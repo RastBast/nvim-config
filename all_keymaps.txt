@@ -5,7 +5,7 @@
 --- РЕЖИМ: I (1) -------------------------------------------------------
   jk                     Выход в Normal                       init.lua
 
---- РЕЖИМ: N (97) -------------------------------------------------------
+--- РЕЖИМ: N (101) -------------------------------------------------------
   <C-Down>               Ниже                                   init.lua
   <C-Up>                 Выше                                   init.lua
   <C-h>                  Окно слева                        init.lua
@@ -42,6 +42,10 @@
   <leader>bd             Закрыть буфер                  lua/plugins/bufdelete.lua
   <leader>cf             🎨 Форматировать файл   lua/plugins/format.lua
   <leader>db             🛑 Точка остановки         lua/plugins/dap.lua
+  <leader>dc             🐳 Docker: lazydocker (TUI)              lua/plugins/toggleterm.lua
+  <leader>di             🐳 Docker: образы                  lua/plugins/toggleterm.lua
+  <leader>dn             🐳 Docker: сети                      lua/plugins/toggleterm.lua
+  <leader>dp             🐳 Docker: контейнеры          lua/plugins/toggleterm.lua
   <leader>dr             🔍 Найти текущую БД        lua/plugins/dadbod-ultimate.lua
   <leader>dt             🧪 Отладка теста             lua/plugins/dap.lua
   <leader>du             🗄 Панель БД (IDE Style)         lua/plugins/dadbod-ultimate.lua
@@ -62,8 +66,8 @@
   <leader>gm             🎭 Сгенерировать мок     lua/plugins/go-tools.lua
   <leader>gt             🧪 Тесты пакета               lua/plugins/go-tools.lua
   <leader>gv             🛡 Проверить уязвимости lua/plugins/go-tools.lua
-  <leader>h1             —                                        lua/plugins/harpoon.lua
-  <leader>h2             —                                        lua/plugins/harpoon.lua
+  <leader>h1             Harpoon: файл 1                        lua/plugins/harpoon.lua
+  <leader>h2             Harpoon: файл 2                        lua/plugins/harpoon.lua
   <leader>ha             Добавить в Harpoon                lua/plugins/harpoon.lua
   <leader>hh             Меню Harpoon                           lua/plugins/harpoon.lua
   <leader>jq             🔎 jq-запрос по JSON             lua/plugins/json-pro.lua
@@ -129,4 +133,4 @@
   au                     —                                        lua/plugins/ts-unit.lua
   iu                     —                                        lua/plugins/ts-unit.lua
 
-Всего маппингов: 117
+Всего маппингов: 121

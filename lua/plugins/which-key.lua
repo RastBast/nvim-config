@@ -185,14 +185,9 @@ return {
         { "<leader>Hnh", "<cmd>nohlsearch<cr>", desc = "🔎 Убрать подсветку поиска" },
         { "<leader>Hne", "<cmd>NvimTreeToggle<cr>", desc = "🗂 Дерево файлов" },
 
-        -------------------------------------------------------------
-        --  🖥 Терминал (toggleterm) — переехал с <leader>Ht, там тесты
-        -------------------------------------------------------------
-        { "<leader>HT", group = "🖥 Терминал" },
-        { "<leader>HTt", "<cmd>ToggleTerm direction=float<cr>", desc = "📟 Плавающий терминал" },
-        { "<leader>HTh", "<cmd>ToggleTerm direction=horizontal size=15<cr>", desc = "📟 Терминал снизу" },
-        { "<leader>HTv", "<cmd>ToggleTerm direction=vertical size=40<cr>", desc = "📟 Терминал справа" },
-        { "<leader>HTa", "<cmd>ToggleTermToggleAll<cr>", desc = "❎ Показать/скрыть все терминалы" },
+        -- Терминал: см. lua/plugins/toggleterm.lua (<leader>T*),
+        -- дубль-набор <leader>HT* удалён — он вызывал :ToggleTerm до загрузки
+        -- плагина и падал с E492.
 
         -------------------------------------------------------------
         --  📂 Файлы (создание — клавишей `a` внутри дерева)
