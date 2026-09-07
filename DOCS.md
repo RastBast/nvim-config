@@ -491,7 +491,11 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
   (`gemini-2.5-flash`): чат-сайдбар справа с контекстом проекта и
   рефакторингом, inline-подсказки целыми блоками при наборе, окно
   объяснения кода/ошибок. Ключ: https://aistudio.google.com/apikey →
-  `set -Ux GEMINI_API_KEY "..."` (fish). Прокси в Lua не нужны.
+  `set -Ux GEMINI_API_KEY "..."` (fish).
+  Сеть: по умолчанию ходит в Google напрямую. Если Google недоступен или
+  «палит» твой VPN — поднимается ретранслятор на своём сервере, конфиг
+  переключается одной переменной: `set -Ux GEMINI_ENDPOINT "…"` или
+  `set -Ux GEMINI_PROXY "…"` (пошагово в **PROXY.md**).
   Клавиши: `<leader>Aa` чат о выделенном, `<leader>Ax` «объясни по-русски»,
   `<leader>Ae` рефакторинг по инструкции, `<leader>At` сайдбар,
   `<leader>As` позвать подсказку, `<leader>AR` карта репо;

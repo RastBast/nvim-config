@@ -13,8 +13,15 @@
 --
 -- КЛЮЧ: получи бесплатный ключ на https://aistudio.google.com/apikey
 -- и пропиши (fish):  set -Ux GEMINI_API_KEY "твой_ключ"
--- Трафик идёт напрямую в generativelanguage.googleapis.com — прокси в Lua
--- НЕ нужны (системный обход DPI/WARP подхватывается из окружения).
+-- (avante также понимает AVANTE_GEMINI_API_KEY — он приоритетнее;
+--  ключ можно вообще не хранить в переменных: в providers.gemini задай
+--  api_key_name = "cmd:команда", и avante возьмёт ключ из её stdout.)
+--
+-- СЕТЬ: по умолчанию трафик идёт напрямую в
+-- generativelanguage.googleapis.com. Если Google недоступен или «палит»
+-- твой VPN — НЕ нужно ничего править в Lua: подними ретранслятор на своём
+-- сервере и переключись одной переменной окружения (GEMINI_ENDPOINT /
+-- GEMINI_PROXY). Пошагово: PROXY.md в корне репозитория.
 --
 -- Сборка: build = "make" тянет ПРЕДСОБРАННЫЕ бинари через curl+tar
 -- (cargo не нужен; нужен только curl и tar — есть в macOS/Linux).
@@ -53,7 +60,28 @@ return {
       auto_suggestions_provider = "gemini-flash",
       providers = {
         gemini = {
-          endpoint = "https://generativelanguage.googleapis.com/v1beta/models",
+          -- ТОЧКА ВХОДА. По умолчанию — напрямую в Google.
+          -- Если Google из твоей сети недоступен/палится, сюда можно
+          -- подставить адрес ретранслятора на СВОЁМ сервере — тогда Google
+          -- увидит IP сервера, а не твой:
+          --   1) поднял nginx-ретранслятор на VPS (см. PROXY.md, способ A);
+          --   2) пробросил порт туннелем (PROXY.md, способ B);
+          --   3) раскомментируй строку ниже:
+          -- endpoint = "http://127.0.0.1:8443/v1beta/models",
+          -- Переопределяется без правки конфига переменной окружения:
+          --   set -Ux GEMINI_ENDPOINT "http://127.0.0.1:8443/v1beta/models"
+          endpoint = vim.env.GEMINI_ENDPOINT
+            or "https://generativelanguage.googleapis.com/v1beta/models",
+          -- HTTP(S)-ПРОКСИ для запросов к Gemini (curl -x под капотом:
+          -- lua/avante/providers/gemini.lua:331 → plenary.curl → curl).
+          -- Пример: proxy = "http://127.0.0.1:1080" — локальный порт,
+          -- проброшенный на твой сервер (ssh -D / gost / 3proxy).
+          -- Ничего не прописано = прямой доступ, как раньше.
+          proxy = vim.env.GEMINI_PROXY or nil,
+          -- Не проверять TLS-сертификат. Нужно ТОЛЬКО если у ретранслятора
+          -- самоподписанный сертификат (см. PROXY.md, §4).
+          -- Включается без правки файла:  set -Ux GEMINI_INSECURE 1
+          allow_insecure = vim.env.GEMINI_INSECURE ~= nil,
           -- бесплатный тариф AI Studio: gemini-2.5-flash.
           -- Актуальная дефолтная модель avante — gemini-3.6-flash:
           -- просто замени строку, когда захочешь новее.
