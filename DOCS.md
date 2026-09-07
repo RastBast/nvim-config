@@ -490,6 +490,8 @@ dockerls, protols, sqls` (включены в `servers.lua`) + доступны 
 
 | Симптом | Причина / лечение |
 |---|---|
+| В `:Lazy` плагины «Not Loaded» | Это НОРМА: ленивые плагины стартуют по триггеру (клавиша/команда/ft/event) — список в Lazy и показывает триггеры. «Disabled» — выключено осознанно (nvim-spotify) |
+| `E492: Not an editor command: …` при нажатии клавиши | which-key вызывал `<cmd>X` до загрузки плагина без стаба. Лечится объявлением `cmd = {"X"}` в спеке (так сделаны Go*, MaximizerToggle, Obsidian*, ToggleTerm, aerial и др.); аудит: все 37 строковых команд which-key прикрыты стабами/жадными плагинами |
 | `E492: Not an editor command: ToggleTerm…` | Было: ленивая загрузка + чужой набор клавиш. Исправлено: `lazy=false`. Если вдруг вернётся — `:Lazy restore toggleterm.nvim` |
 | kulala «checkout failed … .git/modules/fmt» | Старый коммит kulala с сабмодулями + битый кеш. Лечится: `rm -rf ~/.local/share/nvim/lazy/kulala.nvim` + `:Lazy sync` (в lock уже новый коммит без сабмодулей) |
 | «docker.vim: doesn't support neovim» | Плагин Vim-only — **удалён** из конфига. Если ошибка осталая — `rm -rf ~/.local/share/nvim/lazy/docker.vim` |

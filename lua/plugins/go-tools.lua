@@ -23,6 +23,13 @@ return {
     },
     event = { "CmdlineEnter" },
     ft = { "go", "gomod", "gowork", "gosum" },
+    -- Стабы команд: which-key дёргает <cmd>Go* до загрузки плагина —
+    -- без cmd = это E492. Все имена сверены с lua/go/commands.lua go.nvim.
+    cmd = {
+      "GoBuild", "GoTest", "GoTestFunc", "GoTestFile", "GoTestPkg",
+      "GoLint", "GoVulnCheck", "GoMockGen", "GoIfErr", "GoImpl",
+      "GoAddTag", "GoFillStruct", "GoJson", "GoJson2Struct",
+    },
     build = ':lua require("go.install").update_all_sync()',
     config = function()
       require("go").setup({

@@ -11,6 +11,7 @@ return {
     lazy = true,
     ft = "markdown",
     event = { "BufReadPre *.md", "BufNewFile *.md" },
+    cmd = { "ObsidianNew", "ObsidianSearch", "ObsidianFollowLink", "ObsidianToggleCheckbox" },
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
       local vault = vim.fn.expand("~/obsidian_base")
