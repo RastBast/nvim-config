@@ -26,6 +26,7 @@ return {
       local cmp = require("cmp")
       local luasnip = require("luasnip")
 
+<<<<<<< HEAD
       -- Видна ли inline-подсказка avante.nvim (призрак-текст в буфере)?
       -- Позволяет принимать ИИ-подсказку по <Tab> в общей цепочке:
       -- меню cmp → сниппеты → ИИ-подсказка → обычный Tab.
@@ -37,6 +38,8 @@ return {
         return #vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {}) > 0
       end
 
+=======
+>>>>>>> c9c135da7fd245917bf574b14c756041adeb8f9d
       -- Подгружаем готовые сниппеты (friendly-snippets)
       pcall(require("luasnip.loaders.from_vscode").lazy_load)
 
@@ -80,19 +83,26 @@ return {
           ["<CR>"] = cmp.mapping.confirm({ select = true }),
           ["<C-n>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
           ["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
+<<<<<<< HEAD
           -- Прыжки по плейсхолдерам сниппетов + принятие ИИ-подсказки
           -- (avante/Gemini): меню cmp → сниппеты → ИИ-подсказка → Tab
+=======
+          -- Прыжки по плейсхолдерам сниппетов
+>>>>>>> c9c135da7fd245917bf574b14c756041adeb8f9d
           ["<Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
               cmp.select_next_item()
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
+<<<<<<< HEAD
             elseif avante_suggestion_visible() then
               vim.api.nvim_feedkeys(
                 vim.api.nvim_replace_termcodes("<Plug>(AvanteSuggestionAccept)", true, false, true),
                 "n",
                 false
               )
+=======
+>>>>>>> c9c135da7fd245917bf574b14c756041adeb8f9d
             else
               fallback()
             end
