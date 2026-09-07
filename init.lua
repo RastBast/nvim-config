@@ -2,7 +2,7 @@
 --                           ОСНОВНЫЕ НАСТРОЙКИ (CORE)                        --
 -- ========================================================================== --
 
-vim.g.mapleader = " " 
+vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
 local opt = vim.opt
@@ -39,11 +39,20 @@ opt.softtabstop = 4
 opt.shiftwidth = 4
 opt.expandtab = false       -- Используем ЧЕСТНЫЕ ТАБЫ (Go стандарт)
 
--- ПОЛНОЕ ОТКЛЮЧЕНИЕ СВОРАЧИВАНИЯ (FOLDING) — Чтобы ничего не бесило
-opt.foldenable = false      
-opt.foldmethod = "manual"   
-opt.foldlevel = 99          
-opt.foldcolumn = "0"        
+-- ========================================================================== --
+--                     СВОРАЧИВАНИЕ (FOLDING) — ИСПРАВЛЕНО                    --
+-- ========================================================================== --
+-- Раньше здесь стояло foldenable=false + autocmd с `normal! zR` на каждый
+-- FileType. Из-за этого nvim-ufo (lua/plugins/folding.lua) физически не мог
+-- работать: без foldenable сворачивания просто не существует.
+--
+-- Теперь сворачивание ВКЛЮЧЕНО, но foldlevel=99, то есть при открытии файла
+-- всё уже развёрнуто — визуально ничего не изменилось, зато zM/zR и ufo живут.
+opt.foldenable = true
+opt.foldlevel = 99          -- при открытии файла все блоки развёрнуты
+opt.foldlevelstart = 99
+opt.foldmethod = "manual"   -- nvim-ufo сам переключит на expr для нужных буферов
+opt.foldcolumn = "0"        -- без колонки сворачивания (чтобы не мешала)
 
 -- ========================================================================== --
 --                  ФИЛЬТРАЦИЯ ДИАГНОСТИКИ (БЕЗ ШУМА)                         --
@@ -63,137 +72,174 @@ vim.diagnostic.config({
 -- ========================================================================== --
 
 vim.api.nvim_create_autocmd("ColorScheme", {
-    pattern = "*",
-    callback = function()
-        -- 1. ГЛУБОКИЙ ЧЕРНЫЙ ФОН (Везде: окна, меню, плавающие панели)
-        local highlights = {
-            "Normal", "NormalFloat", "SignColumn", "MsgArea", 
-            "StatusLine", "StatusLineNC", "Pmenu", "NormalNC", "FloatBorder"
-        }
-        for _, group in ipairs(highlights) do
-            vim.api.nvim_set_hl(0, group, { bg = "#000000" })
-        end
+  pattern = "*",
+  callback = function()
+    -- 1. ГЛУБОКИЙ ЧЕРНЫЙ ФОН (Везде: окна, меню, плавающие панели)
+    local highlights = {
+      "Normal", "NormalFloat", "SignColumn", "MsgArea",
+      "StatusLine", "StatusLineNC", "Pmenu", "NormalNC", "FloatBorder",
+    }
+    for _, group in ipairs(highlights) do
+      vim.api.nvim_set_hl(0, group, { bg = "#000000" })
+    end
 
-        -- 2. ЗЕЛЕНЫЙ НОМЕР ТЕКУЩЕЙ СТРОКИ
-        vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#00ff00", bold = true })
+    -- 2. ЗЕЛЕНЫЙ НОМЕР ТЕКУЩЕЙ СТРОКИ
+    vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#00ff00", bold = true })
 
-        -- 3. РАСКРАСКА GO (Твои настройки)
-        -- Ключевые слова (ГОЛУБОЙ)
-        vim.api.nvim_set_hl(0, "@keyword", { fg = "#82aaff", bold = true })
-        vim.api.nvim_set_hl(0, "@keyword.function", { fg = "#82aaff", bold = true })
-        vim.api.nvim_set_hl(0, "@repeat", { fg = "#82aaff" })
-        vim.api.nvim_set_hl(0, "@conditional", { fg = "#82aaff" })
+    -- 3. РАСКРАСКА GO
+    -- Ключевые слова (ГОЛУБОЙ)
+    vim.api.nvim_set_hl(0, "@keyword", { fg = "#82aaff", bold = true })
+    vim.api.nvim_set_hl(0, "@keyword.function", { fg = "#82aaff", bold = true })
+    vim.api.nvim_set_hl(0, "@repeat", { fg = "#82aaff" })
+    vim.api.nvim_set_hl(0, "@conditional", { fg = "#82aaff" })
 
-        -- Функции (ФИОЛЕТОВЫЙ + ПОДЧЕРКИВАНИЕ)
-        vim.api.nvim_set_hl(0, "@function", { fg = "#c792ea", underline = true })
-        vim.api.nvim_set_hl(0, "@function.call", { fg = "#c792ea", underline = true })
-        vim.api.nvim_set_hl(0, "@function.builtin", { fg = "#c792ea", underline = true })
-        vim.api.nvim_set_hl(0, "@method", { fg = "#c792ea", underline = true })
-        
-        -- Переменные (ЛАЙМОВЫЙ)
-        vim.api.nvim_set_hl(0, "@variable", { fg = "#c3e88d" })
-        vim.api.nvim_set_hl(0, "@variable.member", { fg = "#c3e88d" })
-        vim.api.nvim_set_hl(0, "@parameter", { fg = "#c3e88d", italic = true })
-    end,
+    -- Функции (ФИОЛЕТОВЫЙ + ПОДЧЕРКИВАНИЕ)
+    vim.api.nvim_set_hl(0, "@function", { fg = "#c792ea", underline = true })
+    vim.api.nvim_set_hl(0, "@function.call", { fg = "#c792ea", underline = true })
+    vim.api.nvim_set_hl(0, "@function.builtin", { fg = "#c792ea", underline = true })
+    vim.api.nvim_set_hl(0, "@method", { fg = "#c792ea", underline = true })
+
+    -- Переменные (ЛАЙМОВЫЙ)
+    vim.api.nvim_set_hl(0, "@variable", { fg = "#c3e88d" })
+    vim.api.nvim_set_hl(0, "@variable.member", { fg = "#c3e88d" })
+    vim.api.nvim_set_hl(0, "@parameter", { fg = "#c3e88d", italic = true })
+  end,
 })
 
 -- ========================================================================== --
 --                           УСТАНОВКА ПЛАГИНОВ (LAZY)                        --
 -- ========================================================================== --
 
+-- ИСПРАВЛЕНО: раньше сюда подставлялась строка "https://github.com",
+-- из-за чего `git clone` падал и lazy.nvim вообще не устанавливался.
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-    vim.fn.system({
-        "git", "clone", "--filter=blob:none",
-        "https://github.com", "--branch=stable", lazypath,
-    })
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+  vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+  if vim.v.shell_error ~= 0 then
+    vim.api.nvim_echo({
+      { "Не удалось установить lazy.nvim:\n", "ErrorMsg" },
+      { "проверьте доступ к github.com и удалите " .. lazypath, "WarningMsg" },
+      { "\nНажмите любую клавишу для выхода", "MoreMsg" },
+    }, true, {})
+    vim.fn.getchar()
+    os.exit(1)
+  end
 end
 vim.opt.rtp:prepend(lazypath)
 
 -- Загружаем все плагины из папки ~/.config/nvim/lua/plugins/
-require("lazy").setup("plugins")
+require("lazy").setup("plugins", {
+  checker = { enabled = true, notify = false },   -- не дёргать уведомлениями
+  change_detection = { notify = false },
+  install = { colorscheme = { "catppuccin-mocha", "habamax" } },
+  performance = {
+    rtp = {
+      disabled_plugins = { "gzip", "tarPlugin", "tohtml", "tutor", "zipPlugin" },
+    },
+  },
+})
 
 -- ========================================================================== --
 --                         ПРИМЕНЕНИЕ ТЕМЫ И ФИЛЬТРЫ                          --
 -- ========================================================================== --
 
--- Безопасный запуск темы (чтобы не было ошибки colors_name nil)
-local status_theme, _ = pcall(vim.cmd, "colorscheme " .. (vim.g.colors_name or "habamax"))
-if not status_theme then
-    vim.cmd("colorscheme habamax")
+-- Тема ставится плагином lua/plugins/colorscheme.lua (catppuccin).
+-- Здесь только страховка: если плагин ещё не скачан — падаем на habamax.
+if not pcall(vim.cmd.colorscheme, "catppuccin-mocha") then
+  pcall(vim.cmd.colorscheme, "habamax")
 end
 
 -- Фильтр всплывающих уведомлений (пропускаем только КРАСНЫЕ ОШИБКИ)
-local status_notify, notify = pcall(require, "notify")
-if status_notify then
+do
+  local ok, notify = pcall(require, "notify")
+  if ok then
+    local base = vim.notify
     vim.notify = function(msg, level, opts)
-        if level ~= nil and level < vim.log.levels.ERROR then return end
-        notify(msg, level, opts)
+      if level ~= nil and level < vim.log.levels.ERROR then return end
+      if type(base) == "function" then
+        return base(msg, level, opts)
+      end
+      return notify(msg, level, opts)
     end
+  end
 end
-
--- Принудительное разворачивание всех строк при открытии файлов
-vim.api.nvim_create_autocmd({ "BufReadPost", "FileType" }, {
-    pattern = "*",
-    callback = function()
-        vim.opt_local.foldenable = false
-        vim.cmd("normal! zR") 
-    end,
-})
 
 -- ========================================================================== --
 --                           ГОРЯЧИЕ КЛАВИШИ (БАЗА)                           --
 -- ========================================================================== --
+-- Навигация по окнам, ресайз, сплиты и вкладки вынесены в lua/config/keymaps.lua
+-- (раньше этот файл вообще никем не подключался — мёртвый код).
 
 local keymap = vim.keymap.set
 
 -- Быстрый выход из Insert Mode
 keymap("i", "jk", "<Esc>", { desc = "Выход в Normal" })
 
--- Убрать подсветку поиска после нажатия Enter
+-- Убрать подсветку поиска
 keymap("n", "<leader>nh", ":nohlsearch<CR>", { desc = "Убрать подсветку поиска" })
-
--- Навигация между окнами (Ctrl + h,j,k,l)
-keymap("n", "<C-h>", "<C-w>h")
-keymap("n", "<C-j>", "<C-w>j")
-keymap("n", "<C-k>", "<C-w>k")
-keymap("n", "<C-l>", "<C-w>l")
-
--- Переключение вкладок (через Tab и Shift+Tab)
-keymap("n", "<Tab>", ":bnext<CR>", { desc = "След. вкладка" })
-keymap("n", "<S-Tab>", ":bprevious<CR>", { desc = "Пред. вкладка" })
 
 -- Умное удаление (удаление через x не перезаписывает скопированный текст)
 keymap("n", "x", '"_x')
 
--- Перемещение строк (Alt + j/k)
-keymap("n", "<A-j>", ":m .+1<CR>== ", { desc = "Двигать строку вниз" })
-keymap("n", "<A-k>", ":m .-2<CR>== ", { desc = "Двигать строку вверх" })
-keymap("v", "<A-j>", ":m '>+1<CR>gv=gv", { desc = "Двигать блок вниз" })
-keymap("v", "<A-k>", ":m '<-2<CR>gv=gv", { desc = "Двигать блок вверх" })
+-- Удалённые отсюда <A-j>/<A-k> делает move.nvim (lua/plugins/move.lua),
+-- а <Tab>/<S-Tab> — bufferline.nvim. Дубли только ломали друг друга.
+
 -- ========================================================================== --
 --                            Кастомные функции                               --
 -- ========================================================================== --
 -- Открыть документацию в полноценном боковом окне (как в VS Code)
-vim.keymap.set('n', '<leader>tD', function()
-    local params = vim.lsp.util.make_position_params()
-    vim.lsp.buf_request(0, "textDocument/hover", params, function(_, result)
-        if not (result and result.contents) then return end
-        
-        local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
-        
-        -- Создаем новое вертикальное окно справа
-        vim.cmd("vsplit")
-        local win = vim.api.nvim_get_current_win()
-        local buf = vim.api.nvim_create_buf(false, true) -- Создаем пустой буфер
-        vim.api.nvim_win_set_buf(win, buf)
-        
-        -- Настраиваем буфер: Markdown, без номеров строк, временный
-        vim.api.nvim_buf_set_lines(buf, 0, -1, false, markdown_lines)
-        vim.opt_local.filetype = "markdown"
-        vim.opt_local.buftype = "nofile"
-        vim.opt_local.number = false
-        vim.opt_local.relativenumber = false
+--
+-- ИСПРАВЛЕНО: vim.lsp.util.make_position_params() без аргументов в
+-- Neovim 0.11+ падает с ошибкой — второй параметр (кодировка позиций)
+-- теперь обязательный. Берём её из подключённого клиента.
+keymap("n", "<leader>tD", function()
+  local clients = vim.lsp.get_clients({ bufnr = 0 })
+  local client = clients[1]
+  if not client then
+    vim.notify("Нет подключённого LSP-сервера для этого буфера", vim.log.levels.WARN)
+    return
+  end
+
+  local params = vim.lsp.util.make_position_params(0, client.offset_encoding or "utf-16")
+  vim.lsp.buf_request(0, "textDocument/hover", params, function(_, result)
+    if not (result and result.contents) then return end
+
+    local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
+    if #markdown_lines == 0 then return end
+
+    -- ответ приходит асинхронно — переносим работу с окнами в основной цикл
+    vim.schedule(function()
+      if not vim.api.nvim_buf_is_valid(0) then return end
+      vim.cmd("vsplit")
+      local win = vim.api.nvim_get_current_win()
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_win_set_buf(win, buf)
+
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, markdown_lines)
+      vim.bo[buf].filetype = "markdown"
+      vim.bo[buf].buftype = "nofile"
+      vim.bo[buf].bufhidden = "wipe"
+      vim.wo[win].number = false
+      vim.wo[win].relativenumber = false
+      vim.wo[win].signcolumn = "no"
+      vim.api.nvim_win_set_width(win, math.max(40, math.floor(vim.o.columns * 0.4)))
+      vim.api.nvim_win_set_cursor(win, { 1, 0 })
     end)
+  end)
 end, { desc = "📑 Открыть доку в новом окне" })
 
+-- ========================================================================== --
+--                       ПОДКЛЮЧЕНИЕ ФАЙЛА КЛАВИШ                             --
+-- ========================================================================== --
+require("config.keymaps")
+
+-- Русский перевод LSP-подсказок (hover): переводится только проза,
+-- код в ```-блоках и inline `code` не трогается. Выкл: :HoverRu off
+require("config.hover_ru").setup()
+
+-- Русские ошибки LSP на лету (Go/Docker/SQL/proto/...): выкл: :DiagRu off
+require("config.diag_ru").setup()
+
+-- Русские уведомления (вывод сборок Go/lint и т.п.): выкл: :NotifyRu off
+require("config.notify_ru").setup()
