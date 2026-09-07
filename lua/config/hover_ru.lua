@@ -20,13 +20,9 @@
 
 local M = { enabled = true }
 
--- ---------- утилиты ----------
+local RU = require("config.ru_util")
 
-local function url_encode(s)
-  return (s:gsub("([^%w%-%.%_%~ ])", function(c)
-    return string.format("%%%02X", string.byte(c))
-  end):gsub(" ", "+"))
-end
+-- ---------- утилиты markdown ----------
 
 -- Разбить markdown на куски {code=bool, text=...}: fenced-блоки — code=true.
 local function split_md(md)
@@ -64,33 +60,6 @@ local function restore_inline(text, stash)
   return (text:gsub("@@(%d+)@@", function(n)
     return stash[tonumber(n)] or ""
   end))
-end
-
--- Асинхронный перевод en→ru (Google gtx). cb(nil) при любой ошибке.
-local function translate(text, cb)
-  if vim.fn.executable("curl") == 0 then
-    return cb(nil)
-  end
-  local url = "https://translate.googleapis.com/translate_a/single"
-    .. "?client=gtx&sl=en&tl=ru&dt=t&q=" .. url_encode(text)
-  vim.system({ "curl", "-sS", "--max-time", "4", url }, { text = true }, function(res)
-    vim.schedule(function()
-      if res.code ~= 0 then
-        return cb(nil)
-      end
-      local ok, data = pcall(vim.json.decode, res.stdout)
-      if not ok or type(data) ~= "table" or type(data[1]) ~= "table" then
-        return cb(nil)
-      end
-      local out = {}
-      for _, item in ipairs(data[1]) do
-        if type(item) == "table" and type(item[1]) == "string" then
-          out[#out + 1] = item[1]
-        end
-      end
-      cb(table.concat(out))
-    end)
-  end)
 end
 
 -- ---------- перехват hover ----------
@@ -144,7 +113,7 @@ function M.setup()
       if not p.code and p.text:match("%a%a%a") then
         local masked, stash = protect_inline(p.text)
         pending = pending + 1
-        translate(masked, function(tr)
+        RU.translate(masked, function(tr)
           if tr then
             local ok_ph = true
             for i = 1, #stash do

@@ -16,4 +16,6 @@ return {
   "jsonls",     -- JSON
   "yamlls",     -- YAML
   "dockerls",   -- Dockerfile
+  "protols",    -- Protobuf: подсказки, диагностика, форматирование .proto
+  "sqls",       -- SQL: подсказки и диагностика (русифицируется через DiagRu)
 }

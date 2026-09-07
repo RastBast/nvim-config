@@ -31,6 +31,7 @@ return {
         sql = { "sqlformat" },
         xml = { "xmlformat" },
         sh = { "shfmt" },
+        proto = { "buf" }, -- buf format; если buf нет — фолбэк через LSP (protols)
         ["_"] = { "trim_whitespace", "trim_newlines" },
       },
       format_on_save = {

@@ -29,6 +29,7 @@ return {
         "javascript", "typescript", "tsx", "css", "html",
         "markdown", "markdown_inline",
         "sql", "dockerfile", "regex", "make", "diff", "gitignore",
+        "proto", -- Protobuf
       }
 
       -- Включаем подсветку. vim.treesitter.start() сам определяет язык

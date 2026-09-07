@@ -29,6 +29,27 @@ return {
       -- Подгружаем готовые сниппеты (friendly-snippets)
       pcall(require("luasnip.loaders.from_vscode").lazy_load)
 
+      -- ================================================================== --
+      --  🧊 Сниппеты Protobuf/gRPC (ft=proto): hdr/svc/msg/rpc/enum/opt     --
+      -- ================================================================== --
+      local s, t, i = luasnip.snippet, luasnip.text_node, luasnip.insert_node
+      luasnip.add_snippets("proto", {
+        s("hdr", { -- каркас нового .proto
+          t({ 'syntax = "proto3";', "", "package " }), i(1, "app.v1"),
+          t({ "", "", 'option go_package = "' }), i(2, "github.com/org/repo/gen/go/app/v1;appv1"),
+          t({ '";', "" }),
+        }),
+        s("svc", { -- сервис с одним rpc
+          t("service "), i(1, "UserService"), t({ " {", "  rpc " }), i(2, "GetUser"),
+          t("("), i(3, "GetUserRequest"), t(") returns ("), i(4, "GetUserResponse"),
+          t({ ");", "}" }),
+        }),
+        s("msg", { t("message "), i(1, "User"), t({ " {", "  " }), i(2, "string id = 1;"), t({ "", "}" }) }),
+        s("rpc", { t("rpc "), i(1, "Method"), t("("), i(2, "Req"), t(") returns ("), i(3, "Resp"), t(");") }),
+        s("enum", { t("enum "), i(1, "Status"), t({ " {", "  " }), i(2, "STATUS_UNSPECIFIED = 0;"), t({ "", "}" }) }),
+        s("opt", { t('option go_package = "'), i(1, "gen/go/app/v1"), t('";') }),
+      })
+
       cmp.setup({
         snippet = {
           expand = function(args)

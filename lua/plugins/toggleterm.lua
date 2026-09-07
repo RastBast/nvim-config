@@ -17,7 +17,7 @@
 --  4) shade_terminals выключен: терминал больше не тонируется в странный
 --     цвет («зелёная панель») и выглядит как обычный fish в alacritty.
 
-local function docker_term(cmd, id, title)
+local function term_cmd(cmd, id, title)
   return function()
     local bin = cmd:match("^(%S+)")
     if vim.fn.executable(bin) == 0 then
@@ -55,10 +55,14 @@ return {
       { "<leader>Tv", "<cmd>ToggleTerm direction=vertical size=60<cr>", desc = "📟 Терминал справа" },
       { "<leader>Ta", "<cmd>ToggleTermToggleAll<cr>", desc = "❎ Показать/скрыть все терминалы" },
       -- 🐳 Docker в маленьком окне (вместо мёртвого docker.vim)
-      { "<leader>dc", docker_term("lazydocker", 100, "docker"), desc = "🐳 Docker: lazydocker (TUI)" },
-      { "<leader>dp", docker_term("docker ps -a", 101, "docker ps"), desc = "🐳 Docker: контейнеры" },
-      { "<leader>di", docker_term("docker images", 102, "docker images"), desc = "🐳 Docker: образы" },
-      { "<leader>dn", docker_term("docker network ls", 103, "docker networks"), desc = "🐳 Docker: сети" },
+      { "<leader>dc", term_cmd("lazydocker", 100, "docker"), desc = "🐳 Docker: lazydocker (TUI)" },
+      { "<leader>dp", term_cmd("docker ps -a", 101, "docker ps"), desc = "🐳 Docker: контейнеры" },
+      { "<leader>di", term_cmd("docker images", 102, "docker images"), desc = "🐳 Docker: образы" },
+      { "<leader>dn", term_cmd("docker network ls", 103, "docker networks"), desc = "🐳 Docker: сети" },
+      -- 🧊 Protobuf/gRPC: buf в плавающем окне (проект с buf.yaml)
+      { "<leader>Pb", term_cmd("buf build", 110, "buf build"), desc = "🧊 buf build (валидация proto)" },
+      { "<leader>Pl", term_cmd("buf lint", 111, "buf lint"), desc = "🧊 buf lint (стиль proto)" },
+      { "<leader>Pg", term_cmd("buf generate", 112, "buf generate"), desc = "🧊 buf generate (codegen по buf.gen.yaml)" },
     },
     config = function()
       require("toggleterm").setup({

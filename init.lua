@@ -237,3 +237,6 @@ require("config.keymaps")
 -- Русский перевод LSP-подсказок (hover): переводится только проза,
 -- код в ```-блоках и inline `code` не трогается. Выкл: :HoverRu off
 require("config.hover_ru").setup()
+
+-- Русские ошибки LSP на лету (Go/Docker/SQL/proto/...): выкл: :DiagRu off
+require("config.diag_ru").setup()

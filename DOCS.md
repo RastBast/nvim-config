@@ -139,7 +139,8 @@ lua/
   `:Lazy update` + коммит.
 * Полезные команды: `:Lazy` (UI), `:Lazy sync`, `:Lazy update`, `:Lazy clean`,
   `:Lazy check`, `:Lazy restore <plugin>` (переставить с нуля), `:Lazy profile`,
-  `:HoverRu on|off|toggle` (перевод LSP-подсказок, см. §8).
+  `:HoverRu on|off|toggle` (перевод LSP-подсказок, см. §8),
+  `:DiagRu on|off|toggle` (перевод ошибок LSP на лету, см. §19).
 
 ## 6. ПОЛНАЯ ТАБЛИЦА ГОРЯЧИХ КЛАВИШ
 
@@ -254,6 +255,9 @@ lua/
 | `<leader>Tv` | 📟 Терминал справа |
 | `<leader>a` | 📑 Структура кода |
 | `<leader>aj` | 🌳 Дерево JSON/структура |
+| `<leader>Pb` | 🧊 buf build (валидация proto) |
+| `<leader>Pl` | 🧊 buf lint (стиль proto) |
+| `<leader>Pg` | 🧊 buf generate (codegen) |
 | `<leader>dc` | 🐳 Docker: lazydocker (TUI) |
 | `<leader>di` | 🐳 Docker: образы |
 | `<leader>dn` | 🐳 Docker: сети |
@@ -384,11 +388,25 @@ GoTestFunc/GoLint/GoVulnCheck/GoMockGen/GoImpl/GoIfErr/GoJson2Struct…`.
 Внутри панели: `dd` — выполнить запрос, автодополнение таблиц/колонок в SQL-буфере.
 Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSON).
 
-## 11. HTTP / gRPC-запросы (Kulala)
+## 11. HTTP / gRPC / Protobuf (Kulala + proto-стек)
 
 `mistweaverco/kulala.nvim` — RestClient прямо в nvim: файлы `*.http`, `*.rest`.
 `<leader>Hur` — выполнить запрос под курсором; поддерживает **gRPC**
 (`GRPC http://host:50051/pkg.Service/Method` в .http-файле). Скретчпад — `:KulalaScratchpad`.
+
+### Protobuf: полный стек
+
+| Слой | Что | Где |
+|---|---|---|
+| Подсветка/парсер | treesitter `proto` | `lua/plugins/treesitter.lua` (ensure) |
+| LSP | `protols` (подсказки, диагностика, переходы) | `lua/config/servers.lua` (Mason ставит сам) |
+| Форматтер | `buf format` через conform, фолбэк — LSP | `lua/plugins/format.lua` (`proto = { "buf" }`) |
+| Линт/сборка/кодоген | `buf lint / build / generate` в плавающем окне | `<leader>Pl / Pb / Pg` (`toggleterm.lua`) |
+| Сниппеты | `hdr` `svc` `msg` `rpc` `enum` `opt` | `lua/plugins/completions.lua` (LuaSnip, ft=proto) |
+| gRPC-запросы | kulala (`GRPC …` в .http) | `<leader>Hur` |
+
+Внешние бинари (один раз): `:MasonInstall buf protolint` (+ по желанию
+`grpcurl` — https://github.com/fullstorydev/grpcurl для запросов из терминала).
 
 ## 12. Терминал
 
@@ -463,7 +481,7 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 
 `lua/config/servers.lua` — все имена сверены с реестром Mason (594 пакета):
 `gopls, ts_ls, bashls, dotls, lemminx, html, cssls, lua_ls, jsonls, yamlls,
-dockerls, docker_compose_language_service, protols, buf_ls, eslint, sqls` +
+dockerls, protols, sqls` (включены в `servers.lua`) + доступны `docker_compose_language_service, buf_ls, eslint` +
 инструменты `golangci-lint, hadolint, delve, protolint`.
 Базовые LSP-клавиши: `gd` определение, `gr` ссылки, `K` ховер, `<leader>d`
 диагностика строки, `]d/[d` — по ошибкам (из lsp-config.lua).
@@ -475,6 +493,7 @@ dockerls, docker_compose_language_service, protols, buf_ls, eslint, sqls` +
 | `E492: Not an editor command: ToggleTerm…` | Было: ленивая загрузка + чужой набор клавиш. Исправлено: `lazy=false`. Если вдруг вернётся — `:Lazy restore toggleterm.nvim` |
 | kulala «checkout failed … .git/modules/fmt» | Старый коммит kulala с сабмодулями + битый кеш. Лечится: `rm -rf ~/.local/share/nvim/lazy/kulala.nvim` + `:Lazy sync` (в lock уже новый коммит без сабмодулей) |
 | «docker.vim: doesn't support neovim» | Плагин Vim-only — **удалён** из конфига. Если ошибка осталая — `rm -rf ~/.local/share/nvim/lazy/docker.vim` |
+| Ошибки/подсказки LSP по-русски | Включено из коробки: `diag_ru.lua` переводит сообщения об ошибках при наборе (Go/Docker/SQL/proto/Lua…), `hover_ru.lua` — текст подсказки `K`, код не трогается. Обе — с кешем и фолбэком на английский без сети |
 | Плагин «Failed: checkout/clone» | Почти всегда битый кеш: `:Lazy restore <имя>` или `rm -rf` папки + `:Lazy sync` |
 | `famiu/bufdelete.nvim`, `stevearc/dressing.nvim` | Архивированы авторами, но **работают** и стабильны — оставлены осознанно. Захочется убрать: dressing заменяем ничем не надо (nvim 0.10+ имеет UI-overridы), bufdelete — `vim.fn.bufdelete`-обёртки |
 | LSP не стартовал | `:Mason` → проверить установку; `:LspInfo`; `:checkhealth` |
