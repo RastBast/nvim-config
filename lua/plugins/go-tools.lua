@@ -56,6 +56,21 @@ return {
       vim.keymap.set("n", "<leader>gt", "<cmd>GoTest<cr>", { desc = "🧪 Тесты пакета" })
       vim.keymap.set("n", "<leader>gb", "<cmd>GoBuild<cr>", { desc = "🔨 Собрать" })
       vim.keymap.set("n", "<leader>gm", "<cmd>GoMockGen<cr>", { desc = "🎭 Сгенерировать мок" })
+
+      -- ============================================================== --
+      --  УМНЫЙ GO: формочка struct как в VSCode + автозаполнение полей  --
+      -- ============================================================== --
+      vim.keymap.set("n", "<leader>HGS", function()
+        require("config.go_extras").fill_struct()
+      end, { desc = "🧩 Формочка struct (выбор из списка)" })
+      vim.keymap.set("n", "<leader>HGf", function()
+        require("config.go_extras").add_fields()
+      end, { desc = "🧱 Поля struct'а под курсором" })
+
+      -- Русские Go-сниппеты + динамическая формочка gstr
+      pcall(function()
+        require("config.go_snips").register()
+      end)
     end,
   },
 }

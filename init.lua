@@ -240,3 +240,6 @@ require("config.hover_ru").setup()
 
 -- Русские ошибки LSP на лету (Go/Docker/SQL/proto/...): выкл: :DiagRu off
 require("config.diag_ru").setup()
+
+-- Русские уведомления (вывод сборок Go/lint и т.п.): выкл: :NotifyRu off
+require("config.notify_ru").setup()

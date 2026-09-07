@@ -174,7 +174,9 @@ lua/
 | `<leader>HGl` | 🧹 Линтер |
 | `<leader>HGm` | ⚙️ Сгенерировать impl |
 | `<leader>HGo` | 🧪 Запуск тестов |
-| `<leader>HGs` | 🧩 Заполнить struct |
+| `<leader>HGs` | 🧩 Заполнить struct (go.nvim) |
+| `<leader>HGS` | 🧩 Формочка struct: пикер + поля с нулевыми значениями, <Tab> по полям |
+| `<leader>HGf` | 🧱 Автозаполнение полей struct'а под курсором |
 | `<leader>HGv` | 🔐 Проверка уязвимостей |
 | `<leader>Ha` | ГРУППА: 🤖 AI и Структура |
 | `<leader>Hac` | ✨ Команда в CodeCompanion |
@@ -350,6 +352,14 @@ GoTestFunc/GoLint/GoVulnCheck/GoMockGen/GoImpl/GoIfErr/GoJson2Struct…`.
 | `<leader>HGs` | Заполнить struct |
 | `<leader>HGm` | `:GoImpl` |
 
+**Умный Go (как в VSCode).** `<leader>HGS` — «формочка»: пикер struct'ов
+(красивый через dressing), вставляется сниппет со ВСЕМИ полями, курсор прыгает
+по значениям `<Tab>`, дефолты — нулевые значения Go по типу поля.
+`<leader>HGf` — то же для struct'а под курсором. Сниппет `gstr` в
+автодополнении — динамическая формочка ближайшего struct'а. Описания всех
+Go-сниппетов в меню — по-русски (`dstring`). Модули: `lua/config/go_extras.lua`,
+`lua/config/go_snips.lua`.
+
 **Русский в подсказках.** Модуль `lua/config/hover_ru.lua` (включён в `init.lua`)
 перехватывает hover LSP — подсказку «что делает функция» (клавиша `K`) — и
 переводит описательный текст на русский через Google (асинхронно, ~1 с).
@@ -495,7 +505,7 @@ dockerls, protols, sqls` (включены в `servers.lua`) + доступны 
 | `E492: Not an editor command: ToggleTerm…` | Было: ленивая загрузка + чужой набор клавиш. Исправлено: `lazy=false`. Если вдруг вернётся — `:Lazy restore toggleterm.nvim` |
 | kulala «checkout failed … .git/modules/fmt» | Старый коммит kulala с сабмодулями + битый кеш. Лечится: `rm -rf ~/.local/share/nvim/lazy/kulala.nvim` + `:Lazy sync` (в lock уже новый коммит без сабмодулей) |
 | «docker.vim: doesn't support neovim» | Плагин Vim-only — **удалён** из конфига. Если ошибка осталая — `rm -rf ~/.local/share/nvim/lazy/docker.vim` |
-| Ошибки/подсказки LSP по-русски | Включено из коробки: `diag_ru.lua` переводит сообщения об ошибках при наборе (Go/Docker/SQL/proto/Lua…), `hover_ru.lua` — текст подсказки `K`, код не трогается. Обе — с кешем и фолбэком на английский без сети |
+| Ошибки/подсказки LSP по-русски | Из коробки: `diag_ru.lua` — ошибки при наборе (Go/Docker/SQL/proto/Lua…), `hover_ru.lua` — подсказка `K` (код не трогается), `notify_ru.lua` — уведомления и вывод сборок (`<leader>HGb`, lint), окно документации автодополнения — через `cmp.entry.get_documentation`. Кеш переводов — файл `stdpath("cache")/ru_cache.json`, переживает перезапуск; первый показ новой ошибки может мелькнуть английским (греется кеш), дальше — русский. Выкл: `:DiagRu off`, `:HoverRu off`, `:NotifyRu off` |
 | Плагин «Failed: checkout/clone» | Почти всегда битый кеш: `:Lazy restore <имя>` или `rm -rf` папки + `:Lazy sync` |
 | `famiu/bufdelete.nvim`, `stevearc/dressing.nvim` | Архивированы авторами, но **работают** и стабильны — оставлены осознанно. Захочется убрать: dressing заменяем ничем не надо (nvim 0.10+ имеет UI-overridы), bufdelete — `vim.fn.bufdelete`-обёртки |
 | LSP не стартовал | `:Mason` → проверить установку; `:LspInfo`; `:checkhealth` |

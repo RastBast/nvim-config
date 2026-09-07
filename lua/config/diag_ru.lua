@@ -62,8 +62,8 @@ function M.setup()
     if pending == 0 and not fired then
       return orig(err, result, ctx, cfg)
     end
-    -- страховка от медленной сети: через 1.2 с ошибки уходят как есть
-    vim.defer_fn(finish, 1200)
+    -- страховка от медленной сети: через 2.5 с ошибки уходят как есть
+    vim.defer_fn(finish, 2500)
   end
 
   vim.api.nvim_create_user_command("DiagRu", function(o)

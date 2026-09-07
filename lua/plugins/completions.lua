@@ -103,6 +103,29 @@ return {
         mapping = cmp.mapping.preset.cmdline(),
         sources = cmp.config.sources({ { name = "path" } }, { { name = "cmdline" } }),
       })
+
+      -- ================================================================== --
+      --  РУССКИЙ В ОКНЕ ДОКУМЕНТАЦИИ АВТОДОПОЛНЕНИЯ (скрин «Snippet for …») --
+      -- ================================================================== --
+      -- Через кеш ru_util: переводилось раньше (или в прошлый сеанс) —
+      -- сразу русский; первый раз — английский + кеш греется фоном.
+      local RU = require("config.ru_util")
+      local ok_e, entry_mod = pcall(require, "cmp.entry")
+      if ok_e and entry_mod and entry_mod.get_documentation then
+        local orig_doc = entry_mod.get_documentation
+        entry_mod.get_documentation = function(self)
+          local docs = orig_doc(self)
+          local text = type(docs) == "table" and table.concat(docs, "\n") or docs
+          if type(text) == "string" and text:match("%a%a%a") then
+            local tr = RU.translate_cached(text)
+            if tr then
+              return vim.split(tr, "\n")
+            end
+            RU.translate(text, function() end) -- греем кеш
+          end
+          return docs
+        end
+      end
     end,
   },
 }

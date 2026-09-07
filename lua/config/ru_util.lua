@@ -1,13 +1,60 @@
 -- ========================================================================== --
 --              ОБЩИЙ АСИНХРОННЫЙ ПЕРЕВОД en→ru (Google gtx, curl)            --
 -- ========================================================================== --
--- Пользователи: config.hover_ru (подсказки), config.diag_ru (ошибки).
--- С кешем: одинаковые строки переводятся один раз (диагностика при письме
--- шлёт одни и те же сообщения постоянно — не спамим сеть).
--- Любая ошибка (нет curl/сети, кривой JSON) → cb(nil), вызывающий решает,
--- что показать (обычно — оригинал).
+-- Пользователи: hover_ru (подсказки), diag_ru (ошибки LSP), notify_ru
+-- (уведомления/вывод сборок), completions (окно документации cmp).
+--
+-- КЕШ: в памяти + файл stdpath("cache")/ru_cache.json — перевод переживает
+-- перезапуск Neovim. Повторная ошибка/подсказка отдаётся СРАЗУ по-русски
+-- (translate_cached), первый раз греет кеш асинхронно.
+-- Любая ошибка (нет curl/сети, кривой JSON) → cb(nil); вызывающий показывает
+-- оригинал — ничего не падает и не блокируется.
 
 local M = { cache = {} }
+
+local function cache_file()
+  local ok, dir = pcall(vim.fn.stdpath, "cache")
+  if not ok or type(dir) ~= "string" then
+    dir = "/tmp"
+  end
+  return dir .. "/ru_cache.json"
+end
+
+-- подгружаем кеш прошлого сеанса
+do
+  local f = io.open(cache_file(), "r")
+  if f then
+    local raw = f:read("*a")
+    f:close()
+    local ok, data = pcall(vim.json.decode, raw)
+    if ok and type(data) == "table" then
+      for k, v in pairs(data) do
+        if type(k) == "string" and type(v) == "string" then
+          M.cache[k] = v
+        end
+      end
+    end
+  end
+end
+
+local save_scheduled = false
+local function persist()
+  if save_scheduled then
+    return
+  end
+  save_scheduled = true
+  vim.defer_fn(function()
+    save_scheduled = false
+    local ok, raw = pcall(vim.json.encode, M.cache)
+    if ok then
+      local f = io.open(cache_file(), "w")
+      if f then
+        f:write(raw)
+        f:close()
+      end
+    end
+  end, 2000)
+end
 
 function M.url_encode(s)
   return (s:gsub("([^%w%-%.%_%~ ])", function(c)
@@ -15,7 +62,12 @@ function M.url_encode(s)
   end):gsub(" ", "+"))
 end
 
---- Перевести текст en→ru. cb(string|nil)
+--- Синхронно: перевод из кеша или nil (ещё не переводилось).
+function M.translate_cached(text)
+  return M.cache[text]
+end
+
+--- Асинхронный перевод en→ru, результат в кеш. cb(string|nil)
 function M.translate(text, cb)
   local hit = M.cache[text]
   if hit then
@@ -43,15 +95,15 @@ function M.translate(text, cb)
       end
       local tr = table.concat(out)
       if tr ~= "" then
-        -- простой предохранитель от бесконечного роста кеша
         local n = 0
         for _ in pairs(M.cache) do
           n = n + 1
         end
-        if n > 1000 then
+        if n > 2000 then
           M.cache = {}
         end
         M.cache[text] = tr
+        persist()
       end
       cb(tr ~= "" and tr or nil)
     end)
