@@ -116,12 +116,35 @@ return {
         entry_mod.get_documentation = function(self)
           local docs = orig_doc(self)
           local text = type(docs) == "table" and table.concat(docs, "\n") or docs
-          if type(text) == "string" and text:match("%a%a%a") then
-            local tr = RU.translate_cached(text)
-            if tr then
-              return vim.split(tr, "\n")
+          if type(text) ~= "string" or not text:match("%a%a%a") then
+            return docs
+          end
+          -- весь текст целиком уже переводился
+          local tr = RU.translate_cached(text)
+          if tr then
+            return vim.split(tr, "\n")
+          end
+          -- код (```-блок с сигнатурой) НЕ переводим: собираем из частей
+          local parts = RU.split_md(text)
+          local all_cached = true
+          for _, p in ipairs(parts) do
+            if not p.code and p.text:match("%a%a%a") and not RU.translate_cached(p.text) then
+              all_cached = false
+              break
             end
-            RU.translate(text, function() end) -- греем кеш
+          end
+          if all_cached and #parts > 1 then
+            local out = {}
+            for _, p in ipairs(parts) do
+              out[#out + 1] = p.code and p.text or (RU.translate_cached(p.text) or p.text)
+            end
+            return vim.split(table.concat(out, "\n"), "\n")
+          end
+          -- первый раз: оригинал + греем кеш по частям
+          for _, p in ipairs(parts) do
+            if not p.code and p.text:match("%a%a%a") then
+              RU.translate(p.text, function() end)
+            end
           end
           return docs
         end

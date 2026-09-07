@@ -22,46 +22,6 @@ local M = { enabled = true }
 
 local RU = require("config.ru_util")
 
--- ---------- утилиты markdown ----------
-
--- Разбить markdown на куски {code=bool, text=...}: fenced-блоки — code=true.
-local function split_md(md)
-  local parts, buf, in_fence = {}, {}, false
-  local function flush()
-    if #buf > 0 then
-      table.insert(parts, { code = in_fence, text = table.concat(buf, "\n") })
-      buf = {}
-    end
-  end
-  for line in (md .. "\n"):gmatch("([^\n]*)\n") do
-    if line:match("^%s*```") then
-      flush()
-      table.insert(parts, { code = true, text = line })
-      in_fence = not in_fence
-    else
-      table.insert(buf, line)
-    end
-  end
-  flush()
-  return parts
-end
-
--- Спрятать inline `код` под маркеры @@N@@ и вернуть обратно.
-local function protect_inline(text)
-  local stash = {}
-  local masked = text:gsub("`[^`\n]+`", function(c)
-    table.insert(stash, c)
-    return "@@" .. #stash .. "@@"
-  end)
-  return masked, stash
-end
-
-local function restore_inline(text, stash)
-  return (text:gsub("@@(%d+)@@", function(n)
-    return stash[tonumber(n)] or ""
-  end))
-end
-
 -- ---------- перехват hover ----------
 
 function M.setup()
@@ -88,7 +48,7 @@ function M.setup()
       return orig(err, result, ctx, cfg)
     end
 
-    local parts = split_md(md)
+    local parts = RU.split_md(md)
     local pending, fired = 0, false
 
     local function finish()
@@ -111,7 +71,7 @@ function M.setup()
 
     for _, p in ipairs(parts) do
       if not p.code and p.text:match("%a%a%a") then
-        local masked, stash = protect_inline(p.text)
+        local masked, stash = RU.protect_inline(p.text)
         pending = pending + 1
         RU.translate(masked, function(tr)
           if tr then
@@ -123,7 +83,7 @@ function M.setup()
               end
             end
             if ok_ph then
-              p.text = restore_inline(tr, stash)
+              p.text = RU.restore_inline(tr, stash)
             end
           end
           pending = pending - 1

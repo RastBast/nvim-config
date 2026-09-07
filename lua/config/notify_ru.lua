@@ -30,9 +30,22 @@ function M.setup()
     if tr then
       return orig(tr, level, opts)
     end
-    -- первый раз: оригинал + греем кеш
-    RU.translate(msg, function() end)
-    return orig(msg, level, opts)
+    -- первый раз: до 0.7 с ждём перевод — успел (обычно да) — сразу
+    -- русский; нет — оригинал, кеш греется для следующего раза
+    local fired = false
+    RU.translate(msg, function(t)
+      if fired then
+        return
+      end
+      fired = true
+      orig(t or msg, level, opts)
+    end)
+    vim.defer_fn(function()
+      if not fired then
+        fired = true
+        orig(msg, level, opts)
+      end
+    end, 700)
   end
 
   vim.api.nvim_create_user_command("NotifyRu", function(o)
