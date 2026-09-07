@@ -1,23 +1,31 @@
+-- ========================================================================== --
+--                        ПОМОДОРО (pomo.nvim)                                --
+-- ========================================================================== --
+-- ИСПРАВЛЕНО. Команды pomo.nvim называются Timer*, а не Pomo*:
+-- в lua/pomo/commands/init.lua создаются TimerStart, TimerStop, TimerRepeat,
+-- TimerHide, TimerShow, TimerPause, TimerResume, TimerSession.
+-- Из-за `cmd = { "PomoStart", ... }` lazy.nvim вешал заглушки на
+-- несуществующие команды, и <leader>pt выдавал "Not an editor command".
 return {
   {
-    'epwalsh/pomo.nvim',
-    version = '*',
+    "epwalsh/pomo.nvim",
     lazy = true,
-    cmd = { 'PomoStart', 'PomoStop', 'PomoPause' },
+    cmd = { "TimerStart", "TimerStop", "TimerPause", "TimerResume", "TimerShow", "TimerHide", "TimerRepeat", "TimerSession" },
+    keys = {
+      { "<leader>pt", "<cmd>TimerStart 25m Work<CR>", desc = "⏱️ Запустить таймер (25м)" },
+      { "<leader>ps", "<cmd>TimerStop Work<CR>", desc = "⏱️ Остановить таймер" },
+      { "<leader>pp", "<cmd>TimerPause Work<CR>", desc = "⏸ Пауза" },
+      { "<leader>pr", "<cmd>TimerResume Work<CR>", desc = "▶ Снять с паузы" },
+    },
     config = function()
-      require('pomo').setup({
-        -- Уведомления будут всплывать через твой nvim-notify
+      require("pomo").setup({
+        -- Уведомления всплывают через nvim-notify
         notifiers = {
-          { name = 'notify', opts = { title = 'Pomo.nvim' } },
+          { name = "Default", opts = { title = "Pomo.nvim" } },
         },
-        -- Настройка времени (в секундах)
-        work_time = 1500,  -- 25 минут
-        break_time = 300,  -- 5 минут
+        -- Времена по умолчанию (в секундах)
+        update_interval = 1000,
       })
-      
-      -- Горячие клавиши для управления
-      vim.keymap.set('n', '<leader>pt', '<cmd>PomoStart<CR>', { desc = '⏱️ Запустить таймер' })
-      vim.keymap.set('n', '<leader>ps', '<cmd>PomoStop<CR>', { desc = '⏱️ Остановить таймер' })
     end,
-  }
+  },
 }
