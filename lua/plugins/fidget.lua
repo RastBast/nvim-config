@@ -1,28 +1,25 @@
+-- ========================================================================== --
+--                    ФИДЖЕТ (прогресс LSP) + АНИМАЦИЯ                        --
+-- ========================================================================== --
+-- ИСПРАВЛЕНО:
+--  1) eandrju/cellular-automaton.nvim был объявлен здесь И в matrix.lua —
+--     lazy.nvim склеивал спеки, config оставался один, и часть клавиш
+--     терялась. Владелец теперь matrix.lua.
+--  2) `spinnner` — опечатка, правильная опция называется `spinner`
+--     (progress.display.spinner), из-за опечатки настройка игнорировалась.
 return {
   {
-    'j-hui/fidget.nvim',
+    "j-hui/fidget.nvim",
+    event = { "LspAttach", "BufReadPre" },
     opts = {
       progress = {
         display = {
-          spinnner = { ' ⊚ ', ' ⊚ ', ' ⊚ ', ' ⊚ ' }, -- можно заменить на фазы движения
+          spinner = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⇇", "⠏" },
         },
       },
       notification = {
         window = { winblend = 0 },
       },
     },
-    config = function(_, opts)
-      require('fidget').setup(opts)
-      -- Рофл: при вводе команды :Flex наш Гофер на заставке будет 'танцевать'
-      vim.api.nvim_create_user_command('Flex', function()
-        require('cellular-automaton').make_it_rain()
-      end, {})
-    end,
   },
-  {
-    'eandrju/cellular-automaton.nvim', -- плагин для анимации кода
-    config = function()
-      vim.keymap.set('n', '<leader>fL', '<cmd>CellularAutomaton make_it_rain<CR>', { desc = '🚀 Код потек!' })
-    end
-  }
 }
