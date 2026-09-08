@@ -123,13 +123,24 @@ return {
         -- Есть и бесплатные модели (суффикс ":free").
         -- Включается:  set -Ux AVANTE_PROVIDER "openrouter-free"
         ["openrouter-free"] = {
-          __inherited_from = "openrouter",
+          -- ВНИМАНИЕ: __inherited_from обязан указывать на имя, для которого
+          -- в avante ЕСТЬ файл lua/avante/providers/<имя>.lua — иначе
+          -- «Failed to load provider: <имя>» (providers/init.lua:175-176).
+          -- Модуля openrouter.lua в avante НЕТ (есть openai/gemini/claude/
+          -- copilot/cohere/ollama/bedrock/azure/vertex), поэтому наследуемся
+          -- от openai, а endpoint и имя ключа задаём явно — ровно те, что
+          -- стоят у штатного openrouter в config.lua:547-553.
+          __inherited_from = "openai",
+          endpoint = "https://openrouter.ai/api/v1",
+          api_key_name = "OPENROUTER_API_KEY",
           -- Дефолт — openrouter/free (роутер по бесплатным моделям; это и
           -- дефолт самого avante, config.lua:552). openrouter/auto брать не
           -- стоит: без кредитов на аккаунте он может выбрать платную модель
           -- и вернуть 402. Конкретную модель — через OPENROUTER_MODEL,
           -- список: curl -sS https://openrouter.ai/api/v1/models
           model = vim.env.OPENROUTER_MODEL or "openrouter/free",
+          timeout = 30000,
+          context_window = 128000,
         },
       },
 

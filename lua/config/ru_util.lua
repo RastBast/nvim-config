@@ -67,6 +67,68 @@ function M.translate_cached(text)
   return M.cache[text]
 end
 
+-- ---------- разборы ответов разных переводчиков ----------
+
+--- Google gtx: [[["перевод","original",...],...],...]
+local function parse_gtx(stdout)
+  local ok, data = pcall(vim.json.decode, stdout)
+  if not ok or type(data) ~= "table" or type(data[1]) ~= "table" then
+    return nil
+  end
+  local out = {}
+  for _, item in ipairs(data[1]) do
+    if type(item) == "table" and type(item[1]) == "string" then
+      out[#out + 1] = item[1]
+    end
+  end
+  local joined = table.concat(out)
+  return joined ~= "" and joined or nil
+end
+
+--- MyMemory: {"responseData":{"translatedText":"..."},"responseStatus":200}
+--- ВАЖНО: при переполнении лимита или слишком длинной строке сервис отдаёт
+--- responseStatus 403/400, а в translatedText — текст ошибки
+--- («QUERY LENGTH LIMIT EXCEEDED»). Без проверки статуса этот текст
+--- уезжал бы пользователю вместо перевода.
+local function parse_mymemory(stdout)
+  local ok, data = pcall(vim.json.decode, stdout)
+  if not ok or type(data) ~= "table" then
+    return nil
+  end
+  if data.responseStatus ~= 200 then
+    return nil
+  end
+  local rd = data.responseData
+  if type(rd) == "table" and type(rd.translatedText) == "string" and rd.translatedText ~= "" then
+    return rd.translatedText
+  end
+  return nil
+end
+
+--- Список переводчиков по порядку: первые два — Google (быстрые, но из РФ
+--- без VPN недоступны), третий — MyMemory (не Google, работает и там).
+--- Каждый элемент: { url = <префикс, дальше припишется текст>, parse = fn }.
+M.endpoints = {
+  {
+    name = "google (translate.googleapis.com)",
+    url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&q=",
+    parse = parse_gtx,
+  },
+  {
+    name = "google (translate.google.com)",
+    url = "https://translate.google.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&q=",
+    parse = parse_gtx,
+  },
+  {
+    -- Не Google: спасает, когда googleapis.com заблокирован провайдером.
+    -- Бесплатный, с дневным лимитом и ограничением на длину строки (~500
+    -- символов) — для ошибок LSP и коротких подсказок хватает.
+    name = "MyMemory (api.mymemory.translated.net)",
+    url = "https://api.mymemory.translated.net/get?langpair=en%7Cru&q=",
+    parse = parse_mymemory,
+  },
+}
+
 --- Асинхронный перевод en→ru, результат в кеш. cb(string|nil)
 function M.translate(text, cb)
   local hit = M.cache[text]
@@ -77,27 +139,16 @@ function M.translate(text, cb)
     return cb(nil)
   end
   local function try(i)
-    if i > #M.endpoints then
+    local ep = M.endpoints[i]
+    if not ep then
       return cb(nil)
     end
-    local url = M.endpoints[i] .. M.url_encode(text)
+    local url = ep.url .. M.url_encode(text)
     vim.system({ "curl", "-sS", "--max-time", "4", url }, { text = true }, function(res)
       vim.schedule(function()
         local tr = nil
-        if res.code == 0 then
-          local ok, data = pcall(vim.json.decode, res.stdout)
-          if ok and type(data) == "table" and type(data[1]) == "table" then
-            local out = {}
-            for _, item in ipairs(data[1]) do
-              if type(item) == "table" and type(item[1]) == "string" then
-                out[#out + 1] = item[1]
-              end
-            end
-            local joined = table.concat(out)
-            if joined ~= "" then
-              tr = joined
-            end
-          end
+        if res.code == 0 and ep.parse then
+          tr = ep.parse(res.stdout)
         end
         if tr then
           local n = 0
@@ -111,17 +162,43 @@ function M.translate(text, cb)
           persist()
           return cb(tr)
         end
-        try(i + 1) -- первый эндпоинт недоступен — пробуем запасной
+        try(i + 1) -- этот переводчик недоступен — пробуем следующий
       end)
     end)
   end
   try(1)
 end
 
-M.endpoints = {
-  "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&q=",
-  "https://translate.google.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&q=",
-}
+--- Диагностика: :RuCheck — какой переводчик реально отвечает.
+--- Без неё «перевод не работает» не отличить от «Google заблокирован».
+function M.check()
+  local lines = {}
+  local pending = #M.endpoints
+  local sample = "undefined reference"
+  for i, ep in ipairs(M.endpoints) do
+    local url = ep.url .. M.url_encode(sample)
+    vim.system({ "curl", "-sS", "--max-time", "6", url }, { text = true }, function(res)
+      local status
+      if res.code ~= 0 then
+        status = "недоступен (curl exit " .. tostring(res.code) .. ")"
+      else
+        local tr = ep.parse and ep.parse(res.stdout) or nil
+        status = tr and ("работает → «" .. tr .. "»") or "отвечает, но разбор не удался"
+      end
+      vim.schedule(function()
+        lines[i] = ("%d. %-42s %s"):format(i, ep.name, status)
+        pending = pending - 1
+        if pending == 0 then
+          vim.notify(
+            "Перевод en→ru, тест строки «" .. sample .. "»:\n" .. table.concat(lines, "\n"),
+            vim.log.levels.INFO,
+            { title = "Проверка переводчика" }
+          )
+        end
+      end)
+    end)
+  end
+end
 
 -- ---------- markdown: код не переводим ----------
 

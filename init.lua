@@ -9,6 +9,11 @@ require("config.env_path").setup()
 vim.api.nvim_create_user_command("EnvCheck", function() require("config.env_path").check() end, {
   desc = "Показать git/curl/tar и PATH этого nvim",
 })
+-- Какой переводчик en→ru реально отвечает (Google из РФ без VPN не работает,
+-- тогда должен отвечать MyMemory). Без этого «нет перевода» не диагностировать.
+vim.api.nvim_create_user_command("RuCheck", function() require("config.ru_util").check() end, {
+  desc = "Проверить доступность переводчиков (перевод ошибок/подсказок)",
+})
 
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
