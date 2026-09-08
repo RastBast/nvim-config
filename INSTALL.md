@@ -87,6 +87,9 @@ bash /tmp/APPLY_UPDATE.sh
 
 1. Открой https://aistudio.google.com/apikey → «Create API key» (бесплатный тариф).
 2. В fish: `set -Ux GEMINI_API_KEY "AIza…"` и перезапусти терминал.
+   Модель по умолчанию — `gemini-3.6-flash` (старый `gemini-2.5-flash`
+   новым аккаунтам Google уже не отдаёт: 404 «no longer available to
+   new users»). Сменить: `set -Ux GEMINI_MODEL "имя-модели"`.
 3. В Neovim: `<leader>Aa` — чат-агент, `<leader>Ax` — объяснить код/ошибку,
    просто печатай код — inline-подсказки придут сами, `<Tab>` — принять.
 4. Если Google не отвечает или «палит» твой VPN — **PROXY.md** в корне

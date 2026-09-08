@@ -82,10 +82,13 @@ return {
           -- самоподписанный сертификат (см. PROXY.md, §4).
           -- Включается без правки файла:  set -Ux GEMINI_INSECURE 1
           allow_insecure = vim.env.GEMINI_INSECURE ~= nil,
-          -- бесплатный тариф AI Studio: gemini-2.5-flash.
-          -- Актуальная дефолтная модель avante — gemini-3.6-flash:
-          -- просто замени строку, когда захочешь новее.
-          model = "gemini-2.5-flash",
+          -- МОДЕЛЬ. gemini-2.5-flash для НОВЫХ аккаунтов закрыт, Google
+          -- отвечает 404 "no longer available to new users" — поэтому
+          -- ставим gemini-3.6-flash (это и дефолт самого avante).
+          -- Меняется без правки файла:  set -Ux GEMINI_MODEL "имя-модели"
+          -- Список доступных тебе моделей:
+          --   curl -sS "https://generativelanguage.googleapis.com/v1beta/models?key=$GEMINI_API_KEY"
+          model = vim.env.GEMINI_MODEL or "gemini-3.6-flash",
           timeout = 30000,
           context_window = 1048576, -- миллион токенов контекста проекта
           extra_request_body = {
@@ -94,8 +97,9 @@ return {
         },
         -- отдельный лёгкий провайдер для автоподсказок
         ["gemini-flash"] = {
-          __inherited_from = "gemini",
-          model = "gemini-2.5-flash",
+          __inherited_from = "gemini", -- наследует endpoint/proxy/allow_insecure
+          -- отдельная переменная, чтобы подсказки можно было сделать дешевле
+          model = vim.env.GEMINI_MODEL or "gemini-3.6-flash",
         },
       },
 

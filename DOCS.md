@@ -488,10 +488,12 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 * **AI** — `codecompanion.nvim`: `<leader>Hat` чат, `Hac` команда, `Hae` отправить
   выделение, `Hai` действия.
 * **ИИ-агент как в Cursor** — `avante.nvim` + бесплатный Google Gemini
-  (`gemini-2.5-flash`): чат-сайдбар справа с контекстом проекта и
+  (`gemini-3.6-flash`): чат-сайдбар справа с контекстом проекта и
   рефакторингом, inline-подсказки целыми блоками при наборе, окно
   объяснения кода/ошибок. Ключ: https://aistudio.google.com/apikey →
   `set -Ux GEMINI_API_KEY "..."` (fish).
+  Модель меняется переменной `set -Ux GEMINI_MODEL "имя"` (список своих
+  моделей: `curl -sS ".../v1beta/models?key=$GEMINI_API_KEY"`).
   Сеть: по умолчанию ходит в Google напрямую. Если Google недоступен или
   «палит» твой VPN — поднимается ретранслятор на своём сервере, конфиг
   переключается одной переменной: `set -Ux GEMINI_ENDPOINT "…"` или

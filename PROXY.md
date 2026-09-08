@@ -4,6 +4,18 @@
 Ниже — почему, как за 5 минут понять, что именно ломается, и два рабочих способа
 (ретранслятор через nginx / HTTP-прокси через SSH-туннель).
 
+> ⚠️ **Сначала выполни §1.** Чаще всего Gemini «не работает» не из-за сети:
+> ключ, устаревшее имя модели или лимит бесплатного тарифа лечатся за минуту,
+> а ретранслятор при этом вообще не нужен.
+>
+> И если ты уже успел «на всякий случай» прописать переменные из §2/§3 —
+> сними их, иначе avante будет стучаться на несуществующий адрес:
+> ```fish
+> set -e GEMINI_ENDPOINT
+> set -e GEMINI_PROXY
+> set -e GEMINI_INSECURE
+> ```
+
 ---
 
 ## 0. Почему «VPN прямо в браузере от Firefox» не вариант
@@ -37,7 +49,7 @@ avante.nvim браузера не использует вообще: он выз
 set -Ux GEMINI_API_KEY 'твой_ключ'
 
 curl -sS -w '\n[HTTP %{http_code}] время: %{time_total}s\n' \
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$GEMINI_API_KEY" \
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=$GEMINI_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"contents":[{"parts":[{"text":"ping"}]}]}' | head -c 500
 ```
@@ -47,6 +59,7 @@ curl -sS -w '\n[HTTP %{http_code}] время: %{time_total}s\n' \
 | JSON с `"candidates"` | Всё работает, дело было в nvim-сессии (не подхватила переменную) | §4, «ключ не виден» |
 | `Connection reset by peer`, `Empty reply`, висит и отваливается | **DPI режет** доступ к Google (без VPN) | способ A или B |
 | `400 API_KEY_INVALID` / `"API key not valid"` | **Ключ**, а не сеть | §3 |
+| `404` + «model … is no longer available to new users» | **Модель устарела**, сеть и ключ в порядке | `set -Ux GEMINI_MODEL "gemini-3.6-flash"` |
 | `400 FAILED_PRECONDITION` + «free tier is not available in your country» | Бесплатный тариф не доступен для региона/аккаунта | §3 |
 | `403 PERMISSION_DENIED` | Ключ без прав / не включён Generative Language API | §3 |
 | `429 RESOURCE_EXHAUSTED` | Упёрся в бесплатный лимит (RPM/TPM) | подождать, лимит поминутный |
@@ -57,7 +70,7 @@ curl -sS -w '\n[HTTP %{http_code}] время: %{time_total}s\n' \
 
 ```fish
 ssh user@ТВОЙ_СЕРВЕР 'curl -sS -w "\n[HTTP %{http_code}]\n" \
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=КЛЮЧ" \
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=КЛЮЧ" \
   -H "Content-Type: application/json" -d "{\"contents\":[{\"parts\":[{\"text\":\"ping\"}]}]}" | head -c 400'
 ```
 
@@ -134,7 +147,7 @@ set -Ux GEMINI_ENDPOINT "https://127.0.0.1:8443/S-ТВОЙ_СЕКРЕТ/v1beta/m
 
 # проверить, что ретранслятор живой:
 curl -sSk -w '\n[HTTP %{http_code}]\n' \
-  "$GEMINI_ENDPOINT/gemini-2.5-flash:generateContent?key=$GEMINI_API_KEY" \
+  "$GEMINI_ENDPOINT/gemini-3.6-flash:generateContent?key=$GEMINI_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"contents":[{"parts":[{"text":"ping"}]}]}' | head -c 300
 ```
