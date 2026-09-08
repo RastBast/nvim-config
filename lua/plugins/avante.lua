@@ -54,10 +54,18 @@ return {
       "MeanderingProgrammer/render-markdown.nvim", -- рендер ответов (ft Avante добавлен в markdown.lua)
     },
     opts = {
-      -- ========================= ПРОВАЙДЕР: GEMINI ======================== --
-      provider = "gemini",
-      -- inline-подсказки — тем же gemini (дешёвая flash-модель)
-      auto_suggestions_provider = "gemini-flash",
+      -- ========================= ПРОВАЙДЕР ================================ --
+      -- По умолчанию Gemini. Google блокирует запросы с IP неподдерживаемых
+      -- стран: «400 User location is not supported for the API use».
+      -- Тогда либо включаешь VPN/туннель с выходом не из РФ, либо поднимаешь
+      -- ретранслятор на сервере НЕ в РФ (PROXY.md), либо переключаешься на
+      -- OpenRouter одной переменной (план B в PROXY.md):
+      --   set -Ux AVANTE_PROVIDER "openrouter-free"
+      --   set -Ux OPENROUTER_API_KEY "sk-or-..."
+      --   set -Ux AVANTE_SUGGEST_PROVIDER "openrouter-free"
+      provider = vim.env.AVANTE_PROVIDER or "gemini",
+      -- inline-подсказки — тем же провайдером (дешёвая flash-модель)
+      auto_suggestions_provider = vim.env.AVANTE_SUGGEST_PROVIDER or "gemini-flash",
       providers = {
         gemini = {
           -- ТОЧКА ВХОДА. По умолчанию — напрямую в Google.
@@ -100,6 +108,18 @@ return {
           __inherited_from = "gemini", -- наследует endpoint/proxy/allow_insecure
           -- отдельная переменная, чтобы подсказки можно было сделать дешевле
           model = vim.env.GEMINI_MODEL or "gemini-3.6-flash",
+        },
+
+        -- ============ ПЛАН B: OPENROUTER (если Google не пускает) ========= --
+        -- Агрегатор моделей, ключ на https://openrouter.ai/keys.
+        -- Наследует штатный провайдер avante «openrouter» (endpoint
+        -- https://openrouter.ai/api/v1, ключ OPENROUTER_API_KEY —
+        -- lua/avante/config.lua:547-553), здесь переопределена только модель.
+        -- Есть и бесплатные модели (суффикс ":free").
+        -- Включается:  set -Ux AVANTE_PROVIDER "openrouter-free"
+        ["openrouter-free"] = {
+          __inherited_from = "openrouter",
+          model = vim.env.OPENROUTER_MODEL or "openrouter/auto",
         },
       },
 

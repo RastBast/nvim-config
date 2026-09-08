@@ -494,6 +494,9 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
   `set -Ux GEMINI_API_KEY "..."` (fish).
   Модель меняется переменной `set -Ux GEMINI_MODEL "имя"` (список своих
   моделей: `curl -sS ".../v1beta/models?key=$GEMINI_API_KEY"`).
+  Если Google отвечает `400 "User location is not supported"` — геоблок по
+  IP, смотри **PROXY.md** (§1.5 — что делать, §5 — план B на OpenRouter:
+  `set -Ux AVANTE_PROVIDER "openrouter-free"`).
   Сеть: по умолчанию ходит в Google напрямую. Если Google недоступен или
   «палит» твой VPN — поднимается ретранслятор на своём сервере, конфиг
   переключается одной переменной: `set -Ux GEMINI_ENDPOINT "…"` или

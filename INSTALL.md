@@ -90,6 +90,11 @@ bash /tmp/APPLY_UPDATE.sh
    Модель по умолчанию — `gemini-3.6-flash` (старый `gemini-2.5-flash`
    новым аккаунтам Google уже не отдаёт: 404 «no longer available to
    new users»). Сменить: `set -Ux GEMINI_MODEL "имя-модели"`.
+   Если Google отвечает `400 "User location is not supported for the API
+   use"` — это геоблок по IP: нужен VPN/туннель с выходом не из РФ или
+   ретранслятор на сервере не в РФ (**PROXY.md**, §1.5). Совсем без
+   обхода — план B на OpenRouter (**PROXY.md**, §5):
+   `set -Ux OPENROUTER_API_KEY "sk-or-…"` и `set -Ux AVANTE_PROVIDER "openrouter-free"`.
 3. В Neovim: `<leader>Aa` — чат-агент, `<leader>Ax` — объяснить код/ошибку,
    просто печатай код — inline-подсказки придут сами, `<Tab>` — принять.
 4. Если Google не отвечает или «палит» твой VPN — **PROXY.md** в корне

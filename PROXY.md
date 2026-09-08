@@ -60,9 +60,42 @@ curl -sS -w '\n[HTTP %{http_code}] время: %{time_total}s\n' \
 | `Connection reset by peer`, `Empty reply`, висит и отваливается | **DPI режет** доступ к Google (без VPN) | способ A или B |
 | `400 API_KEY_INVALID` / `"API key not valid"` | **Ключ**, а не сеть | §3 |
 | `404` + «model … is no longer available to new users» | **Модель устарела**, сеть и ключ в порядке | `set -Ux GEMINI_MODEL "gemini-3.6-flash"` |
-| `400 FAILED_PRECONDITION` + «free tier is not available in your country» | Бесплатный тариф не доступен для региона/аккаунта | §3 |
+| `400 FAILED_PRECONDITION` + «**User location is not supported** for the API use» | Google видит **IP неподдерживаемой страны** (РФ). Ключ и модель в порядке | §1.5 — сначала тест через VPN |
+| `400 FAILED_PRECONDITION` + «free tier is not available in your country» | Бесплатный тариф не доступен для региона **проекта/аккаунта** — смена IP не помогает | §1.5, последний пункт |
 | `403 PERMISSION_DENIED` | Ключ без прав / не включён Generative Language API | §3 |
 | `429 RESOURCE_EXHAUSTED` | Упёрся в бесплатный лимит (RPM/TPM) | подождать, лимит поминутный |
+
+### 1.5. «User location is not supported for the API use» — что делать
+
+Это геоблок по IP исходящего запроса: бесплатный Gemini API в РФ не отдаётся.
+Ключ и модель при этом могут быть полностью рабочими (у тебя так и было:
+с VPN пришла 404 про устаревшую модель — значит запрос до Google дошёл и
+проверку региона прошёл).
+
+**Шаг 1. Тот же curl, но с включённым VPN/туннелем** (AmneziaVPN, WARP — любой):
+
+```fish
+curl -sS -w '\n[HTTP %{http_code}] %{time_total}s\n' \
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=$GEMINI_API_KEY" \
+  -H 'Content-Type: application/json' -d '{"contents":[{"parts":[{"text":"ping"}]}]}' | head -c 300
+```
+
+* **JSON с `"candidates"`** → выход чистый. Оставляешь VPN включённым — и
+  avante работает как есть, ничего больше не нужно (прокси/ретранслятор не
+  требуются, `GEMINI_*` не трогай). Хочешь, чтобы через VPN ходил только
+  Gemini, а не вся система — способ A/B ниже, только сервер должен быть
+  **не в РФ**.
+* **Снова `User location is not supported`** → выход VPN тоже в РФ или в
+  неподдерживаемой стране. Нужен выход из ЕС/США/другой поддерживаемой
+  страны: смена локации в AmneziaVPN, другой сервер, WARP.
+* **`free tier is not available in your country`** даже с чистого IP →
+  ограничение на **проекте/аккаунте** Google. Тогда либо включённый биллинг
+  в AI Studio, либо новый Google-аккаунт, созданный через чистый выход,
+  либо другой провайдер — см. «План B» в конце файла.
+
+**Важно про способ A/B:** Google определяет страну по IP **сервера**, на
+котором стоит ретранслятор. Сервер в РФ не поможет — нужен сервер за
+рубежом (тот же, что ты используешь для VPN, если он не в РФ).
 
 ### Если Google отвечает ошибкой даже с VPS
 
@@ -258,3 +291,25 @@ set -Ux GEMINI_PROXY "socks5h://127.0.0.1:1080"
 
 * **Вернуть всё назад:** `set -e GEMINI_ENDPOINT; set -e GEMINI_PROXY;
   set -e GEMINI_INSECURE` — и avante снова ходит в Google напрямую.
+
+---
+
+## 5. План B: другой провайдер, если Google так и не пускает
+
+Если чистого выхода нет, а работать надо — avante умеет ходить к любому
+OpenAI-совместимому провайдеру. В конфиг уже встроен OpenRouter
+(`lua/plugins/avante.lua`, провайдер `openrouter-free`; штатный
+`openrouter` в avante: `lua/avante/config.lua:547-553`).
+
+```fish
+set -Ux OPENROUTER_API_KEY "sk-or-..."        # ключ: https://openrouter.ai/keys
+set -Ux AVANTE_PROVIDER "openrouter-free"     # чат/агент
+set -Ux AVANTE_SUGGEST_PROVIDER "openrouter-free"   # inline-подсказки
+# модель по желанию (список: https://openrouter.ai/models, бесплатные — ":free")
+set -Ux OPENROUTER_MODEL "openrouter/auto"
+```
+
+Затем в nvim: `:AvanteRefresh` (или перезапуск). Вернуться к Gemini:
+`set -e AVANTE_PROVIDER AVANTE_SUGGEST_PROVIDER`.
+
+Переключить провайдер можно и без переменных — командой `:AvanteSwitchProvider`.
