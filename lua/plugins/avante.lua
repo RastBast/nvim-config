@@ -124,7 +124,12 @@ return {
         -- Включается:  set -Ux AVANTE_PROVIDER "openrouter-free"
         ["openrouter-free"] = {
           __inherited_from = "openrouter",
-          model = vim.env.OPENROUTER_MODEL or "openrouter/auto",
+          -- Дефолт — openrouter/free (роутер по бесплатным моделям; это и
+          -- дефолт самого avante, config.lua:552). openrouter/auto брать не
+          -- стоит: без кредитов на аккаунте он может выбрать платную модель
+          -- и вернуть 402. Конкретную модель — через OPENROUTER_MODEL,
+          -- список: curl -sS https://openrouter.ai/api/v1/models
+          model = vim.env.OPENROUTER_MODEL or "openrouter/free",
         },
       },
 
