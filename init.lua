@@ -2,6 +2,14 @@
 --                           ОСНОВНЫЕ НАСТРОЙКИ (CORE)                        --
 -- ========================================================================== --
 
+-- ПЕРВЫМ ДЕЛОМ — чиним PATH, иначе lazy.nvim не сможет запустить git:
+-- «Failed to spawn process git» на всех плагинах (подробности и причина —
+-- в lua/config/env_path.lua). Диагностика: :EnvCheck
+require("config.env_path").setup()
+vim.api.nvim_create_user_command("EnvCheck", function() require("config.env_path").check() end, {
+  desc = "Показать git/curl/tar и PATH этого nvim",
+})
+
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 

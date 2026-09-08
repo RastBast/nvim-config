@@ -130,7 +130,11 @@ return {
 
       -- ========================= ПОВЕДЕНИЕ ================================ --
       behaviour = {
-        auto_suggestions = true, -- inline-подсказки при наборе (Copilot-стиль)
+        -- inline-подсказки при наборе (Copilot-стиль).
+        -- На бесплатных тарифах подсказка уходит на каждый останов ввода и
+        -- быстро упирается в лимит (429) — отключить без правки файла:
+        --   set -Ux AVANTE_SUGGESTIONS 0
+        auto_suggestions = vim.env.AVANTE_SUGGESTIONS ~= "0",
         -- дифы не применяются сами: сначала показываем, ты подтверждаешь.
         -- Правильное имя опции — auto_apply_diff_after_generation
         -- (avante config.lua, таблица behaviour); auto_apply_diffs не

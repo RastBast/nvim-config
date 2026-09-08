@@ -129,6 +129,7 @@ bash /tmp/APPLY_UPDATE.sh
 
 | Симптом | Лечение |
 |---|---|
+| `Failed to spawn process git` на ВСЕХ плагинах в `:Lazy` | nvim не видит `git` в своём `PATH` (запуск из GUI: launchd даёт урезанный PATH, а git из Homebrew). Конфиг сам дописывает нужные каталоги (`lua/config/env_path.lua`); проверка — `:EnvCheck`. Если не помогло: `xcode-select --install` или запускай nvim из терминала |
 | Кракозябры вместо иконок | Nerd Font в терминале (п.1) |
 | `lazy.nvim не установился` | нет доступа к github: удали `~/.local/share/nvim/lazy` и повтори |
 | Плагин «Failed: checkout…» | `:Lazy restore <имя>` или `rm -rf ~/.local/share/nvim/lazy/<имя>` + `:Lazy sync` |
@@ -137,5 +138,15 @@ bash /tmp/APPLY_UPDATE.sh
 | avante: `E239: Invalid sign text` при загрузке | в `windows.input.prefix` стоял эмодзи: текст знака не может быть шире 2 ячеек. Ставь `"> "` (уже исправлено в конфиге) |
 | avante: `400 User location is not supported` | геоблок Google по IP — нужен выход не из РФ или план B (OpenRouter). **PROXY.md**, §1.5 и §5 |
 | avante: `404 … no longer available to new users` | устарело имя модели: `set -Ux GEMINI_MODEL "gemini-3.6-flash"` |
+
+### 6.1. `:EnvCheck` — что видит nvim
+
+Команда печатает пути к `git`/`curl`/`tar` и `PATH` текущего nvim. Если `git:
+НЕ НАЙДЕН` — плагины обновляться не будут, пока это не починишь. Модуль
+`lua/config/env_path.lua` подключается в `init.lua` первым (до установки
+lazy.nvim, чей bootstrap тоже зовёт git) и дописывает в конец `PATH`
+существующие каталоги: `/opt/homebrew/bin`, `/usr/local/bin`,
+`~/.local/share/nvim/mason/bin` и системные. Твой `PATH` остаётся
+приоритетнее — ничего не перезаписывается.
 
 Полная документация по клавишам и устройству — `DOCS.md`.
