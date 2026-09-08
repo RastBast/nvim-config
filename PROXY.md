@@ -313,3 +313,33 @@ set -Ux OPENROUTER_MODEL "openrouter/auto"
 `set -e AVANTE_PROVIDER AVANTE_SUGGEST_PROVIDER`.
 
 Переключить провайдер можно и без переменных — командой `:AvanteSwitchProvider`.
+
+### Проверить ключ OpenRouter, не тратя токены
+
+```fish
+curl -sS -w '\n[HTTP %{http_code}] %{time_total}s\n' https://openrouter.ai/api/v1/models \
+  -H "Authorization: Bearer $OPENROUTER_API_KEY" -o /dev/null
+# 200 — ключ принимается; 401 — ключ не тот
+
+# найти живые бесплатные модели:
+curl -sS https://openrouter.ai/api/v1/models | python3 -c "
+import json,sys
+d = json.load(sys.stdin)['data']
+for m in d:
+    p = m.get('pricing') or {}
+    if p.get('prompt') == '0' and p.get('completion') == '0':
+        print(m['id'])" | head -20
+```
+
+`openrouter/auto` роутит на лучшую доступную модель — на аккаунте **без
+кредитов** она может оказаться платной и вернуть 402. Тогда поставь
+конкретную бесплатную из списка выше:
+
+```fish
+set -Ux OPENROUTER_MODEL "автор/модель:free"
+```
+
+Бесплатные модели OpenRouter имеют жёсткие лимиты (десятки запросов в день)
+— для агента с большим контекстом их может не хватить, это запасной вариант,
+а не замена Gemini.
+

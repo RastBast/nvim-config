@@ -18,10 +18,15 @@
 --  api_key_name = "cmd:команда", и avante возьмёт ключ из её stdout.)
 --
 -- СЕТЬ: по умолчанию трафик идёт напрямую в
--- generativelanguage.googleapis.com. Если Google недоступен или «палит»
--- твой VPN — НЕ нужно ничего править в Lua: подними ретранслятор на своём
--- сервере и переключись одной переменной окружения (GEMINI_ENDPOINT /
--- GEMINI_PROXY). Пошагово: PROXY.md в корне репозитория.
+-- generativelanguage.googleapis.com. Google блокирует IP неподдерживаемых
+-- стран («400 User location is not supported for the API use») — тогда
+-- нужен выход не из РФ: VPN/туннель, либо ретранслятор на сервере не в РФ
+-- (GEMINI_ENDPOINT / GEMINI_PROXY), либо план B на OpenRouter
+-- (AVANTE_PROVIDER="openrouter-free"). Всё пошагово: PROXY.md.
+--
+-- ВАЖНО ПРО ЭМОДЗИ: windows.input.prefix уходит в vim.fn.sign_define,
+-- поэтому там нельзя ставить эмодзи — будет «E239: Invalid sign text»
+-- и весь setup() упадёт (avante init.lua:288).
 --
 -- Сборка: build = "make" тянет ПРЕДСОБРАННЫЕ бинари через curl+tar
 -- (cargo не нужен; нужен только curl и tar — есть в macOS/Linux).
@@ -125,9 +130,12 @@ return {
 
       -- ========================= ПОВЕДЕНИЕ ================================ --
       behaviour = {
-        auto_suggestions = true,  -- inline-подсказки при наборе (Copilot-стиль)
-        auto_apply_diffs = false, -- дифы применяем вручную (безопаснее)
-        enable_cursor_planning_mode = true, -- агент планирует перед правкой
+        auto_suggestions = true, -- inline-подсказки при наборе (Copilot-стиль)
+        -- дифы не применяются сами: сначала показываем, ты подтверждаешь.
+        -- Правильное имя опции — auto_apply_diff_after_generation
+        -- (avante config.lua, таблица behaviour); auto_apply_diffs не
+        -- существует и молча игнорировался.
+        auto_apply_diff_after_generation = false,
       },
 
       -- ========================= ОКНА ===================================== --
@@ -136,7 +144,11 @@ return {
         wrap = true,
         width = 40,
         sidebar_header = { align = "center", rounded = true },
-        input = { prefix = "🤖 " },
+        -- ВАЖНО: этот префикс уходит в vim.fn.sign_define (avante init.lua:288
+        -- H.signs), а текст знака не может быть шире 2 ячеек — эмодзи даёт
+        -- «E239: Invalid sign text» и setup() падает. Только ASCII/узкие
+        -- символы: "> ", "AI", "❯ ".
+        input = { prefix = "> " },
         edit = { border = "rounded" },
         ask = { border = "rounded" },
       },
