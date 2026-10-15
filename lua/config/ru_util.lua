@@ -1,5 +1,5 @@
 -- ========================================================================== --
---              ОБЩИЙ АСИНХРОННЫЙ ПЕРЕВОД en→ru (Google gtx, curl)            --
+--              ОБЩИЙ АСИНХРОННЫЙ ПЕРЕВОД en→ru (DeepL / Google gtx / MyMemory, curl)            --
 -- ========================================================================== --
 -- Пользователи: hover_ru (подсказки), diag_ru (ошибки LSP), notify_ru
 -- (уведомления/вывод сборок), completions (окно документации cmp).
@@ -105,6 +105,29 @@ local function parse_mymemory(stdout)
   return nil
 end
 
+--- DeepL: {"translations":[{"detected_source_language":"EN","text":"..."}]}
+local function parse_deepl(stdout)
+  local ok, data = pcall(vim.json.decode, stdout)
+  if not ok or type(data) ~= "table" or type(data.translations) ~= "table" then
+    return nil
+  end
+  local t = data.translations[1]
+  if type(t) == "table" and type(t.text) == "string" and t.text ~= "" then
+    return t.text
+  end
+  return nil
+end
+
+--- Ключ DeepL — ТОЛЬКО из переменной окружения DEEPL_API_KEY (в конфиг и в git не пишется).
+--- Пример для ~/.zshrc:  export DEEPL_API_KEY="…"
+function M.deepl_key()
+  local k = vim.env.DEEPL_API_KEY
+  if type(k) == "string" and k ~= "" then
+    return k
+  end
+  return nil
+end
+
 --- Список переводчиков по порядку: первые два — Google (быстрые, но из РФ
 --- без VPN недоступны), третий — MyMemory (не Google, работает и там).
 --- Каждый элемент: { url = <префикс, дальше припишется текст>, parse = fn }.
@@ -129,10 +152,36 @@ M.endpoints = {
   },
 }
 
+--- DeepL — первый по приоритету, когда задан DEEPL_API_KEY.
+--- Free-ключи (заканчиваются на «:fx») работают на api-free.deepl.com.
+local DEEPL = { name = "DeepL (api-free.deepl.com)", parse = parse_deepl, deepl = true }
+
+--- Один запрос к эндпоинту. cb(res): res.code (0 = ок), res.stdout.
+local function call(ep, text, cb)
+  if ep.deepl then
+    local key = M.deepl_key()
+    if not key then
+      return cb({ code = 1, stdout = "" })
+    end
+    local body = vim.json.encode({ text = { text }, source_lang = "EN", target_lang = "RU" })
+    -- Заголовок с ключом уходит curl через stdin (-K -): ключ не виден в списке процессов
+    local cfg = 'header = "Authorization: DeepL-Auth-Key ' .. key .. '"\n'
+    vim.system({
+      "curl", "-sS", "--max-time", "5", "-K", "-",
+      "-X", "POST", "https://api-free.deepl.com/v2/translate",
+      "-H", "Content-Type: application/json",
+      "-d", body,
+    }, { text = true, stdin = cfg }, cb)
+    return
+  end
+  vim.system({ "curl", "-sS", "--max-time", "4", ep.url .. M.url_encode(text) }, { text = true }, cb)
+end
+
 --- Асинхронный перевод en→ru, результат в кеш. cb(string|nil)
---- Стратегия: два Google-эндпоинта опрашиваются ПАРАЛЛЕЛЬНО, побеждает первый
---- успешный ответ (раньше шли по очереди — один «висящий» сервер съедал весь таймаут).
---- MyMemory (с дневным лимитом) подключается только если оба Google не ответили.
+--- Стратегия:
+---   1) DeepL (если задан DEEPL_API_KEY);
+---   2) если DeepL не ответил — два Google-эндпоинта ПАРАЛЛЕЛЬНО, побеждает первый успешный;
+---   3) MyMemory (с дневным лимитом) — только если и Google не ответили.
 function M.translate(text, cb)
   local hit = M.cache[text]
   if hit then
@@ -159,8 +208,7 @@ function M.translate(text, cb)
   local function run_group(eps, on_all_failed)
     local left, won = #eps, false
     for _, ep in ipairs(eps) do
-      local url = ep.url .. M.url_encode(text)
-      vim.system({ "curl", "-sS", "--max-time", "4", url }, { text = true }, function(res)
+      call(ep, text, function(res)
         vim.schedule(function()
           if won then
             return
@@ -184,41 +232,60 @@ function M.translate(text, cb)
 
   local google = { M.endpoints[1], M.endpoints[2] }
   local mymemory = { M.endpoints[3] }
-  run_group(google, function()
-    run_group(mymemory, function()
-      cb(nil)
+  local function google_then_mymemory()
+    run_group(google, function()
+      run_group(mymemory, function()
+        cb(nil)
+      end)
     end)
-  end)
+  end
+
+  if M.deepl_key() then
+    run_group({ DEEPL }, google_then_mymemory)
+  else
+    google_then_mymemory()
+  end
 end
 
 --- Диагностика: :RuCheck — какой переводчик реально отвечает.
 --- Без неё «перевод не работает» не отличить от «Google заблокирован».
 function M.check()
   local lines = {}
-  local pending = #M.endpoints
   local sample = "undefined reference"
-  for i, ep in ipairs(M.endpoints) do
-    local url = ep.url .. M.url_encode(sample)
-    vim.system({ "curl", "-sS", "--max-time", "6", url }, { text = true }, function(res)
-      local status
-      if res.code ~= 0 then
-        status = "недоступен (curl exit " .. tostring(res.code) .. ")"
-      else
-        local tr = ep.parse and ep.parse(res.stdout) or nil
-        status = tr and ("работает → «" .. tr .. "»") or "отвечает, но разбор не удался"
-      end
-      vim.schedule(function()
-        lines[i] = ("%d. %-42s %s"):format(i, ep.name, status)
-        pending = pending - 1
-        if pending == 0 then
-          vim.notify(
-            "Перевод en→ru, тест строки «" .. sample .. "»:\n" .. table.concat(lines, "\n"),
-            vim.log.levels.INFO,
-            { title = "Проверка переводчика" }
-          )
+  local list = { DEEPL }
+  for _, ep in ipairs(M.endpoints) do
+    list[#list + 1] = ep
+  end
+  local pending = #list
+  local function finish_one()
+    pending = pending - 1
+    if pending == 0 then
+      vim.notify(
+        "Перевод en→ru, тест строки «" .. sample .. "»:\n" .. table.concat(lines, "\n"),
+        vim.log.levels.INFO,
+        { title = "Проверка переводчика" }
+      )
+    end
+  end
+  for i, ep in ipairs(list) do
+    if ep.deepl and not M.deepl_key() then
+      lines[i] = ("%d. %-42s %s"):format(i, ep.name, "пропущен: не задан DEEPL_API_KEY")
+      finish_one()
+    else
+      call(ep, sample, function(res)
+        local status
+        if res.code ~= 0 then
+          status = "недоступен (curl exit " .. tostring(res.code) .. ")"
+        else
+          local tr = ep.parse and ep.parse(res.stdout) or nil
+          status = tr and ("работает → «" .. tr .. "»") or "отвечает, но разбор не удался"
         end
+        vim.schedule(function()
+          lines[i] = ("%d. %-42s %s"):format(i, ep.name, status)
+          finish_one()
+        end)
       end)
-    end)
+    end
   end
 end
 
