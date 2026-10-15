@@ -21,6 +21,8 @@
 | `lua/plugins/mini.lua` | Кастомный текстобъект `f` был функцией, которая возвращала функцию-спек; `vif` / `vaf` ломались | `opts` — функция, `f = ai.gen_spec.treesitter({...})` |
 | `lua/plugins/spotify.lua` | `<leader>sp/sn/sb/so/sd` ставились в `config` — до первого `:Spotify` клавиш не было | Объявлены в `keys` (lazy подгружает плагин сам) |
 | `lua/config/hover_ru.lua`, `lua/config/diag_ru.lua` | Счётчик `pending` считался в цикле: если перевод первого куска был в кеше, колбэк шёл синхронно, `finish()` отдавал ответ LSP до перевода остальных кусков (остальные оставались по-английски) | Сначала собираются все куски, потом запускается перевод. Проверено тестом: старая версия — ошибка, новая — ок |
+| `lua/config/telegram.lua` | `nvim_create_user_command(..., { range = "?" })` — недопустимое значение: Neovim падает с `E5113: Invalid 'range'` и `telegram.setup()` не доходит до конца (команды после `TeleSend` не создаются) | `range = true` (текущая строка или выделение) |
+| `lua/plugins/avante.lua` | Не указана обязательная зависимость `ColinKennedy/mega.cmdparse` (и `mega.logging`): `module 'mega.cmdparse' not found` при загрузке avante на `VeryLazy` | Добавлена в `dependencies` (как в README avante) |
 
 Заметки:
 - `CHANGES.md` ранее утверждал, что `prompt_library` «больше не хранит промпты» —

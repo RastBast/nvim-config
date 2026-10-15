@@ -1622,15 +1622,17 @@ function T.commands()
   def("TeleReply", T.reply_prompt, { desc = "ответить в tele, не выходя из кода" })
   def("TeleReplyLast", T.reply_last, { desc = "ответить в чат последнего уведомления" })
   def("TeleSend", function(o)
-    -- range = "?": без выделения это текущая строка; из визуального режима
+    -- range = true: без выделения это текущая строка; из визуального режима
     -- Neovim сам передаст '<,'> — тогда уходят ровно строки выделения.
+    -- (range = "?" — НЕДОПУСТИМО: nvim_create_user_command принимает только
+    -- true, "%" или число; иначе E5113 «Invalid 'range'» и setup() падает.)
     local first, last = tonumber(o.line1) or 0, tonumber(o.line2) or 0
     if last < 1 then
       T.send_lines({ vim.api.nvim_get_current_line() })
       return
     end
     T.send_lines(vim.api.nvim_buf_get_lines(0, first - 1, last, false))
-  end, { range = "?", desc = "отправить строки/выделение в tele как сообщение" })
+  end, { range = true, desc = "отправить строки/выделение в tele как сообщение" })
 
   def("TeleStart", T.start, { desc = "включить слежение за state.db" })
   def("TeleStop", T.stop, { desc = "выключить слежение" })

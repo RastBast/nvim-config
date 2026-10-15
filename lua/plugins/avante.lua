@@ -51,6 +51,10 @@ return {
     dependencies = {
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",
+      -- Обязательная зависимость avante (README avante, «Mandatory dependencies»):
+      -- avante/commands.lua делает require("mega.cmdparse") при VeryLazy.
+      -- Без неё: «module 'mega.cmdparse' not found».
+      { "ColinKennedy/mega.cmdparse", dependencies = { "ColinKennedy/mega.logging" } },
       "nvim-treesitter/nvim-treesitter",
       "nvim-tree/nvim-web-devicons",
       "stevearc/dressing.nvim",
