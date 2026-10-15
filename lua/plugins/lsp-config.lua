@@ -13,7 +13,7 @@
 --     через dressing.nvim. Клавиши те же.
 return {
   {
-    "williamboman/mason.nvim",
+    "mason-org/mason.nvim",
     cmd = { "Mason", "MasonInstall", "MasonUpdate" },
     opts = {
       ui = { border = "rounded" },
@@ -21,8 +21,8 @@ return {
   },
 
   {
-    "williamboman/mason-lspconfig.nvim",
-    dependencies = { "williamboman/mason.nvim" },
+    "mason-org/mason-lspconfig.nvim",
+    dependencies = { "mason-org/mason.nvim" },
     event = { "BufReadPre", "BufNewFile" },
     opts = function()
       local servers = require("config.servers")
@@ -40,7 +40,7 @@ return {
     "neovim/nvim-lspconfig",
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
-      "williamboman/mason-lspconfig.nvim",
+      "mason-org/mason-lspconfig.nvim",
     },
     event = { "BufReadPre", "BufNewFile" },
     config = function()

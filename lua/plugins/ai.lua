@@ -102,7 +102,7 @@ return {
 
   -- Красивый diff для изменений, которые предлагает ИИ
   {
-    "echasnovski/mini.diff",
+    "nvim-mini/mini.diff",
     version = false,
     event = "VeryLazy",
     config = function()

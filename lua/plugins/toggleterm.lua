@@ -33,6 +33,17 @@ return {
       { "<leader>Th", "<cmd>ToggleTerm direction=horizontal size=15<cr>", desc = "📟 Терминал снизу" },
       { "<leader>Tv", "<cmd>ToggleTerm direction=vertical size=60<cr>", desc = "📟 Терминал справа" },
       { "<leader>Ta", "<cmd>ToggleTermToggleAll<cr>", desc = "❎ Показать/скрыть все терминалы" },
+      -- ToggleTermCloseAll в toggleterm.nvim НЕ существует — закрываем через API:
+      -- get_all(true) возвращает и скрытые терминалы, shutdown() убивает процесс.
+      {
+        "<leader>Tc",
+        function()
+          local terms = require("toggleterm.terminal").get_all(true)
+          for _, t in ipairs(terms) do t:shutdown() end
+          vim.notify(("Закрыто терминалов: %d"):format(#terms), vim.log.levels.INFO)
+        end,
+        desc = "❎ Закрыть все терминалы",
+      },
       -- 🐳 Docker в маленьком окне (вместо мёртвого docker.vim)
       { "<leader>dc", term_cmd("lazydocker", 100, "docker"), desc = "🐳 Docker: lazydocker (TUI)" },
       { "<leader>dp", term_cmd("docker ps -a", 101, "docker ps"), desc = "🐳 Docker: контейнеры" },

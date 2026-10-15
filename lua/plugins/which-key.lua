@@ -109,6 +109,14 @@ return {
         { "<leader>Hdi", function() require("dap").step_into() end, desc = "🔽 Шаг в" },
         { "<leader>Hdo", function() require("dap").step_over() end, desc = "⏭ Шаг через" },
         { "<leader>Hdt", function() require("dap-go").debug_test() end, desc = "🧪 Тест в режиме отладки" },
+        -- Выполнение запроса — только в SQL-буфере (filetype sql), иначе :%DB упадёт непонятно.
+        { "<leader>Hde", function()
+          if vim.bo.filetype ~= "sql" then
+            vim.notify("Выполнение запроса — из SQL-буфера (filetype sql).", vim.log.levels.WARN)
+            return
+          end
+          vim.cmd("%DB")
+        end, desc = "🚀 Выполнить запрос" },
 
         -------------------------------------------------------------
         --  🤖 AI и Структура (H + a) — клавиши ставит ai.lua, тут подписи
@@ -222,6 +230,7 @@ return {
         { "<leader>Th", desc = "📟 Терминал снизу" },
         { "<leader>Tv", desc = "📟 Терминал справа" },
         { "<leader>Ta", desc = "❎ Показать/скрыть все терминалы" },
+        { "<leader>Tc", desc = "❎ Закрыть все терминалы" },
         { "<leader>Tl", desc = "➡ Строку в терминал" },
 
         -------------------------------------------------------------

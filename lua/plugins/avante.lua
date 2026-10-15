@@ -31,14 +31,14 @@
 -- Сборка: build = "make" тянет ПРЕДСОБРАННЫЕ бинари через curl+tar
 -- (cargo не нужен; нужен только curl и tar — есть в macOS/Linux).
 --
--- Все схемы опций сверены с исходниками yetone/avante.nvim (2026-09):
+-- Все схемы опций сверены с исходниками avante-corp/avante.nvim (бывш. yetone) (2026-09):
 --   providers.gemini            lua/avante/config.lua:499
 --   api_key_name = GEMINI_API_KEY  lua/avante/providers/gemini.lua:10
 --   mappings.suggestion.*       lua/avante/config.lua:735
 --   accept == "<Tab>" фолбэк    lua/avante/suggestion.lua:463
 return {
   {
-    "yetone/avante.nvim",
+    "avante-corp/avante.nvim",
     event = "VeryLazy",
     version = false, -- НИКОГДА не "*" — плагин ломается на тегах
     -- пребуилт-бинари через curl+tar; cargo не требуется

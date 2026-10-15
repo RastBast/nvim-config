@@ -1,6 +1,6 @@
 return {
   {
-    'mistweaverco/kulala.nvim',
+    'dont-be-evil-company/kulala.nvim',
     ft = { 'http' },
     config = function()
       require('kulala').setup({

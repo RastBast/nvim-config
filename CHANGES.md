@@ -300,3 +300,32 @@ Lua с заглушкой `vim` (фейковые ФС, `pmset`, `git`, `curl`, 
 * Установка ключа (macOS/zsh): добавить в `~/.zshrc` строку `export DEEPL_API_KEY="…"` и перезапустить терминал. Neovim, запущенный из Dock/Spotlight, переменную из `~/.zshrc` не видит — тогда запускать `nvim` из терминала.
 
 Проверка: `/tmp`-тест на заглушках `vim.system`/JSON (4 сценария: без ключа; DeepL отвечает; DeepL падает → Google; всё падает → nil; ключ не в argv). Реального запроса к DeepL из песочницы не было: хост api-free.deepl.com вне разрешённого списка.
+
+## Вторая итерация: аудит и доделки (часть 8)
+
+Статус частей: 1–7 ✅ (см. разделы выше). Этот раздел — проверка «что не доделано» и баги, найденные аудитом.
+
+### Исправлено
+* **`<leader>Hde` «🚀 Выполнить запрос»** — восстановлен. В прежней версии (и в `main`) он вызывал `DBUI ExecuteQuery`, но такой команды у vim-dadbod-ui нет (`:DBUI` не принимает аргументов). Теперь выполняет SQL-буфер через `:%DB` и только в буфере с `filetype=sql`.
+* **`<leader>Tc` «❎ Закрыть все терминалы»** — восстановлен (в `main` был `<leader>Htc`). В toggleterm.nvim команды `ToggleTermCloseAll` **нет**, поэтому закрытие сделано через API плагина: `require("toggleterm.terminal").get_all(true)` + `shutdown()`. Учитываются и скрытые терминалы.
+* **Переименованные репозитории плагинов** (GitHub-перенаправления работают, но спецификации обновлены): `echasnovski/mini.{ai,diff,surround,animate}` → `nvim-mini/*`; `williamboman/mason{,-lspconfig}.nvim` → `mason-org/*`; `yetone/avante.nvim` → `avante-corp/avante.nvim`; `NvChad/nvim-colorizer.lua` → `catgoose/nvim-colorizer.lua`; `mistweaverco/kulala.nvim` → `dont-be-evil-company/kulala.nvim`. Имена плагинов в lazy.nvim не менялись, `lazy-lock.json` не затронут.
+
+### Добавлено в справку (раньше были рабочие клавиши без описания)
+* `keydocs/g6_missing.lua` (40 записей): `<leader>bd`, `db`, `dt`, `du`, `dr`, `ft`, `ha`, `hh`, `h1`, `h2`, `ob`, `qs`, `r` (визуальный), `rr`, `tD`, `tf`, `tr`, `ts`, `to`, `ua`, `xx`, `z`, `nh`, все `<leader>A*` (Avante), `<F5>`, `<F10>`, `<F11>`, `gc`, `gcc`.
+* `keydocs/g7_insert.lua` (16 записей): клавиши автодополнения и ИИ в режиме вставки (`<C-Space>`, `<C-b>`, `<C-f>`, `<C-e>`, `<C-p>`, `<Tab>`, `<M-l>`, `<M-]>`, `<M-[>`, `<C-]>`, `<C-s>`), `<C-c>` (CodeCompanion), выход из терминала `<C-\><C-n>`, а также `<leader>Hde` и `<leader>Tc`.
+* Загрузчик `keydoc.lua` подключает обе группы.
+
+### Проверки этой итерации
+* Все Lua-файлы (включая `ru_util.lua` с DeepL): luacheck (mpeterv/luacheck, master, Lua 5.4), **ошибок синтаксиса нет**. Необъявленные глобальные: только ожидаемые `hs` (Hammerspoon), `Snacks` (создаётся плагином при загрузке) и `vim`.
+* Все `require("config.*")` / `require("plugins.*")` (18 модулей) указывают на существующие файлы.
+* Дублей глобальных клавиш (`vim.keymap.set` / `map` с одним режимом) нет.
+* Устаревшие API не найдены: `get_active_clients`, `buf_get_clients`, `tbl_islist`, `lsp.diagnostic`, `goto_next`, `resolved_capabilities`, `setup_handlers`, `automatic_installation`. Использование `vim.loop` / `vim.highlight` — только с защитой (`vim.uv or vim.loop`).
+* Библиотеки: 36 LSP-серверов (`neovim/nvim-lspconfig`), 45 парсеров Treesitter (`nvim-treesitter` ветка `main`, `vim.treesitter.start` вызывается явно), 31 форматтер (`stevearc/conform.nvim`). Все имена существуют. `automatic_enable` в `mason-lspconfig` — актуальная опция.
+* Справка: 302 статических записи, дублей (`lhs`+режим) нет. Один пересечённый `b` — Super Mode (`hydra`), скрыт вне Super Mode.
+* Логика DeepL (`ru_util.lua`): ключ — только через stdin curl; при неудаче DeepL — Google ×2 → MyMemory; `cb` вызывается ровно один раз.
+
+### Не сделано / решения за пользователем
+* **Архивные плагины** (только чтение, работают): `stevearc/dressing.nvim` (последний пуш 2025-02), `famiu/bufdelete.nvim` (2024-02). Возможная замена без новых зависимостей: `vim.ui.select` → `snacks.picker` (`picker.ui_select = true`), `<leader>bd` → `Snacks.bufdelete()`. Не менял без подтверждения.
+* **Размер `<leader>Tv`**: в `main` было 40, в текущей версии 60 (без записи в журнале). Ожидает решения.
+* **Избранные команды для подсказок**: 15 пользовательских команд без подсказок — `DiagRu`, `EnvCheck`, `Flex`, `HoverRu`, `HudClock`, `HudIp`, `HudNow`, `HudTz`, `Matrix`, `NotifyRu`, `RuCheck`, `StreakGoal`, `StreakHour`, `StreakNotify`, `StreakRepo`. Добавлять в `<leader>H` по выбору пользователя.
+* **Реальный запуск `nvim`** в песочнице не проверен: релизы Neovim недоступны (`objects.githubusercontent.com` блокируется). Нужно `:checkhealth` и `:Lazy sync` (после переименований) на машине пользователя.

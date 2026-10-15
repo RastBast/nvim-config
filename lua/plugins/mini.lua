@@ -8,7 +8,7 @@
 -- Обе библиотеки — чистая Lua от echasnovski/mini.*, без внешних зависимостей.
 return {
   {
-    "echasnovski/mini.surround",
+    "nvim-mini/mini.surround",
     version = false,
     event = { "BufReadPost", "InsertEnter" },
     opts = {
@@ -26,7 +26,7 @@ return {
     },
   },
   {
-    "echasnovski/mini.ai",
+    "nvim-mini/mini.ai",
     version = false,
     event = { "BufReadPost", "InsertEnter" },
     -- opts — функция: gen_spec нужен mini.ai, а его модуль доступен только

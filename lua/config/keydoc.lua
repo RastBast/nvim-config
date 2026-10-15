@@ -18,6 +18,8 @@ local GROUPS = {
   "config.keydocs.g3_menu_h",
   "config.keydocs.g4_new",
   "config.keydocs.g5_lsp_help",
+  "config.keydocs.g6_missing",
+  "config.keydocs.g7_insert",
 }
 
 local ESC = "\27"
