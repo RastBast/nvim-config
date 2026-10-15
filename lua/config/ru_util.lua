@@ -130,6 +130,9 @@ M.endpoints = {
 }
 
 --- Асинхронный перевод en→ru, результат в кеш. cb(string|nil)
+--- Стратегия: два Google-эндпоинта опрашиваются ПАРАЛЛЕЛЬНО, побеждает первый
+--- успешный ответ (раньше шли по очереди — один «висящий» сервер съедал весь таймаут).
+--- MyMemory (с дневным лимитом) подключается только если оба Google не ответили.
 function M.translate(text, cb)
   local hit = M.cache[text]
   if hit then
@@ -138,35 +141,54 @@ function M.translate(text, cb)
   if vim.fn.executable("curl") == 0 then
     return cb(nil)
   end
-  local function try(i)
-    local ep = M.endpoints[i]
-    if not ep then
-      return cb(nil)
+
+  local function store(tr)
+    local n = 0
+    for _ in pairs(M.cache) do
+      n = n + 1
     end
-    local url = ep.url .. M.url_encode(text)
-    vim.system({ "curl", "-sS", "--max-time", "4", url }, { text = true }, function(res)
-      vim.schedule(function()
-        local tr = nil
-        if res.code == 0 and ep.parse then
-          tr = ep.parse(res.stdout)
-        end
-        if tr then
-          local n = 0
-          for _ in pairs(M.cache) do
-            n = n + 1
-          end
-          if n > 2000 then
-            M.cache = {}
-          end
-          M.cache[text] = tr
-          persist()
-          return cb(tr)
-        end
-        try(i + 1) -- этот переводчик недоступен — пробуем следующий
-      end)
-    end)
+    if n > 5000 then
+      M.cache = {}
+    end
+    M.cache[text] = tr
+    persist()
+    cb(tr)
   end
-  try(1)
+
+  -- Запускаем группу эндпоинтов параллельно; первый успешный выигрывает
+  local function run_group(eps, on_all_failed)
+    local left, won = #eps, false
+    for _, ep in ipairs(eps) do
+      local url = ep.url .. M.url_encode(text)
+      vim.system({ "curl", "-sS", "--max-time", "4", url }, { text = true }, function(res)
+        vim.schedule(function()
+          if won then
+            return
+          end
+          local tr = nil
+          if res.code == 0 and ep.parse then
+            tr = ep.parse(res.stdout)
+          end
+          if tr then
+            won = true
+            return store(tr)
+          end
+          left = left - 1
+          if left == 0 then
+            on_all_failed()
+          end
+        end)
+      end)
+    end
+  end
+
+  local google = { M.endpoints[1], M.endpoints[2] }
+  local mymemory = { M.endpoints[3] }
+  run_group(google, function()
+    run_group(mymemory, function()
+      cb(nil)
+    end)
+  end)
 end
 
 --- Диагностика: :RuCheck — какой переводчик реально отвечает.
