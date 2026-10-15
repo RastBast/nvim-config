@@ -263,6 +263,14 @@ return {
         --  хранится в конфиге: логин в самом приложении или DISCORDO_TOKEN.
         -------------------------------------------------------------
         { "<leader>Hy", group = "💬 Чаты (терминал)" },
+        -- Справка по клавишам и буфер обмена / macOS (вторая итерация, части 4–6)
+        { "<leader>Hq", group = "❓ Справка по клавишам" },
+        { "<leader>Hq?", function() require("config.keydoc").lookup() end, desc = "❓ Справка по клавише (не выполняет)" },
+        { "<leader>Hqm", function() require("config.keydoc").toggle_help_mode() end, desc = "❓ Режим справки вкл/выкл" },
+        { "<leader>Hb", group = "📋 Буфер обмена и macOS" },
+        { "<leader>Hbr", function() require("config.yank_ring").pick() end, desc = "📋 Кольцо буфера обмена (1–9)" },
+        { "<leader>Hbm", function() vim.cmd("vsplit " .. vim.fn.stdpath("config") .. "/macos/README.md") end, desc = "🍎 macOS: клавиатура и Maccy (инструкция)" },
+        { "<leader>Hbk", function() vim.notify("⌃⌥⌘K — экранная клавиатура (Hammerspoon). Инструкция: <leader>Hbm", vim.log.levels.INFO) end, desc = "⌨ Экранная клавиатура macOS (⌃⌥⌘K)" },
         { "<leader>y", group = "📋 Буфер обмена" },
         { "<leader>yr", function() require("config.yank_ring").pick() end, desc = "📋 Кольцо буфера обмена (1–9)" },
         { "<leader>Hyd", require("config.termcmd").make("discordo", 150, "discordo"), desc = "💬 Discordo — Discord в терминале (⚠ риск для аккаунта, см. доку)" },

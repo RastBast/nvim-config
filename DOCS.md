@@ -117,6 +117,7 @@ rm -rf ~/.local/share/nvim/lazy/kulala.nvim    # лечение старого �
 init.lua                    — точка входа: опции, базовые маппинги, загрузка lazy
 lazy-lock.json              — ЗАФИКСИРОВАННЫЕ версии всех плагинов (не трогать руками)
 all_keymaps.txt             — автосгенерированный полный список клавиш
+macos/                      — всё для macOS вне Neovim: Hammerspoon (экранная клавиатура), README (KeyCastr, Maccy)
 CHANGES.md                  — отчёт «до/после» большой ревизии
 DOCS.md                     — этот документ
 lua/
