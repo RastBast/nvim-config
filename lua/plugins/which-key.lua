@@ -266,6 +266,42 @@ return {
         { "<leader>Hyd", require("config.termcmd").make("discordo", 150, "discordo"), desc = "💬 Discordo — Discord в терминале (⚠ риск для аккаунта, см. доку)" },
 
         -------------------------------------------------------------
+        --  🛠 Код: разбить/собрать (treesj) — <leader>c…
+        --  (<leader>cl линтеры — в plugins/lint.lua, <leader>cf/ca — выше)
+        -------------------------------------------------------------
+        { "<leader>c", group = "🛠 Код" },
+        { "<leader>cj", "<cmd>TSJToggle<cr>", desc = "🔀 Разбить/собрать конструкцию (переключить)" },
+        { "<leader>cs", "<cmd>TSJSplit<cr>", desc = "✂ Разбить конструкцию на строки" },
+        { "<leader>cJ", "<cmd>TSJJoin<cr>", desc = "🔗 Собрать конструкцию в одну строку" },
+
+        -------------------------------------------------------------
+        --  🆚 Git: Diffview и мерж-конфликты (H g v / f / q / m…)
+        --  Дефолтные co/ct/cb у git-conflict отключены (конфликт с оператором c)
+        -------------------------------------------------------------
+        { "<leader>Hgv", "<cmd>DiffviewOpen<cr>", desc = "🆚 Diffview: сравнить изменения" },
+        { "<leader>Hgf", "<cmd>DiffviewFileHistory %<cr>", desc = "🕰 История файла (Diffview)" },
+        { "<leader>Hgq", "<cmd>DiffviewClose<cr>", desc = "❌ Закрыть Diffview" },
+        { "<leader>Hgm", group = "⚔ Мерж-конфликты" },
+        { "<leader>Hgmo", "<cmd>GitConflictChooseOurs<cr>", desc = "⬅ Оставить СВОЁ (ours)" },
+        { "<leader>Hgmt", "<cmd>GitConflictChooseTheirs<cr>", desc = "➡ Оставить ЧУЖОЁ (theirs)" },
+        { "<leader>Hgmb", "<cmd>GitConflictChooseBoth<cr>", desc = "⬌ Оставить оба куска" },
+        { "<leader>Hgm0", "<cmd>GitConflictChooseNone<cr>", desc = "🚫 Убрать оба куска" },
+        { "<leader>Hgmn", "<cmd>GitConflictNextConflict<cr>", desc = "⏭ Следующий конфликт" },
+        { "<leader>Hgmp", "<cmd>GitConflictPrevConflict<cr>", desc = "⏮ Предыдущий конфликт" },
+        { "<leader>Hgml", "<cmd>GitConflictListQf<cr>", desc = "📋 Все конфликты в quickfix" },
+
+        -------------------------------------------------------------
+        --  📚 Шпаргалки cheat.sh (H k)
+        -------------------------------------------------------------
+        { "<leader>Hk", group = "📚 Шпаргалки (cheat.sh)" },
+        { "<leader>Hkc", function()
+            vim.ui.input({ prompt = "cheat.sh: " }, function(q)
+              if q and q ~= "" then vim.cmd("Cheat " .. q) end
+            end)
+          end, desc = "📚 Шпаргалка по запросу (cheat.sh)" },
+        { "<leader>Hkl", "<cmd>CheatList<cr>", desc = "📋 Поиск по всем шпаргалкам" },
+
+        -------------------------------------------------------------
         --  📂 Создать файл/директорию (H + c)
         -------------------------------------------------------------
         { "<leader>Hc", group = "📂 Создать файл/директорию" },

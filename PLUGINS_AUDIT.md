@@ -33,7 +33,12 @@
 | MunifTanjim/nui.nvim, nvim-treesitter, nvim-web-devicons | зависимости | несколько |
 | `vim.opt.termguicolors = true` | уже в настройках | `init.lua`, строка 27 |
 
-## ➕ Добавить (нет в конфиге, полезно, без конфликтов)
+## ➕ Добавлено (решение пользователя: «все 10»; flatten и cheat.sh тоже)
+
+Статус: добавлено в конфиг, проверено по исходникам плагинов и харнессом (без запуска Neovim).
+Файлы: `lint.lua`, `lightbulb.lua`, `spider.lua`, `treesj.lua`, `visual-multi.lua`,
+`diffview.lua`, `git-conflict.lua`, `cheatsheet.lua`, `flatten.lua`, `completions.lua` (lspkind).
+Клавиши: `<leader>cl`, `<leader>cj/cs/cJ`, `<leader>Hgv/Hgf/Hgq`, `<leader>Hgm…`, `<leader>Hk…`.
 
 | Плагин | Зачем | Примечание |
 |---|---|---|

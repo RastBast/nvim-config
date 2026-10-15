@@ -21,6 +21,8 @@ return {
       "saadparwaiz1/cmp_luasnip",
       "rafamadriz/friendly-snippets",
       "kristijanhusak/vim-dadbod-completion",
+      -- Иконки типа (функция / переменная / класс…) в меню автодополнения
+      "onsails/lspkind.nvim",
     },
     config = function()
       local cmp = require("cmp")
@@ -68,6 +70,15 @@ return {
           end,
         },
         completion = { completeopt = "menu,menuone,noinsert" },
+        -- Иконка + тип + подпись в меню. Иконки для файлов — nvim-web-devicons (уже есть)
+        formatting = {
+          fields = { "abbr", "kind", "menu" },
+          format = require("lspkind").cmp_format({
+            mode = "symbol_text",
+            maxwidth = { menu = 50, abbr = 50 },
+            ellipsis_char = "...",
+          }),
+        },
         window = {
           completion = cmp.config.window.bordered(),
           documentation = cmp.config.window.bordered(),
