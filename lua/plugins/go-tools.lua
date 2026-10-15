@@ -28,7 +28,7 @@ return {
     cmd = {
       "GoBuild", "GoTest", "GoTestFunc", "GoTestFile", "GoTestPkg",
       "GoLint", "GoVulnCheck", "GoMockGen", "GoIfErr", "GoImpl",
-      "GoAddTag", "GoFillStruct", "GoJson", "GoJson2Struct",
+      "GoAddTag", "GoFillStruct", "GoJson2Struct",
     },
     build = ':lua require("go.install").update_all_sync()',
     config = function()
@@ -70,6 +70,10 @@ return {
       -- Русские Go-сниппеты + динамическая формочка gstr
       pcall(function()
         require("config.go_snips").register()
+      end)
+      -- Kafka (kafka-go) и драйверы БД (database/sql)
+      pcall(function()
+        require("config.go_infra_snips").register()
       end)
     end,
   },

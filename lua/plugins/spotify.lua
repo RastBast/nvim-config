@@ -15,6 +15,16 @@ return {
   enabled = vim.fn.executable("spt") == 1, -- нет spt — плагин не грузим
   lazy = true,
   cmd = { "Spotify", "SpotifyDevices" },
+  -- Клавиши объявлены в keys, а не в config: config выполняется только ПОСЛЕ
+  -- загрузки плагина, и до первого :Spotify <leader>sp/sn/sb не существовали.
+  -- Lazy сам подгрузит плагин при нажатии.
+  keys = {
+    { "<leader>so", ":Spotify<CR>", desc = "🎵 Spotify поиск", silent = true },
+    { "<leader>sd", ":SpotifyDevices<CR>", desc = "🎵 Spotify устройства", silent = true },
+    { "<leader>sp", "<Plug>(SpotifyPause)", desc = "🎵 Пауза/Плей", silent = true },
+    { "<leader>sn", "<Plug>(SpotifySkip)", desc = "🎵 Вперёд", silent = true },
+    { "<leader>sb", "<Plug>(SpotifyPrev)", desc = "🎵 Назад", silent = true },
+  },
   config = function()
     local spotify = require("nvim-spotify")
     spotify.setup({
@@ -29,11 +39,5 @@ return {
       spotify.status:start()
     end
 
-    local opts = { silent = true }
-    vim.keymap.set("n", "<leader>so", ":Spotify<CR>", vim.tbl_extend("force", opts, { desc = "🎵 Spotify поиск" }))
-    vim.keymap.set("n", "<leader>sd", ":SpotifyDevices<CR>", vim.tbl_extend("force", opts, { desc = "🎵 Spotify устройства" }))
-    vim.keymap.set("n", "<leader>sp", "<Plug>(SpotifyPause)", vim.tbl_extend("force", opts, { desc = "🎵 Пауза/Плей" }))
-    vim.keymap.set("n", "<leader>sn", "<Plug>(SpotifySkip)", vim.tbl_extend("force", opts, { desc = "🎵 Вперёд" }))
-    vim.keymap.set("n", "<leader>sb", "<Plug>(SpotifyPrev)", vim.tbl_extend("force", opts, { desc = "🎵 Назад" }))
   end,
 }

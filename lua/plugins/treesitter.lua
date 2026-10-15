@@ -32,6 +32,18 @@ return {
         "proto", -- Protobuf
       }
 
+      -- Парсеры ≈40 языков — из lua/config/languages.lua (без дублей)
+      do
+        local seen = {}
+        for _, p in ipairs(ensure) do seen[p] = true end
+        for _, p in ipairs(require("config.languages").parsers()) do
+          if not seen[p] then
+            seen[p] = true
+            ensure[#ensure + 1] = p
+          end
+        end
+      end
+
       -- Включаем подсветку. vim.treesitter.start() сам определяет язык
       -- по filetype; pcall — потому что парсер может ещё не скачаться.
       vim.api.nvim_create_autocmd("FileType", {

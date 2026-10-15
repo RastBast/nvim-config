@@ -88,11 +88,13 @@ return {
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
             elseif avante_suggestion_visible() then
-              vim.api.nvim_feedkeys(
-                vim.api.nvim_replace_termcodes("<Plug>(AvanteSuggestionAccept)", true, false, true),
-                "n",
-                false
-              )
+              -- Принимаем напрямую, а не через feedkeys("<Plug>(...)", "n"):
+              -- режим "n" запрещает маппинги, и <Plug>-мапа не срабатывала бы.
+              local ok_av, av = pcall(require, "avante")
+              if ok_av then
+                local _, _, sg = av.get()
+                if sg then sg:accept() end
+              end
             else
               fallback()
             end

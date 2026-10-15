@@ -1,4 +1,104 @@
 # Что исправлено в конфиге (2026-08-30)
+
+## 2026-10-15 · Языки (≈45), каталог БД, K8s/Docker/Kafka под Go
+
+**Языки — `lua/config/languages.lua`** — один список на LSP, Treesitter и форматтеры
+(45 языков: Go, Python, Rust, C/C++, Java, Kotlin, Scala, C#, Ruby, PHP, Swift, Dart,
+Elixir, Haskell, OCaml, Zig, R, Julia, Terraform, Nix, Vue, Svelte, GraphQL, TOML, LaTeX,
+Typst, Clojure, Perl, CMake, Groovy, Markdown, …). Каждая строка проверена по исходникам:
+имена LSP — nvim-lspconfig, парсеры — nvim-treesitter, форматтеры — conform.
+- `servers.lua` / `lsp-config.lua`: Mason ставит только `lsp`; серверы с `toolchain`
+  (csharp_ls, sourcekit/Xcode, dartls, hls/ghcup, ocamllsp/opam, r_language_server, julials, groovyls) включаются, только если бинарник
+  уже в PATH. `automatic_installation` (мёртвая опция в зафиксированной версии) заменена на
+  `automatic_enable = { exclude = toolchain }`.
+- `treesitter.lua`: парсеры из таблицы (без дублей).
+- `format.lua`: форматтеры из таблицы; записи, которые были, имеют приоритет.
+  Исправлено: `sql = { "sqlformat" }` → `"sqlfluff"` (`sqlformat` в conform нет).
+
+**Общий запуск утилит — `lua/config/termcmd.lua`**: `term_cmd` вынесен из `toggleterm.lua`,
+теперь используется и там, и для K8s/Docker/Kafka. Нет утилиты в PATH → предупреждение
+со ссылкой, без обходных путей.
+
+**Базы данных — `lua/config/db_menu.lua`, каталог `<leader>D`**:
+`<leader>D` → СУБД (`s` SQLite, `m` MySQL/MariaDB, `p` PostgreSQL, `o` Oracle,
+`x` SQL Server, `c` ClickHouse) → команды этой СУБД:
+`c` подключиться · `r` выполнить буфер (normal) / выделение (visual) · `t` таблицы ·
+`d` описание таблицы · `n` новый SQL-буфер с подключением · `u` панель DBUI.
+- URL: из переменных `NVIM_DB_SQLITE`, `NVIM_DB_MYSQL`, `NVIM_DB_PG`, `NVIM_DB_ORACLE`,
+  `NVIM_DB_MSSQL`, `NVIM_DB_CLICKHOUSE`, либо спрашивается при первом обращении.
+  Пароли в файлы не пишутся (только `vim.g.nvim_db_urls` на время сессии).
+- Выполнение запросов — только в SQL-буфере (filetype `sql`); каталог и новые буферы работают из любого места.
+- Клиенты (sqlite3, mysql, psql, sqlplus, sqlcmd, clickhouse) — системные; адаптеры
+  vim-dadbod для всех шести есть (проверено по `autoload/db/adapter/`).
+
+**Go-сниппеты — `lua/config/go_infra_snips.lua`**: Kafka (`gkprod` producer, `gkcons`
+consumer group с CommitMessages, `gkcfg` Dialer с SASL/PLAIN и TLS — `segmentio/kafka-go`)
+и драйверы `database/sql` (`gdbsqlite`, `gdbmysql`, `gdbpg`, `gdboracle`, `gdbmssql`, `gdbch`).
+
+**Группа `<leader>HG` «🐹 Go: K8s · Docker · Kafka»**:
+- `HGk` ☸ Kubernetes: `k9s`, `kubectl get pods`, `kubectl config get-contexts`
+- `HGd` 🐳 Docker: `lazydocker`, `docker ps -a`, `docker images`
+- `HGa` 📨 Kafka: `ktea` (TUI), `kafkactl get topics / consumer-groups / brokers`
+
+Новых плагинов не добавлено (`lazy-lock.json` не меняется).
+
+## 2026-10-15 · Подсказки <leader>H — как в main; HUD: день недели и число
+
+**`lua/plugins/which-key.lua`** — структура, эмодзи и названия групп возвращены из `main`
+(🎛 Главное меню, 🔍 Поиск и Файлы, 🌿 Git и Go, 🗄 Базы и Отладка, 🤖 AI и Структура,
+💎 Obsidian, 🧪 Тесты, 🎨 Визуал и UI, 📌 Harpoon, 🔌 Плагины, ⚠️ Диагностика, 📦 Прочее,
+📂 Создать файл/директорию). Отличия от `main` — только там, где клавиша в `main` не работала:
+
+| Было в main | Стало | Почему |
+|---|---|---|
+| `<leader>Ht` = GoTest и группа «Тесты», и группа «Терминал» | GoTest → `<leader>Hgt` | `<leader>Ht` — группа; команда на том же префиксе не работает |
+| Терминал `<leader>Htt/Hth/Htv/Htc` | Группа `<leader>T` (🖥 Терминал) — подписи к `<leader>T*` из `toggleterm.lua` | терминал живёт на `<leader>T*` |
+| `GoVulncheck`, `GoTagAdd`, `Telescope todo`, `DBUI AddConnection`, `TroubleToggle`, `PomodoroStart/Stop`, `Pets`, `KulalaRun`, `harpoon.mark`, `CodeCompanionSend` | `GoVulnCheck`, `GoAddTag`, `TodoTelescope`, `DBUIAddConnection`, `Trouble diagnostics toggle`, `TimerStart/Stop`, `PetsNew holli`, `kulala.run()`, harpoon v2, `:CodeCompanion` | такой команды/API нет в актуальных версиях плагинов |
+| `DBUI ExecuteQuery`, `NvimTreeCreate` | убраны | подкоманды нет; файл создаётся клавишей `a` в дереве |
+
+Новые команды (помечены `✚`): `<leader>Hfc` команды Neovim, `Hfw` слово под курсором, `Hfm` метки,
+`Hgd` diff файла, `Hgl` blame строки вкл/выкл, `Hgg` LazyGit, `Hdf` БД буфера, `Hac` CodeCompanion,
+`Hpy` **Lazy sync**, `Hpc` ConformInfo, `Hxs` символы (Trouble), `Hxt` TODO (Trouble).
+
+**`lua/config/hud.lua`** — рядом со временем показываются день недели и дата по МСК:
+`🕐 Чт 15.10 · 8:48 PM`. Считается арифметикой (без `os.date`, как и время), опция `show_date`
+(по умолчанию `true`). Проверено против `datetime` на 3008 метках времени, включая високосные годы.
+
+## 2026-10-15 · Проход по багам: команды, API плагинов, логика переводчика
+
+Сверка с исходниками плагинов (клоны `codecompanion`, `avante`, `conform`,
+`go.nvim`, `neotest`, `obsidian`, `mini.nvim`, `nvim-treesitter`) и
+юнит-тесты на Lua-рантайме. Найдены и исправлены ошибки, которые не давали
+ошибок при старте, но ломали конкретные функции:
+
+| Где | Было | Стало |
+|---|---|---|
+| `lua/plugins/ai.lua` | Промпт «Explain Code» лежал в `interactions` с `strategy` и `opts.mapping` — CodeCompanion такой промпт не регистрирует, а `mapping` не поддерживается | Перенесён в `prompt_library` (`interaction = "chat"`, `opts.alias = "explain"`); вызов `require("codecompanion").prompt("explain")` |
+| `lua/plugins/ai.lua` | `<leader>Hae` в visual шёл через `<cmd>`: диапазон пустой, уходила одна строка | Строковый rhs `:CodeCompanion<cr>` — Vim дописывает `'<,'>` |
+| `lua/plugins/ai.lua` | `api_key = os.getenv(...) or "MOONSHOT_API_KEY"`: CodeCompanion принимает здесь **имя** переменной; при заданном ключе уходило его значение как имя, при незаданном — строка `MOONSHOT_API_KEY` вместо ключа | `api_key = "MOONSHOT_API_KEY"` — CodeCompanion сам читает переменную |
+| `lua/plugins/completions.lua` | Принятие ИИ-подсказки через `feedkeys("<Plug>(AvanteSuggestionAccept)", "n")` — режим `n` запрещает маппинги, `<Plug>` не срабатывал | Прямой вызов `require("avante").get()` → `sg:accept()` |
+| `lua/plugins/format.lua` | `cmd = { "ConformInfo", "Format" }` — команды `:Format` в conform нет (E492) | `cmd = { "ConformInfo" }`, форматирование — `<leader>cf` |
+| `lua/plugins/which-key.lua`, `go-tools.lua` | `<leader>HGj` → `<cmd>GoJson` — такой команды в go.nvim нет | `<cmd>GoJson2Struct<cr>` (в шапке исправлена запись «было/стало») |
+| `lua/plugins/silicon.lua` | `<leader>sc` в visual: `vim.cmd("Silicon")` без диапазона | Строковый rhs `:Silicon<cr>` — снимается выделение |
+| `lua/plugins/dadbod-ultimate.lua` | `db_ui_save_location = ~/.config/nvim/db_ui` — это git-репозиторий конфига; строки подключения с паролями попали бы в коммиты | `stdpath("data") .. "/db_ui"` (вне репозитория) |
+| `lua/plugins/avante.lua` | `allow_insecure = vim.env.GEMINI_INSECURE ~= nil`: `GEMINI_INSECURE=0` тоже отключал проверку TLS | `== "1"` (как написано в INSTALL.md и PROXY.md) |
+| `lua/plugins/mini.lua` | Кастомный текстобъект `f` был функцией, которая возвращала функцию-спек; `vif` / `vaf` ломались | `opts` — функция, `f = ai.gen_spec.treesitter({...})` |
+| `lua/plugins/spotify.lua` | `<leader>sp/sn/sb/so/sd` ставились в `config` — до первого `:Spotify` клавиш не было | Объявлены в `keys` (lazy подгружает плагин сам) |
+| `lua/config/hover_ru.lua`, `lua/config/diag_ru.lua` | Счётчик `pending` считался в цикле: если перевод первого куска был в кеше, колбэк шёл синхронно, `finish()` отдавал ответ LSP до перевода остальных кусков (остальные оставались по-английски) | Сначала собираются все куски, потом запускается перевод. Проверено тестом: старая версия — ошибка, новая — ок |
+| `lua/config/telegram.lua` | `nvim_create_user_command(..., { range = "?" })` — недопустимое значение: Neovim падает с `E5113: Invalid 'range'` и `telegram.setup()` не доходит до конца (команды после `TeleSend` не создаются) | `range = true` (текущая строка или выделение) |
+| `lua/plugins/avante.lua` | Не указана обязательная зависимость `ColinKennedy/mega.cmdparse` (и `mega.logging`): `module 'mega.cmdparse' not found` при загрузке avante на `VeryLazy` | Добавлена в `dependencies` (как в README avante) |
+| `lua/config/hud.lua`, `lua/config/telegram.lua` (inbox, read_chat) | `vim.bo[buf].spell = false` — `spell` window-локальная опция; Neovim: `E5113 'buf' cannot be passed for window-local option 'spell'`, HUD падал при старте | `spell` ставится на окно: `vim.wo[win].spell = false` (после `nvim_open_win`) |
+
+Заметки:
+- `CHANGES.md` ранее утверждал, что `prompt_library` «больше не хранит промпты» —
+  по документации CodeCompanion промпты как раз там (см. запись выше).
+- `lazy-lock.json` не содержит 8 плагинов, добавленных позже (avante, mini.ai,
+  mini.surround, lazydev, cmp-cmdline, friendly-snippets, nvim-bqf, luvit-meta).
+  Lazy допишет их при `:Lazy sync`; вручную lock не редактировался.
+- Проверка: синтаксис всех `.lua` (Lua-рантайм), поиск маркеров конфликта, дубли
+  клавиш по всем `keymap.set` и `<leader>`-строкам, разрешение `require`
+  для локальных модулей. Полный запуск Neovim в песочнице недоступен — поведение
+  плагинов проверено по исходникам, а не запуском.
 ## 2026-10-15 · Отдел TG в which-key, 🕐 HUD в углу и 🔥 огонёк за коммиты (добавлено)
 
 Два новых модуля — `lua/config/hud.lua` и `lua/config/streak.lua` (подключены

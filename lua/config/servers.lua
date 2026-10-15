@@ -1,21 +1,14 @@
 -- ========================================================================== --
 --                  ЕДИНЫЙ СПИСОК LSP-СЕРВЕРОВ                                --
 -- ========================================================================== --
--- Этот список использует И mason-lspconfig (что ставить), И nvim-lspconfig
--- (что включать через vim.lsp.enable). Раньше списки были разные, из-за чего
--- часть серверов скачивалась, но никогда не запускалась.
+-- Теперь список собирается из lua/config/languages.lua (≈40 языков).
+--   .mason     — что Mason ставит сам (ensure_installed)
+--   .all       — что включать через vim.lsp.enable (включая toolchain-серверы)
+--   .toolchain — серверы, которым нужен системный тулчейн: Mason их не трогает
+local L = require("config.languages")
+
 return {
-  "gopls",      -- Go
-  "ts_ls",      -- TypeScript / JavaScript
-  "bashls",     -- bash
-  "dotls",      -- Graphviz
-  "lemminx",    -- XML
-  "html",       -- HTML
-  "cssls",      -- CSS
-  "lua_ls",     -- Lua (правка этого конфига)
-  "jsonls",     -- JSON
-  "yamlls",     -- YAML
-  "dockerls",   -- Dockerfile
-  "protols",    -- Protobuf: подсказки, диагностика, форматирование .proto
-  "sqls",       -- SQL: подсказки и диагностика (русифицируется через DiagRu)
+  mason = L.mason_servers(),
+  all = L.servers(),
+  toolchain = L.toolchain_servers(),
 }

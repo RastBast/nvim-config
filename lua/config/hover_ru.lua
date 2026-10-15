@@ -69,34 +69,43 @@ function M.setup()
       orig(nil, r2, ctx, cfg)
     end
 
+    -- Сначала СОБИРАЕМ все куски к переводу, и только потом запускаем перевод.
+    -- Раньше счётчик pending считали прямо в цикле: если первый кусок уже был
+    -- в кеше, его колбэк вызывался синхронно, pending доходил до 0 и finish()
+    -- отдавал подсказку ДО того, как переведены остальные куски.
+    local jobs = {}
     for _, p in ipairs(parts) do
       if not p.code and p.text:match("%a%a%a") then
-        local masked, stash = RU.protect_inline(p.text)
-        pending = pending + 1
-        RU.translate(masked, function(tr)
-          if tr then
-            local ok_ph = true
-            for i = 1, #stash do
-              if not tr:find("@@" .. i .. "@@", 1, true) then
-                ok_ph = false
-                break
-              end
-            end
-            if ok_ph then
-              p.text = RU.restore_inline(tr, stash)
-            end
-          end
-          pending = pending - 1
-          if pending == 0 then
-            finish()
-          end
-        end)
+        jobs[#jobs + 1] = p
       end
     end
 
-    if pending == 0 and not fired then
+    if #jobs == 0 then
       -- нечего переводить (или всё код) — сразу оригинал
       return orig(err, result, ctx, cfg)
+    end
+
+    pending = #jobs
+    for _, p in ipairs(jobs) do
+      local masked, stash = RU.protect_inline(p.text)
+      RU.translate(masked, function(tr)
+        if tr then
+          local ok_ph = true
+          for i = 1, #stash do
+            if not tr:find("@@" .. i .. "@@", 1, true) then
+              ok_ph = false
+              break
+            end
+          end
+          if ok_ph then
+            p.text = RU.restore_inline(tr, stash)
+          end
+        end
+        pending = pending - 1
+        if pending == 0 then
+          finish()
+        end
+      end)
     end
     -- страховка: сеть медленная → через 1.2 с показываем как есть
     vim.defer_fn(finish, 1200)

@@ -1,30 +1,20 @@
 -- ========================================================================== --
---                        WHICH-KEY: ГЛАВНОЕ МЕНЮ                            --
+--                 WHICH-KEY: ГЛАВНОЕ МЕНЮ <leader>H (как в main)             --
 -- ========================================================================== --
--- ИСПРАВЛЕНО (каждая строка проверена по исходникам плагинов):
---
---  ❌ было                              ✅ стало
---  ------------------------------------------------------------------
---  <leader>Ht объявлен 3 раза           один раз (группа «Тесты»);
---  (GoTest + Тесты + Терминал)          Go-тесты переехали на <leader>Hgo
---  GoVulncheck                          GoVulnCheck   (регистра важен)
---  GoJson2Struct                        GoJson
---  DBUI AddConnection                   DBUIAddConnection
---  DBUI ExecuteQuery                    убрано — такой подкоманды нет
---  CodeCompanionSend                    CodeCompanion (Send не существует)
---  TroubleToggle                        Trouble diagnostics toggle (v3)
---  ToggleTermCloseAll                   ToggleTermToggleAll
---  NvimTreeCreate                       NvimTreeFindFileToggle (Create нет;
---                                       файл создаётся клавишей `a` в дереве)
---  PomodoroStart / PomodoroStop         TimerStart / TimerStop (pomo.nvim)
---  Pets                                 PetsNew holli
---  KulalaRun                            require('kulala').run()
---  Telescope todo                       TodoTelescope (пикер зовётся
---                                       todo-comments)
---  require('noice').toggle()            переключатель mini.animate
---                                       (noice.toggle не существует)
---  require('harpoon.mark') /            harpoon v2 (ветка harpoon2):
---  require('harpoon.ui')                require('harpoon'):list():add() и т.д.
+-- Структура, эмодзи и названия групп — из main (Главное меню, Поиск, Git и Go,
+-- Базы, AI, Obsidian, Тесты, Визуал, Harpoon, Плагины, Диагностика, Прочее,
+-- Файлы). Отличия от main — только там, где в main клавиша была сломана:
+--   • GoTest        <leader>Ht  → <leader>Hgt   (Ht — группа «Тесты», два значения
+--                                                на одном префиксе не работают)
+--   • Терминал      <leader>Ht* → <leader>T*    (живёт в toggleterm.lua)
+--   • команды       GoVulncheck→GoVulnCheck, GoTest/Telescope todo/DBUI AddConnection,
+--                   TroubleToggle→Trouble diagnostics toggle, PomodoroStart→TimerStart,
+--                   harpoon.mark → harpoon v2, KulalaRun → kulala.run(), CodeCompanionSend → :CodeCompanion
+--   • ушли из main, потому что такой команды/подкоманды нет: DBUI ExecuteQuery,
+--     NvimTreeCreate (создание файла — клавишей `a` в дереве)
+-- Новые команды помечены  ✚  в подписи.
+-- Клавиши, которые ставятся в другом месте (ai.lua, maximizer.lua, hud.lua,
+-- go-tools.lua, toggleterm.lua), здесь только подписаны, без действия — иначе дубль.
 return {
   {
     "folke/which-key.nvim",
@@ -46,18 +36,14 @@ return {
 
       spec = {
         -------------------------------------------------------------
-        --  🎛  Главное меню
+        --  🎛  Главное меню (через <leader>H)
         -------------------------------------------------------------
         { "<leader>H", group = "🎛 Главное меню" },
 
         -------------------------------------------------------------
         --  ✈️  TG — ОТДЕЛ TELEGRAM (консольный tele внутри nvim)
         -------------------------------------------------------------
-        -- Отдел объявлен ЗДЕСЬ, чтобы он был виден отдельной строкой в таблице
-        -- на <leader>. Сами клавиши ставит lua/config/telegram.lua (vim.keymap.set),
-        -- поэтому тут ТОЛЬКО desc без действия: { lhs, desc = ... } без rhs —
-        -- это подписи, новых маппингов which-key от них не создаёт (v3: маппинг
-        -- создаётся, только если задан rhs).
+        -- Сами клавиши ставит lua/config/telegram.lua; здесь только подписи.
         { "<leader>m", group = "TG ✈ Telegram (tele)", icon = "✈" },
         { "<leader>mm", desc = "🗕 tele: маленькое окно (float)" },
         { "<leader>mf", desc = "🖥 tele: на весь экран" },
@@ -78,7 +64,7 @@ return {
         { "<leader>m?", desc = "📋 шпаргалка по telegram-мосту" },
 
         -------------------------------------------------------------
-        --  🔍 Поиск и Файлы
+        --  🔍 Поиск и Файлы (H + f)
         -------------------------------------------------------------
         { "<leader>Hf", group = "🔍 Поиск и Файлы" },
         { "<leader>Hff", "<cmd>Telescope find_files<cr>", desc = "📂 Найти файл" },
@@ -88,53 +74,54 @@ return {
         { "<leader>Hfr", "<cmd>Telescope oldfiles<cr>", desc = "🕑 Недавние файлы" },
         { "<leader>Hft", "<cmd>TodoTelescope<cr>", desc = "📝 TODO/FIXME" },
         { "<leader>Hfk", "<cmd>Telescope keymaps<cr>", desc = "⌨️ Все горячие клавиши" },
+        { "<leader>Hfc", "<cmd>Telescope commands<cr>", desc = "✚ ⌨️ Все команды Neovim" },
+        { "<leader>Hfw", "<cmd>Telescope grep_string<cr>", desc = "✚ 🔍 Найти слово под курсором" },
+        { "<leader>Hfm", "<cmd>Telescope marks<cr>", desc = "✚ 🔖 Метки (marks)" },
 
         -------------------------------------------------------------
-        --  🌿 Git
+        --  🌿 Git и Go (H + g; Go-команды — как в main)
         -------------------------------------------------------------
-        { "<leader>Hg", group = "🌿 Git" },
+        { "<leader>Hg", group = "🌿 Git и Go" },
         { "<leader>Hgs", function() require("gitsigns").stage_hunk() end, desc = "📦 Stage hunk" },
         { "<leader>Hgu", function() require("gitsigns").reset_hunk() end, desc = "↩️ Undo stage hunk" },
-        { "<leader>Hgb", function() require("gitsigns").blame_line() end, desc = "🕵️ Автор строки" },
+        { "<leader>Hgb", function() require("gitsigns").blame_line() end, desc = "🕵️‍♂️ Показать автора строки" },
         { "<leader>Hgh", function() require("gitsigns").preview_hunk() end, desc = "🔎 Предпросмотр изменений" },
-        { "<leader>Hgg", "<cmd>LazyGit<cr>", desc = "🐙 LazyGit" },
+        { "<leader>Hgd", function() require("gitsigns").diffthis() end, desc = "✚ 🔀 Diff текущего файла" },
+        { "<leader>Hgl", function() require("gitsigns").toggle_current_line_blame() end, desc = "✚ 👤 Blame строки вкл/выкл" },
+        { "<leader>Hgg", "<cmd>LazyGit<cr>", desc = "✚ 🐙 LazyGit" },
+        { "<leader>Hti", "<cmd>GoAddTag json<cr>", desc = "🏷 Добавить json‑теги" },
+        { "<leader>Hie", "<cmd>GoIfErr<cr>", desc = "❗ Авто‑if err" },
+        { "<leader>Hfs", "<cmd>GoFillStruct<cr>", desc = "🧩 Заполнить struct" },
+        { "<leader>Hj2s", "<cmd>GoJson2Struct<cr>", desc = "📦 JSON → struct" },
+        { "<leader>Him", "<cmd>GoImpl<cr>", desc = "⚙️ Сгенерировать impl" },
+        { "<leader>Hvc", "<cmd>GoVulnCheck<cr>", desc = "🔐 Проверка уязвимостей" },
+        { "<leader>Hgt", "<cmd>GoTest<cr>", desc = "🧪 Запуск Go-тестов" },
 
         -------------------------------------------------------------
-        --  🐹 Go
-        -------------------------------------------------------------
-        { "<leader>HG", group = "🐹 Go" },
-        { "<leader>HGi", "<cmd>GoAddTag json<cr>", desc = "🏷 Добавить json-теги" },
-        { "<leader>HGe", "<cmd>GoIfErr<cr>", desc = "❗ Авто-if err" },
-        { "<leader>HGs", "<cmd>GoFillStruct<cr>", desc = "🧩 Заполнить struct" },
-        { "<leader>HGj", "<cmd>GoJson<cr>", desc = "📦 JSON → struct" },
-        { "<leader>HGm", "<cmd>GoImpl<cr>", desc = "⚙️ Сгенерировать impl" },
-        { "<leader>HGv", "<cmd>GoVulnCheck<cr>", desc = "🔐 Проверка уязвимостей" },
-        { "<leader>HGl", "<cmd>GoLint<cr>", desc = "🧹 Линтер" },
-        { "<leader>HGo", "<cmd>GoTest<cr>", desc = "🧪 Запуск тестов" },
-        { "<leader>HGb", "<cmd>GoBuild<cr>", desc = "🔨 Собрать" },
-
-        -------------------------------------------------------------
-        --  🗄 Базы и Отладка
+        --  🗄 Базы и Отладка (H + d)
         -------------------------------------------------------------
         { "<leader>Hd", group = "🗄 Базы и Отладка" },
-        { "<leader>Hdu", "<cmd>DBUI<cr>", desc = "💾 Панель БД" },
-        { "<leader>Hdt", "<cmd>DBUIToggle<cr>", desc = "💾 Панель БД (toggle)" },
+        { "<leader>Hdu", "<cmd>DBUI<cr>", desc = "💾 Открыть панель БД" },
         { "<leader>Hda", "<cmd>DBUIAddConnection<cr>", desc = "➕ Добавить подключение" },
-        { "<leader>Hdf", "<cmd>DBUIFindBuffer<cr>", desc = "🔍 Найти БД буфера" },
+        { "<leader>Hdf", "<cmd>DBUIFindBuffer<cr>", desc = "✚ 🔍 Найти БД буфера" },
         { "<leader>Hdb", function() require("dap").toggle_breakpoint() end, desc = "⛔ Точка останова" },
         { "<leader>Hdr", function() require("dap").continue() end, desc = "▶️ Старт/Продолжить" },
         { "<leader>Hdi", function() require("dap").step_into() end, desc = "🔽 Шаг в" },
         { "<leader>Hdo", function() require("dap").step_over() end, desc = "⏭ Шаг через" },
-        { "<leader>Hdg", function() require("dap-go").debug_test() end, desc = "🧪 Тест в режиме отладки" },
+        { "<leader>Hdt", function() require("dap-go").debug_test() end, desc = "🧪 Тест в режиме отладки" },
 
         -------------------------------------------------------------
-        --  🤖 AI и Структура
+        --  🤖 AI и Структура (H + a) — клавиши ставит ai.lua, тут подписи
         -------------------------------------------------------------
         { "<leader>Ha", group = "🤖 AI и Структура" },
+        { "<leader>Hat", desc = "💬 Открыть чат с ИИ" },
+        { "<leader>Hai", desc = "🛠 AI‑меню действий" },
+        { "<leader>Hae", desc = "📤 Отправить выделение ИИ" },
+        { "<leader>Hac", desc = "✚ ✨ Команда в CodeCompanion" },
         { "<leader>Has", "<cmd>AerialToggle!<cr>", desc = "📑 Показать структуру файла" },
 
         -------------------------------------------------------------
-        --  💎 Obsidian
+        --  💎 Obsidian (H + o)
         -------------------------------------------------------------
         { "<leader>Ho", group = "💎 Obsidian" },
         { "<leader>Hos", "<cmd>ObsidianSearch<cr>", desc = "🔎 Поиск заметок" },
@@ -143,26 +130,25 @@ return {
         { "<leader>Hot", "<cmd>ObsidianToggleCheckbox<cr>", desc = "☑ Тоггл чекбокса" },
 
         -------------------------------------------------------------
-        --  🧪 Тесты (единственная группа на <leader>Ht)
+        --  🧪 Тесты (H + t) — единственная группа на <leader>Ht
         -------------------------------------------------------------
         { "<leader>Ht", group = "🧪 Тесты" },
-        { "<leader>Htr", "<cmd>Neotest run<cr>", desc = "▶️ Тест под курсором" },
-        { "<leader>Htf", "<cmd>Neotest run file<cr>", desc = "📂 Все тесты в файле" },
+        { "<leader>Htr", "<cmd>Neotest run<cr>", desc = "▶️ Запуск теста под курсором" },
+        { "<leader>Htf", "<cmd>Neotest run file<cr>", desc = "📂 Запуск всех тестов в файле" },
         { "<leader>Hts", "<cmd>Neotest summary<cr>", desc = "🗂 Окно со статусом тестов" },
-        { "<leader>Hto", "<cmd>Neotest output<cr>", desc = "📄 Вывод ошибки" },
+        { "<leader>Hto", "<cmd>Neotest output<cr>", desc = "📄 Показать вывод ошибки" },
         { "<leader>Htn", "<cmd>Neotest jump next<cr>", desc = "⬇️ Следующий тест" },
 
         -------------------------------------------------------------
-        --  🎨 Визуал и UI
+        --  🎨 Визуал и UI (клавиши — как в main)
         -------------------------------------------------------------
         { "<leader>Hu", group = "🎨 Визуал и UI" },
-        { "<leader>Hus", "<cmd>Silicon<cr>", desc = "📸 Скриншот кода (Silicon)" },
-        { "<leader>Hur", function() require("kulala").run() end, desc = "🚀 HTTP-запрос (Kulala)" },
-        { "<leader>Huz", "<cmd>ZenMode<cr>", desc = "🧘 Дзен-режим" },
-        -- саму клавишу ставит lua/plugins/maximizer.lua (там и ленивый триггер);
-        -- MaximizerToggle! = форс-восстановление, а не toggle — поэтому <leader>HuM
+        { "<leader>Hsc", "<cmd>Silicon<cr>", desc = "📸 Скриншот кода (Silicon)" },
+        { "<leader>Hrr", function() require("kulala").run() end, desc = "🚀 HTTP‑запрос (Kulala)" },
+        { "<leader>Hz", "<cmd>ZenMode<cr>", desc = "🧘 Дзен‑режим" },
+        -- клавишу <leader>Hum ставит lua/plugins/maximizer.lua (там и ленивый триггер)
         { "<leader>Hum", desc = "🪟 Развернуть/восстановить окно" },
-        { "<leader>HuM", desc = "🪟 Принудительно вернуть раскладку (!)" },
+        { "<leader>Hm", "<cmd>MaximizerToggle!<cr>", desc = "🪟 Развернуть/восстановить окно" },
         { "<leader>Hup", "<cmd>PetsNew holli<cr>", desc = "🐾 Питомец (Pets)" },
         {
           "<leader>Hua",
@@ -178,11 +164,13 @@ return {
           end,
           desc = "✨ Переключить анимации",
         },
-        { "<leader>Hut", "<cmd>TimerStart 25m Work<cr>", desc = "⏱️ Старт Pomodoro" },
-        { "<leader>HuP", "<cmd>TimerStop Work<cr>", desc = "⏱️ Стоп Pomodoro" },
+
+        -- ⏱ Pomodoro (pomo.nvim) — клавиши из main, команды исправлены
+        { "<leader>Hpt", "<cmd>TimerStart 25m Work<cr>", desc = "⏱️ Старт Pomodoro" },
+        { "<leader>Hps", "<cmd>TimerStop Work<cr>", desc = "⏱️ Стоп Pomodoro" },
 
         -- 🕐 HUD в правом верхнем углу (lua/config/hud.lua) и 🔥 огонёк за
-        -- коммиты (lua/config/streak.lua). Клавиши тоже ставятся там, тут подписи.
+        -- коммиты (lua/config/streak.lua). Клавиши ставятся там, тут подписи.
         { "<leader>Huh", desc = "🕐 HUD: плашка в углу (вкл/выкл)" },
         { "<leader>Hud", desc = "🐞 HUD: что он видит (диагностика)" },
         { "<leader>Hui", desc = "🌐 HUD: какой IP — lan → public → both → off" },
@@ -193,48 +181,94 @@ return {
         --  📌 Harpoon (v2 — ветка harpoon2)
         -------------------------------------------------------------
         { "<leader>Hh", group = "📌 Harpoon" },
-        { "<leader>Hha", function() require("harpoon"):list():add() end, desc = "📍 Добавить файл" },
-        { "<leader>Hhh", function() require("harpoon").ui:toggle_quick_menu(require("harpoon"):list()) end, desc = "📂 Меню Harpoon" },
-        { "<leader>Hh1", function() require("harpoon"):list():select(1) end, desc = "🚀 К 1-му файлу" },
-        { "<leader>Hh2", function() require("harpoon"):list():select(2) end, desc = "🚀 Ко 2-му файлу" },
+        { "<leader>Hha", function() require("harpoon"):list():add() end, desc = "📍 Добавить файл в Harpoon" },
+        { "<leader>Hhh", function() require("harpoon").ui:toggle_quick_menu(require("harpoon"):list()) end, desc = "📂 Открыть меню Harpoon" },
+        { "<leader>Hh1", function() require("harpoon"):list():select(1) end, desc = "🚀 Перейти к 1‑му файлу" },
+        { "<leader>Hh2", function() require("harpoon"):list():select(2) end, desc = "🚀 Перейти к 2‑му файлу" },
 
         -------------------------------------------------------------
-        --  🔌 Плагины
+        --  🔌 Плагины (H + p)
         -------------------------------------------------------------
         { "<leader>Hp", group = "🔌 Плагины" },
-        { "<leader>Hpl", "<cmd>Lazy<cr>", desc = "📦 Lazy UI" },
-        { "<leader>Hpm", "<cmd>Mason<cr>", desc = "🛠 Mason UI" },
-        { "<leader>Hpi", "<cmd>LspInfo<cr>", desc = "📝 Информация об LSP" },
-        { "<leader>Hph", "<cmd>checkhealth<cr>", desc = "⚙️ Checkhealth" },
-        { "<leader>Hpc", "<cmd>ConformInfo<cr>", desc = "🎨 Чем форматируется файл" },
+        { "<leader>Hpl", "<cmd>Lazy<cr>", desc = "📦 Открыть Lazy UI" },
+        { "<leader>Hpm", "<cmd>Mason<cr>", desc = "🛠 Открыть Mason UI" },
+        { "<leader>Hpy", "<cmd>Lazy sync<cr>", desc = "✚ 🔄 Lazy sync (поставить новые плагины)" },
+        { "<leader>Hli", "<cmd>LspInfo<cr>", desc = "📝 LspInfo" },
+        { "<leader>Hch", "<cmd>checkhealth<cr>", desc = "⚙️ Checkhealth" },
+        { "<leader>Hpc", "<cmd>ConformInfo<cr>", desc = "✚ 🎨 Чем форматируется файл" },
 
         -------------------------------------------------------------
-        --  ⚠️ Диагностика
+        --  ⚠️ Диагностика (H + x)
         -------------------------------------------------------------
         { "<leader>Hx", group = "⚠️ Диагностика" },
-        { "<leader>Hxx", "<cmd>Trouble diagnostics toggle<cr>", desc = "❗ Все ошибки (Trouble)" },
+        { "<leader>Hxx", "<cmd>Trouble diagnostics toggle<cr>", desc = "❗ Показать все ошибки (Trouble)" },
         { "<leader>Hxl", "<cmd>Trouble loclist toggle<cr>", desc = "📋 Location list" },
         { "<leader>Hxq", "<cmd>Trouble qflist toggle<cr>", desc = "📋 Quickfix list" },
+        { "<leader>Hxs", "<cmd>Trouble symbols toggle<cr>", desc = "✚ 🧭 Символы файла (Trouble)" },
+        { "<leader>Hxt", "<cmd>Trouble todo toggle<cr>", desc = "✚ 📝 TODO‑комментарии (Trouble)" },
 
         -------------------------------------------------------------
-        --  📦 Прочее
+        --  📦 Прочее (H + n)
         -------------------------------------------------------------
         { "<leader>Hn", group = "📦 Прочее" },
         { "<leader>Hnh", "<cmd>nohlsearch<cr>", desc = "🔎 Убрать подсветку поиска" },
-        { "<leader>Hne", "<cmd>NvimTreeToggle<cr>", desc = "🗂 Дерево файлов" },
-
-        -- Терминал: см. lua/plugins/toggleterm.lua (<leader>T*),
-        -- дубль-набор <leader>HT* удалён — он вызывал :ToggleTerm до загрузки
-        -- плагина и падал с E492.
+        { "<leader>He", "<cmd>NvimTreeToggle<cr>", desc = "🗂 Дерево файлов (nvim‑tree)" },
 
         -------------------------------------------------------------
-        --  📂 Файлы (создание — клавишей `a` внутри дерева)
+        --  🖥 Терминал — клавиши в lua/plugins/toggleterm.lua (<leader>T*)
         -------------------------------------------------------------
-        { "<leader>Hc", group = "📂 Работа с файлами" },
-        { "<leader>Hcf", "<cmd>NvimTreeFindFileToggle<cr>", desc = "🗂 Дерево (дальше `a` — создать)" },
+        { "<leader>T", group = "🖥 Терминал (toggleterm)" },
+        { "<leader>Tt", desc = "📟 Плавающий терминал" },
+        { "<leader>Th", desc = "📟 Терминал снизу" },
+        { "<leader>Tv", desc = "📟 Терминал справа" },
+        { "<leader>Ta", desc = "❎ Показать/скрыть все терминалы" },
+        { "<leader>Tl", desc = "➡ Строку в терминал" },
+
+        -------------------------------------------------------------
+        --  🗄 Базы данных — КАТАЛОГ <leader>D (клавиши: lua/config/db_menu.lua)
+        --  <leader>D → СУБД → c подключиться · r выполнить (SQL) · t таблицы ·
+        --  d описание таблицы · n новый SQL-буфер · u панель DBUI
+        -------------------------------------------------------------
+        { "<leader>D", group = "🗄 Базы данных (каталог)" },
+        { "<leader>Ds", group = "🪶 SQLite" },
+        { "<leader>Dm", group = "🐬 MySQL / MariaDB" },
+        { "<leader>Dp", group = "🐘 PostgreSQL" },
+        { "<leader>Do", group = "🏛 Oracle" },
+        { "<leader>Dx", group = "🟦 SQL Server" },
+        { "<leader>Dc", group = "🏠 ClickHouse" },
+
+        -------------------------------------------------------------
+        --  🐹 Go: Kubernetes · Docker · Kafka — в плавающем терминале
+        --  (если утилиты нет в PATH — подсказка со ссылкой, без обходных путей)
+        -------------------------------------------------------------
+        { "<leader>HG", group = "🐹 Go: K8s · Docker · Kafka" },
+        { "<leader>HGk", group = "☸ Kubernetes" },
+        { "<leader>HGkk", require("config.termcmd").make("k9s", 120, "k9s"), desc = "☸ k9s — TUI кластера" },
+        { "<leader>HGkp", require("config.termcmd").make("kubectl get pods", 121, "kubectl pods"), desc = "📦 kubectl: поды текущего namespace" },
+        { "<leader>HGkc", require("config.termcmd").make("kubectl config get-contexts", 122, "kubectl contexts"), desc = "🔀 kubectl: контексты" },
+        { "<leader>HGd", group = "🐳 Docker" },
+        { "<leader>HGdd", require("config.termcmd").make("lazydocker", 130, "lazydocker"), desc = "🐳 lazydocker — TUI Docker" },
+        { "<leader>HGdp", require("config.termcmd").make("docker ps -a", 131, "docker ps"), desc = "📦 docker ps -a" },
+        { "<leader>HGdi", require("config.termcmd").make("docker images", 132, "docker images"), desc = "🖼 docker images" },
+        { "<leader>HGa", group = "📨 Kafka" },
+        { "<leader>HGak", require("config.termcmd").make("ktea", 140, "ktea"), desc = "📨 ktea — Kafka TUI (топики, группы, сообщения)" },
+        { "<leader>HGat", require("config.termcmd").make("kafkactl get topics", 141, "kafkactl topics"), desc = "📋 kafkactl: топики" },
+        { "<leader>HGag", require("config.termcmd").make("kafkactl get consumer-groups", 142, "kafkactl groups"), desc = "👥 kafkactl: consumer-группы" },
+        { "<leader>HGab", require("config.termcmd").make("kafkactl get brokers", 143, "kafkactl brokers"), desc = "🖧 kafkactl: брокеры" },
+
+        -------------------------------------------------------------
+        --  📂 Создать файл/директорию (H + c)
+        -------------------------------------------------------------
+        { "<leader>Hc", group = "📂 Создать файл/директорию" },
+        -- NvimTreeCreate не существует: файл создаётся клавишей `a` в дереве
+        { "<leader>Hcf", "<cmd>NvimTreeFindFileToggle<cr>", desc = "🆕 Дерево: создать файл (клавиша a)" },
         -- snacks.rename — это модуль (не функция), точка входа: rename_file()
         { "<leader>Hcr", function() require("snacks").rename.rename_file() end, desc = "✏️ Переименовать файл" },
       },
     },
+
+    config = function(_, opts)
+      require("which-key").setup(opts)
+    end,
   },
 }

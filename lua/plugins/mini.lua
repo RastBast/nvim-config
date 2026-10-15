@@ -29,15 +29,18 @@ return {
     "echasnovski/mini.ai",
     version = false,
     event = { "BufReadPost", "InsertEnter" },
-    opts = {
-      n_lines = 50,
-      custom_textobjects = {
-        -- f — функция (по Treesitter), c — вызов, o — блок
-        f = function()
-          local ok, ai = pcall(require, "mini.ai")
-          return ok and ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }) or nil
-        end,
-      },
-    },
+    -- opts — функция: gen_spec нужен mini.ai, а его модуль доступен только
+    -- после загрузки плагина. Раньше `f` был обёрткой, которая возвращала
+    -- функцию-спек вместо спека → vif/vaf ломались.
+    opts = function()
+      local ai = require("mini.ai")
+      return {
+        n_lines = 50,
+        custom_textobjects = {
+          -- f — функция (по Treesitter): af / if
+          f = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }),
+        },
+      }
+    end,
   },
 }

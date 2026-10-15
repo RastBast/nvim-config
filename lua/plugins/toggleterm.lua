@@ -17,30 +17,9 @@
 --  4) shade_terminals выключен: терминал больше не тонируется в странный
 --     цвет («зелёная панель») и выглядит как обычный fish в alacritty.
 
+-- Общая реализация в lua/config/termcmd.lua (её же используют K8s/Kafka под Go)
 local function term_cmd(cmd, id, title)
-  return function()
-    local bin = cmd:match("^(%S+)")
-    if vim.fn.executable(bin) == 0 then
-      vim.notify(
-        ("Команда «%s» не найдена в PATH.\nПоставь: lazydocker — https://github.com/jesseduffield/lazydocker\n(или пакетным менеджером: brew / apt / yay / nix)"):format(bin),
-        vim.log.levels.WARN
-      )
-      return
-    end
-    local Terminal = require("toggleterm.terminal").Terminal
-    Terminal:new({
-      cmd = cmd,
-      direction = "float",
-      id = id,
-      name = title,
-      close_on_exit = true,
-      float_opts = {
-        border = "curved",
-        width = math.floor(vim.o.columns * 0.85),
-        height = math.floor(vim.o.lines * 0.8),
-      },
-    }):toggle()
-  end
+  return require("config.termcmd").make(cmd, id, title)
 end
 
 return {

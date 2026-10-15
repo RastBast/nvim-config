@@ -9,15 +9,18 @@
 --     в текущей версии адаптеры лежат в `adapters.http`, а не в `adapters`.
 --  2) `strategies` — устаревшее имя (config.lua подменяет его на
 --     `interactions`), переписано на актуальное.
---  3) `prompt_library` больше не хранит промпты (там только markdown.dirs),
---     кастомные промпты переехали в `interactions`.
---  4) `display.diff.provider = "mini_diff"` — такой опции нет
+--  3) `display.diff.provider = "mini_diff"` — такой опции нет
 --     (у display.diff есть enabled/threshold_for_chat/window/word_highlights),
 --     поэтому mini.diff подключён как отдельный плагин.
---  5) Команды :CodeCompanionSend НЕ СУЩЕСТВУЕТ. Реальные команды:
+--  4) Команды :CodeCompanionSend НЕ СУЩЕСТВУЕТ. Реальные команды:
 --     CodeCompanion, CodeCompanionChat, CodeCompanionActions, CodeCompanionCmd,
 --     CodeCompanionCLI, CodeCompanionCodeReview.
 --     Отправка выделения в инлайн-чат — это :CodeCompanion в visual-режиме.
+--  5) Свой промпт «Explain Code» переехал из `interactions` в `prompt_library`
+--     (с `interaction = "chat"` и `opts.alias`). В `interactions` он никогда
+--     не регистрировался, а `opts.mapping` в CodeCompanion не поддерживается.
+--  6) api_key для kimi — имя переменной окружения, а не её значение
+--     (см. комментарий у `env` ниже).
 return {
   {
     "olimorris/codecompanion.nvim",
@@ -37,18 +40,25 @@ return {
     keys = {
       { "<leader>Hat", "<cmd>CodeCompanionChat<cr>", desc = "💬 Чат с Kimi", mode = { "n", "v" } },
       { "<leader>Hai", "<cmd>CodeCompanionActions<cr>", desc = "🛠 Действия AI", mode = { "n", "v" } },
-      { "<leader>Hae", "<cmd>CodeCompanion<cr>", desc = "📤 Отправить выделение ИИ", mode = { "n", "v" } },
+      -- Строковый rhs, а не <cmd>: в visual Vim дописывает '<,'> и команда
+      -- получает именно выделение. С <cmd> range пустой → уходила одна строка.
+      { "<leader>Hae", ":CodeCompanion<cr>", desc = "📤 Отправить выделение ИИ", mode = { "n", "v" } },
       { "<leader>Hac", "<cmd>CodeCompanionCmd<cr>", desc = "✨ Команда в CodeCompanion", mode = { "n", "v" } },
     },
     opts = {
       adapters = {
         http = {
-          -- Встроенный адаптер kimi + наш ключ из окружения.
-          -- Можно просто `export MOONSHOT_API_KEY=...` — тогда блок не нужен.
+          -- Встроенный адаптер kimi + ключ из окружения.
+          -- Нужен только `export MOONSHOT_API_KEY=...` в shell.
           extend = {
             kimi = {
+              -- ИМЯ переменной, а не её значение: CodeCompanion сам читает
+              -- переменную в момент запроса. Раньше здесь стояло
+              -- os.getenv(...) or "MOONSHOT_API_KEY": при заданном ключе
+              -- его значение принималось за имя переменной, а при незаданном
+              -- в запрос уходила строка "MOONSHOT_API_KEY" → 401.
               env = {
-                api_key = os.getenv("MOONSHOT_API_KEY") or "MOONSHOT_API_KEY",
+                api_key = "MOONSHOT_API_KEY",
               },
               schema = {
                 model = { default = "moonshot-v1-8k" }, -- есть 32k и 128k
@@ -70,12 +80,15 @@ return {
         },
         inline = { adapter = "kimi" },
         agent = { adapter = "kimi" },
+      },
 
-        -- Кастомный промпт (раньше жил в prompt_library)
+      -- Пользовательские промпты — в prompt_library (НЕ в interactions).
+      -- Вызов: require("codecompanion").prompt("explain") или :CodeCompanion /explain
+      prompt_library = {
         ["Explain Code"] = {
-          strategy = "chat",
+          interaction = "chat",
           description = "Объясни выделенный код",
-          opts = { mapping = "<leader>Hae" },
+          opts = { alias = "explain" },
           prompts = {
             {
               role = "user",

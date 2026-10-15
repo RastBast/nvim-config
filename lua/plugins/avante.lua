@@ -51,6 +51,10 @@ return {
     dependencies = {
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",
+      -- Обязательная зависимость avante (README avante, «Mandatory dependencies»):
+      -- avante/commands.lua делает require("mega.cmdparse") при VeryLazy.
+      -- Без неё: «module 'mega.cmdparse' not found».
+      { "ColinKennedy/mega.cmdparse", dependencies = { "ColinKennedy/mega.logging" } },
       "nvim-treesitter/nvim-treesitter",
       "nvim-tree/nvim-web-devicons",
       "stevearc/dressing.nvim",
@@ -94,7 +98,7 @@ return {
           -- Не проверять TLS-сертификат. Нужно ТОЛЬКО если у ретранслятора
           -- самоподписанный сертификат (см. PROXY.md, §4).
           -- Включается без правки файла:  set -Ux GEMINI_INSECURE 1
-          allow_insecure = vim.env.GEMINI_INSECURE ~= nil,
+          allow_insecure = vim.env.GEMINI_INSECURE == "1",
           -- МОДЕЛЬ. gemini-2.5-flash для НОВЫХ аккаунтов закрыт, Google
           -- отвечает 404 "no longer available to new users" — поэтому
           -- ставим gemini-3.6-flash (это и дефолт самого avante).

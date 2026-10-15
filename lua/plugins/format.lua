@@ -11,12 +11,16 @@ return {
   {
     "stevearc/conform.nvim",
     event = { "BufWritePre" },
-    cmd = { "ConformInfo", "Format" },
+    -- Команды conform: только ConformInfo. Раньше здесь был «Format» — такой
+    -- команды у conform НЕТ (E492 при вызове), форматирование — <leader>cf.
+    cmd = { "ConformInfo" },
     keys = {
       { "<leader>cf", function() require("conform").format({ async = true }) end, desc = "🎨 Форматировать файл" },
     },
     opts = {
-      formatters_by_ft = {
+      -- Базовые форматтеры ≈40 языков — из lua/config/languages.lua;
+      -- записи ниже (уже были в конфиге) имеют приоритет над ними.
+      formatters_by_ft = vim.tbl_extend("force", require("config.languages").formatters(), {
         go = { "goimports", "gofmt" },
         lua = { "stylua" },
         javascript = { "prettier" },
@@ -28,12 +32,12 @@ return {
         css = { "prettier" },
         html = { "prettier" },
         markdown = { "prettier" },
-        sql = { "sqlformat" },
+        sql = { "sqlfluff" }, -- ИСПРАВЛЕНО: "sqlformat" в conform не существует
         xml = { "xmlformat" },
         sh = { "shfmt" },
         proto = { "buf" }, -- buf format; если buf нет — фолбэк через LSP (protols)
         ["_"] = { "trim_whitespace", "trim_newlines" },
-      },
+      }),
       format_on_save = {
         timeout_ms = 1000,
         lsp_format = "fallback", -- если нет внешнего форматтера — через LSP

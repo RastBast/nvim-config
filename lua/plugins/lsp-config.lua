@@ -27,8 +27,11 @@ return {
     opts = function()
       local servers = require("config.servers")
       return {
-        ensure_installed = servers,
-        automatic_installation = true,
+        ensure_installed = servers.mason,
+        -- toolchain-серверы (Dart, Xcode, R…) Mason не ставит и не включает сам.
+        -- В зафиксированной версии (lazy-lock.json) опция называется automatic_enable;
+        -- старое automatic_installation там не поддерживается.
+        automatic_enable = { exclude = servers.toolchain },
       }
     end,
   },
@@ -44,7 +47,7 @@ return {
       local ok, cmp_lsp = pcall(require, "cmp_nvim_lsp")
       local capabilities = ok and cmp_lsp.default_capabilities() or vim.lsp.protocol.make_client_capabilities()
 
-      local servers = require("config.servers")
+      local servers = require("config.servers").all
       local custom = {
         gopls = {
           settings = {

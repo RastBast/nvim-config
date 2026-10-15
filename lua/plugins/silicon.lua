@@ -27,10 +27,9 @@ return {
       require("nvim-silicon").setup(opts)
       
       -- Клавиша для скриншота
-      vim.keymap.set("v", "<leader>sc", function()
-        -- Тихий запуск без лишних варнингов
-        pcall(vim.cmd, "Silicon")
-      end, { desc = "📸 Скриншот Silicon" })
+      -- Строковый rhs: в visual Vim дописывает '<,'> → Silicon снимает именно
+      -- выделение. Раньше vim.cmd("Silicon") без диапазона брал всю строку/буфер.
+      vim.keymap.set("v", "<leader>sc", ":Silicon<CR>", { desc = "📸 Скриншот Silicon" })
     end
   }
 }
