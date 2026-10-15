@@ -51,6 +51,33 @@ return {
         { "<leader>H", group = "🎛 Главное меню" },
 
         -------------------------------------------------------------
+        --  ✈️  TG — ОТДЕЛ TELEGRAM (консольный tele внутри nvim)
+        -------------------------------------------------------------
+        -- Отдел объявлен ЗДЕСЬ, чтобы он был виден отдельной строкой в таблице
+        -- на <leader>. Сами клавиши ставит lua/config/telegram.lua (vim.keymap.set),
+        -- поэтому тут ТОЛЬКО desc без действия: { lhs, desc = ... } без rhs —
+        -- это подписи, новых маппингов which-key от них не создаёт (v3: маппинг
+        -- создаётся, только если задан rhs).
+        { "<leader>m", group = "TG ✈ Telegram (tele)", icon = "✈" },
+        { "<leader>mm", desc = "🗕 tele: маленькое окно (float)" },
+        { "<leader>mf", desc = "🖥 tele: на весь экран" },
+        { "<leader>mp", desc = "▐ tele: боковой панелью" },
+        { "<leader>mh", desc = "🙈 спрятать окно (tele останется живым)" },
+        { "<leader>mo", desc = "↩︎ открыть чат последнего уведомления" },
+        { "<leader>mc", desc = "🎯 выбрать чат и сесть на него" },
+        { "<leader>mi", desc = "📥 история входящих" },
+        { "<leader>mt", desc = "📖 прочитать чат, не открывая tele" },
+        { "<leader>mr", desc = "✍️ ответить через tele" },
+        { "<leader>mq", desc = "↩︎ ответить в чат последнего уведомления" },
+        { "<leader>ms", desc = "📤 отправить выделение в tele (visual)" },
+        { "<leader>mS", desc = "📤 отправить текущую строку в tele" },
+        { "<leader>mn", desc = "🔇 режим тишины (dnd)" },
+        { "<leader>mb", desc = "🔔 гудок вкл/выкл" },
+        { "<leader>md", desc = "🩺 диагностика (:TeleCheck)" },
+        { "<leader>mk", desc = "💀 убить процесс tele" },
+        { "<leader>m?", desc = "📋 шпаргалка по telegram-мосту" },
+
+        -------------------------------------------------------------
         --  🔍 Поиск и Файлы
         -------------------------------------------------------------
         { "<leader>Hf", group = "🔍 Поиск и Файлы" },
@@ -132,7 +159,10 @@ return {
         { "<leader>Hus", "<cmd>Silicon<cr>", desc = "📸 Скриншот кода (Silicon)" },
         { "<leader>Hur", function() require("kulala").run() end, desc = "🚀 HTTP-запрос (Kulala)" },
         { "<leader>Huz", "<cmd>ZenMode<cr>", desc = "🧘 Дзен-режим" },
-        { "<leader>Hum", "<cmd>MaximizerToggle!<cr>", desc = "🪟 Развернуть/восстановить окно" },
+        -- саму клавишу ставит lua/plugins/maximizer.lua (там и ленивый триггер);
+        -- MaximizerToggle! = форс-восстановление, а не toggle — поэтому <leader>HuM
+        { "<leader>Hum", desc = "🪟 Развернуть/восстановить окно" },
+        { "<leader>HuM", desc = "🪟 Принудительно вернуть раскладку (!)" },
         { "<leader>Hup", "<cmd>PetsNew holli<cr>", desc = "🐾 Питомец (Pets)" },
         {
           "<leader>Hua",
@@ -150,6 +180,14 @@ return {
         },
         { "<leader>Hut", "<cmd>TimerStart 25m Work<cr>", desc = "⏱️ Старт Pomodoro" },
         { "<leader>HuP", "<cmd>TimerStop Work<cr>", desc = "⏱️ Стоп Pomodoro" },
+
+        -- 🕐 HUD в правом верхнем углу (lua/config/hud.lua) и 🔥 огонёк за
+        -- коммиты (lua/config/streak.lua). Клавиши тоже ставятся там, тут подписи.
+        { "<leader>Huh", desc = "🕐 HUD: плашка в углу (вкл/выкл)" },
+        { "<leader>Hud", desc = "🐞 HUD: что он видит (диагностика)" },
+        { "<leader>Hui", desc = "🌐 HUD: какой IP — lan → public → both → off" },
+        { "<leader>Huc", desc = "🕐 HUD: 12/24-часовой формат" },
+        { "<leader>Huk", desc = "🔥 Огонёк за коммиты (:Streak)" },
 
         -------------------------------------------------------------
         --  📌 Harpoon (v2 — ветка harpoon2)

@@ -5,7 +5,7 @@
 --- РЕЖИМ: I (1) -------------------------------------------------------
   jk                     Выход в Normal                       init.lua
 
---- РЕЖИМ: N (117) -------------------------------------------------------
+--- РЕЖИМ: N (122) -------------------------------------------------------
   <C-Down>               Ниже                                   init.lua
   <C-Up>                 Выше                                   init.lua
   <C-h>                  Окно слева                        init.lua
@@ -29,6 +29,13 @@
   <leader>Hae            📤 Отправить выделение ИИ lua/plugins/ai.lua
   <leader>Hai            🛠 Действия AI                   lua/plugins/ai.lua
   <leader>Hat            💬 Чат с Kimi                        lua/plugins/ai.lua
+  <leader>Hum            🪟 Развернуть/восстановить окно lua/plugins/maximizer.lua
+  <leader>HuM            🪟 Принудительно вернуть раскладку lua/plugins/maximizer.lua
+  <leader>Huc            🕐 HUD: 12/24-часовой формат lua/config/hud.lua
+  <leader>Hud            🐞 HUD: что он видит (диагностика) lua/config/hud.lua
+  <leader>Huh            🕐 HUD: плашка в углу (вкл/выкл) lua/config/hud.lua
+  <leader>Hui            🌐 HUD: какой IP (lan/public/both/off) lua/config/hud.lua
+  <leader>Huk            🔥 Огонёк за коммиты (:Streak) lua/config/hud.lua
   <leader>S              Поиск и замена во всем проекте lua/plugins/spectre.lua
   <leader>TG             🌿 lazygit в терминале         lua/plugins/toggleterm.lua
   <leader>Ta             ❎ Показать/скрыть все терминалы lua/plugins/toggleterm.lua
@@ -72,7 +79,6 @@
   <leader>hh             Меню Harpoon                           lua/plugins/harpoon.lua
   <leader>jq             🔎 jq-запрос по JSON             lua/plugins/json-pro.lua
   <leader>jx             🔍 Список ключей JSON        lua/plugins/json-pro.lua
-  <leader>m              Развернуть окно              lua/plugins/maximizer.lua
   <leader>mb             ✈ Гудок терминала вкл/выкл lua/config/telegram.lua
   <leader>mc             ✈ Выбрать чат и сесть на него lua/config/telegram.lua
   <leader>md             ✈ Диагностика Telegram-моста lua/config/telegram.lua
@@ -149,5 +155,8 @@
   au                     —                                        lua/plugins/ts-unit.lua
   iu                     —                                        lua/plugins/ts-unit.lua
 
-Всего маппингов: 138 (из них 16 — Telegram-мост, lua/config/telegram.lua;
-буферные клавиши :TeleInbox/:TeleRead в список не входят)
+Всего маппингов: 143 (из них 16 — Telegram-мост, lua/config/telegram.lua;
+буферные клавиши :TeleInbox/:TeleRead в список не входят.
+🕐/🔥 — 7 клавиш lua/config/hud.lua (<leader>Huc/Hud/Huh/Hui/Huk) и
+lua/plugins/maximizer.lua (<leader>Hum/HuM); счётчики пересчитаны по фактическим
+строкам файла — в прошлой ревизии заголовок РЕЖИМ: N отставал на одну строку.)

@@ -15,6 +15,8 @@
 | `go` | Go-стек | `brew install go` |
 | `tele` | Telegram в терминале и в nvim (`<leader>m…`) | brew tap + `brew install tele`, либо apt/dnf из репозитория автора, либо `go build -o tele ./cmd/tele` |
 | `sqlite3` | мост читает кэш tele → уведомления в nvim | обычно уже стоит; `brew install sqlite` / `apt install sqlite3` |
+| — (ничего ставить не надо) | 🕐 HUD в правом верхнем углу: время МСК, заряд, IP. Заряд — `pmset -g batt` (встроен в macOS) или `/sys/class/power_supply/BAT*` (Linux); локальный IP — `ipconfig`/`ip`; публичный — `curl` (встроен) | если чего-то нет, сегмент просто исчезает: `:Hud debug` покажет, чего именно |
+| `git` (уже требуется выше) | 🔥 огонёк за коммиты: число коммитов за день берётся из локального `git log`, никуда не отправляется | ничего; журнал живёт в `stdpath("data")/streak.json` |
 | Nerd Font | иконки | `brew install --cask font-jetbrains-mono-nerd-font` (или любой с nerd-fonts.com) |
 
 Опционально для proto: `buf`, `protolint` — можно из Neovim: `:MasonInstall buf protolint`.
@@ -84,6 +86,12 @@ bash /tmp/APPLY_UPDATE.sh
 ```
 
 После любого варианта — **полный перезапуск Neovim**.
+
+Локальное состояние (не часть репозитория, при обновлении не трогается и не
+трогается `git reset`): `~/.local/share/nvim/streak.json` — 🔥 огонёк за
+коммиты, и `~/.config/tele/config.yml` + `state_dir` (кэш `state.db`) — telegram-
+мост. При переносе на новую машину их стоит скопировать руками, иначе серия
+начнётся с нуля (§24 в DOCS.md).
 
 ## 4.5. Ключ Google Gemini (бесплатный ИИ)
 

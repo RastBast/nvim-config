@@ -1777,7 +1777,7 @@ function T.keymaps()
     callback = function()
       local ok, wk = pcall(require, "which-key")
       if ok and type(wk.add) == "function" then
-        pcall(wk.add, { { "<leader>m", group = "✈ Telegram (tele)" } })
+        pcall(wk.add, { { "<leader>m", group = "TG ✈ Telegram (tele)", icon = "✈" } })
       end
     end,
   })
