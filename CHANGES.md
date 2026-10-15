@@ -1,5 +1,27 @@
 # Что исправлено в конфиге (2026-08-30)
 
+## 2026-10-15 · Подсказки <leader>H — как в main; HUD: день недели и число
+
+**`lua/plugins/which-key.lua`** — структура, эмодзи и названия групп возвращены из `main`
+(🎛 Главное меню, 🔍 Поиск и Файлы, 🌿 Git и Go, 🗄 Базы и Отладка, 🤖 AI и Структура,
+💎 Obsidian, 🧪 Тесты, 🎨 Визуал и UI, 📌 Harpoon, 🔌 Плагины, ⚠️ Диагностика, 📦 Прочее,
+📂 Создать файл/директорию). Отличия от `main` — только там, где клавиша в `main` не работала:
+
+| Было в main | Стало | Почему |
+|---|---|---|
+| `<leader>Ht` = GoTest и группа «Тесты», и группа «Терминал» | GoTest → `<leader>Hgt` | `<leader>Ht` — группа; команда на том же префиксе не работает |
+| Терминал `<leader>Htt/Hth/Htv/Htc` | Группа `<leader>T` (🖥 Терминал) — подписи к `<leader>T*` из `toggleterm.lua` | терминал живёт на `<leader>T*` |
+| `GoVulncheck`, `GoTagAdd`, `Telescope todo`, `DBUI AddConnection`, `TroubleToggle`, `PomodoroStart/Stop`, `Pets`, `KulalaRun`, `harpoon.mark`, `CodeCompanionSend` | `GoVulnCheck`, `GoAddTag`, `TodoTelescope`, `DBUIAddConnection`, `Trouble diagnostics toggle`, `TimerStart/Stop`, `PetsNew holli`, `kulala.run()`, harpoon v2, `:CodeCompanion` | такой команды/API нет в актуальных версиях плагинов |
+| `DBUI ExecuteQuery`, `NvimTreeCreate` | убраны | подкоманды нет; файл создаётся клавишей `a` в дереве |
+
+Новые команды (помечены `✚`): `<leader>Hfc` команды Neovim, `Hfw` слово под курсором, `Hfm` метки,
+`Hgd` diff файла, `Hgl` blame строки вкл/выкл, `Hgg` LazyGit, `Hdf` БД буфера, `Hac` CodeCompanion,
+`Hpy` **Lazy sync**, `Hpc` ConformInfo, `Hxs` символы (Trouble), `Hxt` TODO (Trouble).
+
+**`lua/config/hud.lua`** — рядом со временем показываются день недели и дата по МСК:
+`🕐 Чт 15.10 · 8:48 PM`. Считается арифметикой (без `os.date`, как и время), опция `show_date`
+(по умолчанию `true`). Проверено против `datetime` на 3008 метках времени, включая високосные годы.
+
 ## 2026-10-15 · Проход по багам: команды, API плагинов, логика переводчика
 
 Сверка с исходниками плагинов (клоны `codecompanion`, `avante`, `conform`,

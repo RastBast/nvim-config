@@ -35,6 +35,7 @@ H.defaults = {
   segments = { time = true, battery = true, ip = true, flames = true },
   ip_mode = "both",        -- lan | public | both | off
   clock = 12,              -- 12 | 24
+  show_date = true,        -- день недели и число перед временем: «Ср 15.10 · 3:45 PM»
   tz_offset = 3 * 3600,    -- МСК = UTC+3 (переводов времени нет с 2014)
   tz_label = "МСК",
   time_every = 15000,      -- мс
@@ -93,6 +94,27 @@ H.run = run -- наружу для :HudNow/тестов
 -- ========================================================================== --
 --                                 СЕГМЕНТЫ
 -- ========================================================================== --
+
+local WEEKDAYS_RU = { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" }
+
+---@param ts number|nil
+---@return string «Ср 15.10» — день недели и дата по МСК (tz_offset)
+function H.date_str(ts)
+  local t = (ts or os.time()) + (H.opts.tz_offset or 0)
+  local days = math.floor(t / 86400)
+  -- 1970-01-01 — четверг. ISO-нумерация: Пн=1 … Вс=7
+  local wd = ((days + 3) % 7) + 1
+  -- дата из дней с эпохи (civil_from_days, Howard Hinnant) — без os.date
+  local z = days + 719468
+  local era = math.floor(z / 146097)
+  local doe = z - era * 146097
+  local yoe = math.floor((doe - math.floor(doe / 1460) + math.floor(doe / 36524) - math.floor(doe / 146096)) / 365)
+  local doy = doe - (365 * yoe + math.floor(yoe / 4) - math.floor(yoe / 100))
+  local mp = math.floor((5 * doy + 2) / 153)
+  local d = doy - math.floor((153 * mp + 2) / 5) + 1
+  local m = mp < 10 and mp + 3 or mp - 9
+  return ("%s %02d.%02d"):format(WEEKDAYS_RU[wd], d, m)
+end
 
 ---@param ts number|nil
 ---@return string "2:15 PM" | "14:15"
@@ -241,7 +263,8 @@ function H.build()
     hls[#hls + 1] = hl
   end
   if H.opts.segments.time then
-    push(H.opts.icons.time .. " " .. H.time_str(), "HudTime")
+    local date = H.opts.show_date and (H.date_str() .. " · ") or ""
+    push(H.opts.icons.time .. " " .. date .. H.time_str(), "HudTime")
   end
   if H.opts.segments.battery then
     local b, hl = battery_text()
