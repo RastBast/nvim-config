@@ -57,7 +57,6 @@ return {
       { "ColinKennedy/mega.cmdparse", dependencies = { "ColinKennedy/mega.logging" } },
       "nvim-treesitter/nvim-treesitter",
       "nvim-tree/nvim-web-devicons",
-      "stevearc/dressing.nvim",
       "nvim-telescope/telescope.nvim", -- выбор файлов для @упоминаний
       "folke/snacks.nvim",             -- input-виджеты
       "MeanderingProgrammer/render-markdown.nvim", -- рендер ответов (ft Avante добавлен в markdown.lua)

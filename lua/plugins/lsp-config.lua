@@ -10,7 +10,7 @@
 --     добавлена явная зависимость и pcall.
 --  3) renamer.nvim (lua/plugins/renamer.lua) удалён: он заброшен, а
 --     переименование делает встроенный vim.lsp.buf.rename() (Neovim 0.11+)
---     через dressing.nvim. Клавиши те же.
+--     через snacks.picker (picker.ui_select в snacks.lua). Клавиши те же.
 return {
   {
     "mason-org/mason.nvim",

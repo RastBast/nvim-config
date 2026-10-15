@@ -329,3 +329,31 @@ Lua с заглушкой `vim` (фейковые ФС, `pmset`, `git`, `curl`, 
 * **Размер `<leader>Tv`**: в `main` было 40, в текущей версии 60 (без записи в журнале). Ожидает решения.
 * **Избранные команды для подсказок**: 15 пользовательских команд без подсказок — `DiagRu`, `EnvCheck`, `Flex`, `HoverRu`, `HudClock`, `HudIp`, `HudNow`, `HudTz`, `Matrix`, `NotifyRu`, `RuCheck`, `StreakGoal`, `StreakHour`, `StreakNotify`, `StreakRepo`. Добавлять в `<leader>H` по выбору пользователя.
 * **Реальный запуск `nvim`** в песочнице не проверен: релизы Neovim недоступны (`objects.githubusercontent.com` блокируется). Нужно `:checkhealth` и `:Lazy sync` (после переименований) на машине пользователя.
+
+## Часть 9: огонёк сам, решения по архивным плагинам и утилиты
+
+### Огонёк за коммиты — автоматически (`lua/config/streak.lua`)
+* **Репозитории находятся сами**: при `BufEnter`/`DirChanged` определяется git-корень каталога (`git rev-parse --show-toplevel`), при старте сканируются папки `roots` (`~/code`, `~/projects`, `~/dev`, `~/Developer`, `~/src`… на 1–2 уровня). Найденное сохраняется в `streak.json` (`auto`). `:StreakRepo` больше не нужен.
+* **Коммит и новая ветка пересчитываются сразу**: `fs_event` на `.git/logs` и `.git/refs/heads` + склейка через `debounce_ms` (800 мс). Не нужно ждать таймера 5 минут.
+* **Новая ветка за день тоже зажигает огонёк** (`branch_counts = true`). Время создания берётся из первой строки reflog ветки (`.git/logs/refs/heads/<имя>`), учитываются только свои (по `user.email`). Поставьте `branch_counts = false`, если хотите только коммиты.
+* **Триггеры без таймера**: возврат фокуса в nvim (`FocusGained`) и выход из терминала (`TermClose`: lazygit, git в toggleterm).
+* Исправлено: `active_repos()` не вызывает `git` на каждом `BufEnter` (корень конфига кешируется); удалён ошибочный комментарий над `refresh_hud`; сообщение «нет репозитория» больше не предлагает `:StreakRepo`.
+* Проверено на настоящем git: формат reflog (email и unix-время создания ветки) разбирается верно для `git branch` и `git switch -c`.
+
+### Архивные плагины заменены (ответ на «решай сам»)
+* `stevearc/dressing.nvim` (архив, 2025-02) → **удалён**. Выбор `vim.ui.select` теперь в **snacks.picker** (`picker = { enabled = true, ui_select = true }` в `snacks.lua`). Зависимость из avante убрана.
+* `famiu/bufdelete.nvim` (архив, 2024-02) → **удалён**. `<leader>bd` → `Snacks.bufdelete()` (модуль уже в snacks.nvim).
+
+### Остальные решения
+* **`<leader>Tv` — размер 40** (как в `main`). Раньше здесь было 60 без записи в журнале.
+* **Утилиты с клавишами**: группа **`<leader>HW` «🧰 Утилиты и диагностика»** (заглавная W — все строчные буквы под `<leader>H` заняты; прежнее утверждение «свободна только w» было ошибкой). Клавиши: `HWr` RuCheck, `HWh/HWd/HWn` переключатели HoverRu/DiagRu/NotifyRu, `HWe` EnvCheck, `HWm` Matrix, `HWt` HudNow, `HWi` HudIp toggle, `HWc/HWC` HudClock 24/12, `HWz` HudTz 3, `HWa/HWA` огонёк без/с уведомлениями, `HWg` StreakGoal 1, `HWb` StreakHour 3. Справка: `keydocs/g8_utils.lua`.
+
+### Проверки
+* luacheck (mpeterv/luacheck, Lua 5.4): синтаксических ошибок нет; необъявленных глобалей нет (кроме `hs`, `Snacks`, которые создаются средой или плагином).
+* Справка: 317 статических записей; единственное пересечение — `b` (Super Mode, `hydra`), скрыто вне Super Mode.
+* Межфайловых дублей клавиш `keymap.set` нет.
+* Файлы `dressing.lua` и `bufdelete.lua` удалены; ссылок на `dressing`/`Bdelete` в коде нет.
+
+### Не проверено
+* Запуск настоящего `nvim`: в песочнице релизы Neovim недоступны. Нужно `:Lazy sync`, `:checkhealth`, затем `:Streak` и коммит в тестовом репозитории.
+* `picker.ui_select` в snacks: поведение проверено по исходникам upstream, но не в живом Neovim (например, выбор структуры в `go_extras`).

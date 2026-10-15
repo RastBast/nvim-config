@@ -17,6 +17,8 @@ return {
     opts = {
       bigfile = { enabled = true, size = 1024 * 1024 }, -- 1 МБ
       scratch = { enabled = true },
+      -- vim.ui.select → выбор в snacks picker (замена архивному dressing.nvim)
+      picker = { enabled = true, ui_select = true },
       indent = { enabled = true, animate = { enabled = false } },
       quickfile = { enabled = true },
       statuscolumn = { enabled = false }, -- колонку рисуем сами (signcolumn = yes)
@@ -25,6 +27,8 @@ return {
     keys = {
       { "<leader>ns", function() Snacks.scratch() end, desc = "📓 Черновик" },
       { "<leader>nS", function() Snacks.scratch.select() end, desc = "📓 История черновиков" },
+      -- закрыть буфер без поломки окон (замена архивному bufdelete.nvim)
+      { "<leader>bd", function() Snacks.bufdelete() end, desc = "Закрыть буфер" },
       -- УБРАНО: <leader>nh — оно уже занято под :nohlsearch в init.lua
       { "]]", function() Snacks.words.jump(1, true) end, desc = "Следующее слово", mode = { "n", "t" } },
       { "[[", function() Snacks.words.jump(-1, true) end, desc = "Предыдущее слово", mode = { "n", "t" } },

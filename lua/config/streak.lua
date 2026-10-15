@@ -36,6 +36,13 @@ S.defaults = {
   all_branches = true,    -- --branches, а не только HEAD
   notify = true,
   grid_days = 14,         -- ширина сетки дней в :Streak
+  -- ---- АВТОМАТИКА: ничего запускать руками не нужно ----
+  -- Папки, где лежат ваши проекты: ищем репозитории на 1–2 уровня вглубь.
+  -- Несуществующие пути молча пропускаются.
+  roots = { "~/code", "~/Code", "~/projects", "~/Projects", "~/dev", "~/Developer", "~/src" },
+  watch = true,           -- следить за .git (коммит / новая ветка) через fs_event
+  debounce_ms = 800,      -- несколько событий git подряд → один пересчёт
+  branch_counts = true,   -- создание ветки за день тоже зажигает огонёк
 }
 
 -- Опции готовы сразу, до setup(): day_of()/report() опираются на tz_offset и
@@ -59,6 +66,10 @@ S.state = {
   email = nil,
   last_day = nil,   -- последний день, о котором мы знаем (для melt_gaps)
   last_awarded = nil, -- день, за который огонёк уже засчитан (не повторять нотификейшн)
+  auto = {},          -- репозитории, найденные автоматически (сохраняются в streak.json)
+  seen_dirs = {},     -- каталоги, которые уже проверили на принадлежность к git
+  watchers = {},      -- [repo] = { fs_event-хэндлы }
+  debounce = nil,     -- таймер склейки событий git
 }
 
 local function expand(p) return p and vim.fn.expand(p) or nil end
@@ -159,6 +170,7 @@ function S.save()
       -- last_day = «последний день, о котором мы точно знаем»: из check(), а если
       -- nvim открыли и не успели проверить — из сохранённого ранее
       last_day = S.state.today or S.state.last_day,
+      auto = S.state.auto,
     }
     for d, n in pairs(S.state.days) do out.days[tostring(d)] = n end
     for d in pairs(S.state.burned) do out.burned[tostring(d)] = true end
@@ -185,25 +197,138 @@ function S.load()
   S.state.best = tonumber(parsed.best) or 0
   S.state.total = tonumber(parsed.total) or 0
   S.state.last_day = tonumber(parsed.last_day)
+  S.state.auto = {}
+  for _, r in ipairs(parsed.auto or {}) do
+    if type(r) == "string" then S.state.auto[#S.state.auto + 1] = r end
+  end
 end
 
 -- ========================================================================== --
 --                            РЕПОЗИТОРИИ И КОММИТЫ
 -- ========================================================================== --
 
---- Куда смотреть. По умолчанию: репозиторий этого конфига (его рабочий каталог)
---- и всё, что добавили через :StreakRepo.
+--- Куда смотреть: репозиторий конфига (если не задано иное), явный список из
+--- setup()/:StreakRepo и всё, что нашлось автоматически (S.state.auto).
 function S.active_repos()
-  if S.opts.repos and #S.opts.repos > 0 then
-    local out = {}
-    for _, r in ipairs(S.opts.repos) do out[#out + 1] = expand(r) end
-    return out
+  local out, seen = {}, {}
+  local function add(p)
+    if not p or p == "" then return end
+    p = vim.fs.normalize(expand(p))
+    if not seen[p] and vim.fn.isdirectory(p) == 1 then
+      seen[p] = true
+      out[#out + 1] = p
+    end
   end
-  local cfg = vim.fn.stdpath("config")
-  local top = vim.fn.system({ "git", "-C", cfg, "rev-parse", "--show-toplevel" })
-  top = vim.trim(top or "")
-  if top ~= "" and vim.fn.isdirectory(top) == 1 then return { top } end
-  return {}
+  if S.opts.repos and #S.opts.repos > 0 then
+    for _, r in ipairs(S.opts.repos) do add(r) end
+  else
+    -- git-корень конфига узнаём один раз: active_repos() зовётся на каждом BufEnter
+    if S.state.cfg_top == nil then
+      local top = vim.fn.system({ "git", "-C", vim.fn.stdpath("config"), "rev-parse", "--show-toplevel" })
+      S.state.cfg_top = vim.trim(top or "")
+    end
+    add(S.state.cfg_top)
+  end
+  for _, r in ipairs(S.state.auto or {}) do add(r) end
+  return out
+end
+
+--- АВТОМАТИКА: найти репозитории и следить за ними.
+--- Репозиторий, в котором вы открыли файл или сменили каталог, добавляется сам.
+--- Возвращает true, если репозиторий новый.
+function S.add_auto(top)
+  if not top or top == "" then return false end
+  top = vim.fs.normalize(top)
+  for _, r in ipairs(S.state.auto) do
+    if r == top then return false end
+  end
+  S.state.auto[#S.state.auto + 1] = top
+  S.save()
+  S.watch(top)
+  return true
+end
+
+--- Каталог → git-корень (асинхронно). Уже известные каталоги не проверяем повторно,
+--- а каталоги внутри известного репозитория — вообще без вызова git.
+function S.discover_dir(dir)
+  if not dir or dir == "" then return end
+  dir = vim.fs.normalize(expand(dir))
+  if S.state.seen_dirs[dir] then return end
+  for _, r in ipairs(S.active_repos()) do
+    if dir == r or dir:sub(1, #r + 1) == r .. "/" then return end
+  end
+  S.state.seen_dirs[dir] = true
+  run({ "git", "-C", dir, "rev-parse", "--show-toplevel" }, function(out, err)
+    local top = vim.trim(out or "")
+    if err or top == "" then return end
+    if S.add_auto(top) then S.check() end
+  end)
+end
+
+--- Один раз при старте: папки из opts.roots (глубина 1 и 2) → репозитории.
+function S.discover_roots()
+  local found = false
+  for _, root in ipairs(S.opts.roots or {}) do
+    local base = vim.fn.expand(root)
+    if vim.fn.isdirectory(base) == 1 then
+      for _, pat in ipairs({ base .. "/*/.git", base .. "/*/*/.git" }) do
+        for _, g in ipairs(vim.fn.glob(pat, false, true)) do
+          if S.add_auto(vim.fs.dirname(g)) then found = true end
+        end
+      end
+    end
+  end
+  if found then S.check() end
+end
+
+--- fs_event на .git/logs (коммиты, checkout -b, reflog) и .git/refs/heads (новые ветки).
+--- Для worktree/submodule (.git — файл) вотчера нет: работают таймер и триггеры nvim.
+function S.watch(repo)
+  if not S.opts.watch or S.state.watchers[repo] then return end
+  local gitdir = repo .. "/.git"
+  if vim.fn.isdirectory(gitdir) ~= 1 then return end
+  local handles = {}
+  for _, sub in ipairs({ "logs", "refs/heads" }) do
+    local p = gitdir .. "/" .. sub
+    if vim.fn.isdirectory(p) == 1 then
+      local h = uv.new_fs_event()
+      if h and h:start(p, {}, vim.schedule_wrap(function(err)
+        if not err then S.kick() end
+      end)) then
+        handles[#handles + 1] = h
+      elseif h then
+        h:close()
+      end
+    end
+  end
+  S.state.watchers[repo] = handles
+end
+
+--- Событие git → пересчёт через debounce_ms (несколько событий подряд = один пересчёт).
+function S.kick()
+  if not S.state.started then return end
+  if not S.state.debounce then S.state.debounce = uv.new_timer() end
+  S.state.debounce:stop()
+  S.state.debounce:start(S.opts.debounce_ms or 800, 0, vim.schedule_wrap(function()
+    S.check()
+  end))
+end
+
+--- Автокоманды: смена буфера/каталога → поиск репозитория; фокус и выход из
+--- терминала (lazygit, git в toggleterm) → пересчёт.
+function S.autocmds()
+  local g = vim.api.nvim_create_augroup("UserStreakAuto", { clear = true })
+  vim.api.nvim_create_autocmd({ "BufEnter", "DirChanged" }, {
+    group = g,
+    callback = function()
+      local real = vim.bo.buftype == "" and vim.api.nvim_buf_get_name(0) ~= ""
+      S.discover_dir(real and vim.fn.expand("%:p:h") or vim.fn.getcwd())
+    end,
+  })
+  vim.api.nvim_create_autocmd({ "FocusGained", "TermClose" }, {
+    group = g,
+    callback = function() S.kick() end,
+  })
 end
 
 --- Считать только свои коммиты: берём user.email из первого репозитория.
@@ -230,7 +355,34 @@ function S.scan(repo, from, to, cb)
       local ts = tonumber(num)
       if ts and ts >= from and ts < to then n = n + 1 end
     end
-    cb(n, nil)
+    S.count_branches(repo, from, to, function(b)
+      cb(n + b, nil)
+    end)
+  end)
+end
+
+--- Ветки, созданные в окне дня. Время создания = первая строка reflog ветки
+--- (.git/logs/refs/heads/<имя>): «<old> <new> Имя <email> <unix> <tz>\t…».
+--- Учитываем только свои (по email), если он известен.
+function S.count_branches(repo, from, to, cb)
+  local gitdir = repo .. "/.git"
+  if not S.opts.branch_counts or vim.fn.isdirectory(gitdir) ~= 1 then return cb(0) end
+  run({ "git", "-C", repo, "for-each-ref", "--format=%(refname)", "refs/heads" }, function(out, err)
+    if err then return cb(0) end
+    local n = 0
+    for ref in (out or ""):gmatch("[^\n]+") do
+      local f = io.open(gitdir .. "/logs/" .. ref, "r")
+      if f then
+        local line = f:read("*l") or ""
+        f:close()
+        local email, ts = line:match("^%x+ %x+ .-<([^>]*)> (%d+) ")
+        ts = tonumber(ts)
+        if ts and ts >= from and ts < to and (not S.state.email or email == S.state.email) then
+          n = n + 1
+        end
+      end
+    end
+    cb(n)
   end)
 end
 
@@ -305,8 +457,8 @@ function S.check(cb)
   local repos = S.active_repos()
   S.state.repos = repos
   if #repos == 0 then
-    S.state.error = "не найдено ни одного git-репозитория: добавь "
-      .. "(:StreakRepo ~/code/api) или включи этот каталог в конфиг"
+    S.state.error = "не найдено ни одного git-репозитория: откройте файл из своего "
+      .. "проекта или положите его в ~/code"
     if cb then cb(false) end
     return
   end
@@ -353,7 +505,7 @@ function S.check(cb)
   end
 end
 
---- Только что закоммитил? Пересчитаться сразу, не ждать таймера.
+--- Обновить HUD и lualine после пересчёта.
 function S.refresh_hud()
   pcall(function()
     local hud = package.loaded["config.hud"]
@@ -440,7 +592,14 @@ function S.start()
   S.load()
   S.state.repos = S.active_repos()
   S.state.email = resolve_email(S.state.repos)
+  for _, r in ipairs(S.state.repos) do S.watch(r) end
+  S.autocmds()
   S.check()
+  -- поиск по папкам и каталог nvim — после старта, чтобы не тормозить запуск
+  vim.schedule(function()
+    S.discover_roots()
+    S.discover_dir(vim.fn.getcwd())
+  end)
   S.state.timer = uv.new_timer()
   S.state.timer:start(S.opts.check_every * 1000, S.opts.check_every * 1000,
     vim.schedule_wrap(function() S.check() end))
@@ -449,7 +608,7 @@ end
 
 function S.stop()
   S.state.started = false
-  for _, key in ipairs({ "timer", "burn_timer" }) do
+  for _, key in ipairs({ "timer", "burn_timer", "debounce" }) do
     local t = S.state[key]
     if t then
       t:stop()
@@ -499,7 +658,7 @@ function S.commands()
   })
   vim.api.nvim_create_user_command("StreakRepo", function(o)
     vim.api.nvim_echo({ { S.add_repo(o.args), "Normal" } }, false, {})
-  end, { nargs = 1, desc = "🔥 добавить репозиторий в зачёт огонька" })
+  end, { nargs = 1, desc = "🔥 вручную добавить репозиторий (обычно не нужно: находит сам)" })
   vim.api.nvim_create_user_command("StreakGoal", function(o)
     S.opts.goal = math.max(1, tonumber(o.args) or 1)
     S.check()

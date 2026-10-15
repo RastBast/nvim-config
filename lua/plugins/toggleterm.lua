@@ -31,7 +31,7 @@ return {
       { "<c-\\>", desc = "📟 Переключить терминал" },
       { "<leader>Tt", "<cmd>ToggleTerm direction=float<cr>", desc = "📟 Плавающий терминал" },
       { "<leader>Th", "<cmd>ToggleTerm direction=horizontal size=15<cr>", desc = "📟 Терминал снизу" },
-      { "<leader>Tv", "<cmd>ToggleTerm direction=vertical size=60<cr>", desc = "📟 Терминал справа" },
+      { "<leader>Tv", "<cmd>ToggleTerm direction=vertical size=40<cr>", desc = "📟 Терминал справа" },
       { "<leader>Ta", "<cmd>ToggleTermToggleAll<cr>", desc = "❎ Показать/скрыть все терминалы" },
       -- ToggleTermCloseAll в toggleterm.nvim НЕ существует — закрываем через API:
       -- get_all(true) возвращает и скрытые терминалы, shutdown() убивает процесс.

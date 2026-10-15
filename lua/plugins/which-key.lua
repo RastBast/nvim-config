@@ -225,6 +225,24 @@ return {
         -------------------------------------------------------------
         --  🖥 Терминал — клавиши в lua/plugins/toggleterm.lua (<leader>T*)
         -------------------------------------------------------------
+        -- 🧰 Утилиты: команды, которые раньше были без клавиш. Строчные буквы под
+        -- <leader>H заняты, поэтому префикс — заглавная <leader>HW.
+        { "<leader>HW", group = "🧰 Утилиты и диагностика" },
+        { "<leader>HWr", "<cmd>RuCheck<cr>", desc = "🌐 Проверить переводчики" },
+        { "<leader>HWh", "<cmd>HoverRu toggle<cr>", desc = "🌐 Перевод подсказок K: вкл/выкл" },
+        { "<leader>HWd", "<cmd>DiagRu toggle<cr>", desc = "🩺 Русские ошибки LSP: вкл/выкл" },
+        { "<leader>HWn", "<cmd>NotifyRu toggle<cr>", desc = "🔔 Русские уведомления: вкл/выкл" },
+        { "<leader>HWe", "<cmd>EnvCheck<cr>", desc = "🧪 Проверка PATH и утилит" },
+        { "<leader>HWm", "<cmd>Matrix<cr>", desc = "🟢 Дождь из символов" },
+        { "<leader>HWt", "<cmd>HudNow<cr>", desc = "🕐 Обновить часы и HUD" },
+        { "<leader>HWi", "<cmd>HudIp toggle<cr>", desc = "🌐 IP в углу: вкл/выкл" },
+        { "<leader>HWc", "<cmd>HudClock 24<cr>", desc = "🕐 Часы: 24 часа" },
+        { "<leader>HWC", "<cmd>HudClock 12<cr>", desc = "🕐 Часы: 12 часов" },
+        { "<leader>HWz", "<cmd>HudTz 3<cr>", desc = "🕐 Пояс UTC+3 (МСК)" },
+        { "<leader>HWa", "<cmd>StreakNotify off<cr>", desc = "🔕 Огонёк: без уведомлений" },
+        { "<leader>HWA", "<cmd>StreakNotify on<cr>", desc = "🔔 Огонёк: уведомления вкл" },
+        { "<leader>HWg", "<cmd>StreakGoal 1<cr>", desc = "🔥 Огонёк: цель 1 коммит в день" },
+        { "<leader>HWb", "<cmd>StreakHour 3<cr>", desc = "🔥 Огонёк: день до 03:00 МСК" },
         { "<leader>T", group = "🖥 Терминал (toggleterm)" },
         { "<leader>Tt", desc = "📟 Плавающий терминал" },
         { "<leader>Th", desc = "📟 Терминал снизу" },

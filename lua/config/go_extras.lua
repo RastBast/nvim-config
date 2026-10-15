@@ -2,7 +2,7 @@
 --      УМНЫЙ GO: ФОРМОЧКА STRUCT (как в VSCode) + АВТОЗАПОЛНЕНИЕ ПОЛЕЙ       --
 -- ========================================================================== --
 -- fill_struct()  — «формочка»: выбираешь struct (красивый пикер через
---                  dressing), вставляется снаркет с ВСЕМИ полями, курсор
+--                  snacks.picker), вставляется снаркет с ВСЕМИ полями, курсор
 --                  прыгает по значениям (<Tab>/<S-Tab>), дефолты —
 --                  нулевые значения Go по типу поля.
 -- add_fields()   — автодополнение полей: берёт struct под/над курсором
@@ -213,7 +213,7 @@ function M.fill_struct()
   if #names == 1 then
     return choose(names[1])
   end
-  -- dressing.nvim делает vim.ui.select красивым
+  -- snacks.picker (ui_select) делает vim.ui.select красивым
   vim.ui.select(names, { prompt = "🧩 Заполнить struct: " }, choose)
 end
 
