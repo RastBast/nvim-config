@@ -44,23 +44,31 @@ function M.setup()
       orig(nil, result, ctx, cfg)
     end
 
+    -- Сначала собираем сообщения к переводу, потом запускаем перевод: иначе
+    -- закешированный перевод первого сообщения вызывал finish() синхронно,
+    -- и остальные ошибки уходили в LSP непереведёнными.
+    local jobs = {}
     for _, d in ipairs(result.diagnostics) do
       if type(d.message) == "string" and d.message:match("%a%a%a") then
-        pending = pending + 1
-        RU.translate(d.message, function(tr)
-          if tr and tr ~= "" then
-            d.message = tr
-          end
-          pending = pending - 1
-          if pending == 0 then
-            finish()
-          end
-        end)
+        jobs[#jobs + 1] = d
       end
     end
 
-    if pending == 0 and not fired then
+    if #jobs == 0 then
       return orig(err, result, ctx, cfg)
+    end
+
+    pending = #jobs
+    for _, d in ipairs(jobs) do
+      RU.translate(d.message, function(tr)
+        if tr and tr ~= "" then
+          d.message = tr
+        end
+        pending = pending - 1
+        if pending == 0 then
+          finish()
+        end
+      end)
     end
     -- страховка от медленной сети: через 2.5 с ошибки уходят как есть
     vim.defer_fn(finish, 2500)

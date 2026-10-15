@@ -1,4 +1,37 @@
 # Что исправлено в конфиге (2026-08-30)
+
+## 2026-10-15 · Проход по багам: команды, API плагинов, логика переводчика
+
+Сверка с исходниками плагинов (клоны `codecompanion`, `avante`, `conform`,
+`go.nvim`, `neotest`, `obsidian`, `mini.nvim`, `nvim-treesitter`) и
+юнит-тесты на Lua-рантайме. Найдены и исправлены ошибки, которые не давали
+ошибок при старте, но ломали конкретные функции:
+
+| Где | Было | Стало |
+|---|---|---|
+| `lua/plugins/ai.lua` | Промпт «Explain Code» лежал в `interactions` с `strategy` и `opts.mapping` — CodeCompanion такой промпт не регистрирует, а `mapping` не поддерживается | Перенесён в `prompt_library` (`interaction = "chat"`, `opts.alias = "explain"`); вызов `require("codecompanion").prompt("explain")` |
+| `lua/plugins/ai.lua` | `<leader>Hae` в visual шёл через `<cmd>`: диапазон пустой, уходила одна строка | Строковый rhs `:CodeCompanion<cr>` — Vim дописывает `'<,'>` |
+| `lua/plugins/ai.lua` | `api_key = os.getenv(...) or "MOONSHOT_API_KEY"`: CodeCompanion принимает здесь **имя** переменной; при заданном ключе уходило его значение как имя, при незаданном — строка `MOONSHOT_API_KEY` вместо ключа | `api_key = "MOONSHOT_API_KEY"` — CodeCompanion сам читает переменную |
+| `lua/plugins/completions.lua` | Принятие ИИ-подсказки через `feedkeys("<Plug>(AvanteSuggestionAccept)", "n")` — режим `n` запрещает маппинги, `<Plug>` не срабатывал | Прямой вызов `require("avante").get()` → `sg:accept()` |
+| `lua/plugins/format.lua` | `cmd = { "ConformInfo", "Format" }` — команды `:Format` в conform нет (E492) | `cmd = { "ConformInfo" }`, форматирование — `<leader>cf` |
+| `lua/plugins/which-key.lua`, `go-tools.lua` | `<leader>HGj` → `<cmd>GoJson` — такой команды в go.nvim нет | `<cmd>GoJson2Struct<cr>` (в шапке исправлена запись «было/стало») |
+| `lua/plugins/silicon.lua` | `<leader>sc` в visual: `vim.cmd("Silicon")` без диапазона | Строковый rhs `:Silicon<cr>` — снимается выделение |
+| `lua/plugins/dadbod-ultimate.lua` | `db_ui_save_location = ~/.config/nvim/db_ui` — это git-репозиторий конфига; строки подключения с паролями попали бы в коммиты | `stdpath("data") .. "/db_ui"` (вне репозитория) |
+| `lua/plugins/avante.lua` | `allow_insecure = vim.env.GEMINI_INSECURE ~= nil`: `GEMINI_INSECURE=0` тоже отключал проверку TLS | `== "1"` (как написано в INSTALL.md и PROXY.md) |
+| `lua/plugins/mini.lua` | Кастомный текстобъект `f` был функцией, которая возвращала функцию-спек; `vif` / `vaf` ломались | `opts` — функция, `f = ai.gen_spec.treesitter({...})` |
+| `lua/plugins/spotify.lua` | `<leader>sp/sn/sb/so/sd` ставились в `config` — до первого `:Spotify` клавиш не было | Объявлены в `keys` (lazy подгружает плагин сам) |
+| `lua/config/hover_ru.lua`, `lua/config/diag_ru.lua` | Счётчик `pending` считался в цикле: если перевод первого куска был в кеше, колбэк шёл синхронно, `finish()` отдавал ответ LSP до перевода остальных кусков (остальные оставались по-английски) | Сначала собираются все куски, потом запускается перевод. Проверено тестом: старая версия — ошибка, новая — ок |
+
+Заметки:
+- `CHANGES.md` ранее утверждал, что `prompt_library` «больше не хранит промпты» —
+  по документации CodeCompanion промпты как раз там (см. запись выше).
+- `lazy-lock.json` не содержит 8 плагинов, добавленных позже (avante, mini.ai,
+  mini.surround, lazydev, cmp-cmdline, friendly-snippets, nvim-bqf, luvit-meta).
+  Lazy допишет их при `:Lazy sync`; вручную lock не редактировался.
+- Проверка: синтаксис всех `.lua` (Lua-рантайм), поиск маркеров конфликта, дубли
+  клавиш по всем `keymap.set` и `<leader>`-строкам, разрешение `require`
+  для локальных модулей. Полный запуск Neovim в песочнице недоступен — поведение
+  плагинов проверено по исходникам, а не запуском.
 ## 2026-10-15 · Отдел TG в which-key, 🕐 HUD в углу и 🔥 огонёк за коммиты (добавлено)
 
 Два новых модуля — `lua/config/hud.lua` и `lua/config/streak.lua` (подключены

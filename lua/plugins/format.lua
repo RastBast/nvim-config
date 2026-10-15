@@ -11,7 +11,9 @@ return {
   {
     "stevearc/conform.nvim",
     event = { "BufWritePre" },
-    cmd = { "ConformInfo", "Format" },
+    -- Команды conform: только ConformInfo. Раньше здесь был «Format» — такой
+    -- команды у conform НЕТ (E492 при вызове), форматирование — <leader>cf.
+    cmd = { "ConformInfo" },
     keys = {
       { "<leader>cf", function() require("conform").format({ async = true }) end, desc = "🎨 Форматировать файл" },
     },

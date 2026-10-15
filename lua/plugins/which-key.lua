@@ -8,7 +8,7 @@
 --  <leader>Ht объявлен 3 раза           один раз (группа «Тесты»);
 --  (GoTest + Тесты + Терминал)          Go-тесты переехали на <leader>Hgo
 --  GoVulncheck                          GoVulnCheck   (регистра важен)
---  GoJson2Struct                        GoJson
+--  GoJson (такой команды нет)           GoJson2Struct
 --  DBUI AddConnection                   DBUIAddConnection
 --  DBUI ExecuteQuery                    убрано — такой подкоманды нет
 --  CodeCompanionSend                    CodeCompanion (Send не существует)
@@ -106,7 +106,7 @@ return {
         { "<leader>HGi", "<cmd>GoAddTag json<cr>", desc = "🏷 Добавить json-теги" },
         { "<leader>HGe", "<cmd>GoIfErr<cr>", desc = "❗ Авто-if err" },
         { "<leader>HGs", "<cmd>GoFillStruct<cr>", desc = "🧩 Заполнить struct" },
-        { "<leader>HGj", "<cmd>GoJson<cr>", desc = "📦 JSON → struct" },
+        { "<leader>HGj", "<cmd>GoJson2Struct<cr>", desc = "📦 JSON → struct" },
         { "<leader>HGm", "<cmd>GoImpl<cr>", desc = "⚙️ Сгенерировать impl" },
         { "<leader>HGv", "<cmd>GoVulnCheck<cr>", desc = "🔐 Проверка уязвимостей" },
         { "<leader>HGl", "<cmd>GoLint<cr>", desc = "🧹 Линтер" },

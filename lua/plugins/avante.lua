@@ -94,7 +94,7 @@ return {
           -- Не проверять TLS-сертификат. Нужно ТОЛЬКО если у ретранслятора
           -- самоподписанный сертификат (см. PROXY.md, §4).
           -- Включается без правки файла:  set -Ux GEMINI_INSECURE 1
-          allow_insecure = vim.env.GEMINI_INSECURE ~= nil,
+          allow_insecure = vim.env.GEMINI_INSECURE == "1",
           -- МОДЕЛЬ. gemini-2.5-flash для НОВЫХ аккаунтов закрыт, Google
           -- отвечает 404 "no longer available to new users" — поэтому
           -- ставим gemini-3.6-flash (это и дефолт самого avante).
