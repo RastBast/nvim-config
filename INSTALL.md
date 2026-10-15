@@ -13,6 +13,8 @@
 | `lazygit` | `<leader>gg` | `brew install lazygit` |
 | `lazydocker` | `<leader>dc` (Docker-TUI) | `brew install lazydocker` |
 | `go` | Go-стек | `brew install go` |
+| `tele` | Telegram в терминале и в nvim (`<leader>m…`) | brew tap + `brew install tele`, либо apt/dnf из репозитория автора, либо `go build -o tele ./cmd/tele` |
+| `sqlite3` | мост читает кэш tele → уведомления в nvim | обычно уже стоит; `brew install sqlite` / `apt install sqlite3` |
 | Nerd Font | иконки | `brew install --cask font-jetbrains-mono-nerd-font` (или любой с nerd-fonts.com) |
 
 Опционально для proto: `buf`, `protolint` — можно из Neovim: `:MasonInstall buf protolint`.

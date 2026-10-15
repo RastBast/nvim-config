@@ -34,6 +34,14 @@ return {
         return type(text) == "string" and text or ""
       end
 
+      -- Telegram: непрочитанные из кэша tele (см. lua/config/telegram.lua).
+      -- Пустая строка, когда нечего показывать, — статус-бар не пухнет.
+      local function telegram_status()
+        local ok, tg = pcall(require, "config.telegram")
+        if not ok or not tg.component then return "" end
+        return tg.component()
+      end
+
       -- Диагноз LSP: какие серверы прикреплены к буферу
       local function lsp_clients()
         local clients = vim.lsp.get_clients({ bufnr = 0 })
@@ -55,6 +63,8 @@ return {
           lualine_x = {
             { pomo_status, color = { fg = "#e0af68" } },
             { spotify_status, color = { fg = "#1DB954" } },
+            -- ✈ непрочитанные Telegram (мост к tele); пусто, когда новых нет
+            { telegram_status, color = { fg = "#89b4fa" } },
             { lsp_clients, color = { fg = "#82aaff" } },
             "encoding",
             "fileformat",

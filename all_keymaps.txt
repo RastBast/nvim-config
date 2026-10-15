@@ -5,7 +5,7 @@
 --- РЕЖИМ: I (1) -------------------------------------------------------
   jk                     Выход в Normal                       init.lua
 
---- РЕЖИМ: N (101) -------------------------------------------------------
+--- РЕЖИМ: N (117) -------------------------------------------------------
   <C-Down>               Ниже                                   init.lua
   <C-Up>                 Выше                                   init.lua
   <C-h>                  Окно слева                        init.lua
@@ -73,6 +73,21 @@
   <leader>jq             🔎 jq-запрос по JSON             lua/plugins/json-pro.lua
   <leader>jx             🔍 Список ключей JSON        lua/plugins/json-pro.lua
   <leader>m              Развернуть окно              lua/plugins/maximizer.lua
+  <leader>mb             ✈ Гудок терминала вкл/выкл lua/config/telegram.lua
+  <leader>mc             ✈ Выбрать чат и сесть на него lua/config/telegram.lua
+  <leader>md             ✈ Диагностика Telegram-моста lua/config/telegram.lua
+  <leader>mf             ✈ tele на весь экран lua/config/telegram.lua
+  <leader>mh             ✈ Спрятать окно (процесс жив) lua/config/telegram.lua
+  <leader>mi             ✈ Лента входящих Telegram lua/config/telegram.lua
+  <leader>mk             ✈ Убить процесс tele lua/config/telegram.lua
+  <leader>mm             ✈ tele в маленьком окне lua/config/telegram.lua
+  <leader>mn             ✈ Режим тишины lua/config/telegram.lua
+  <leader>mo             ✈ Чат последнего уведомления lua/config/telegram.lua
+  <leader>mp             ✈ tele боковой панелью lua/config/telegram.lua
+  <leader>mq             ✈ Ответить в чат посл. уведомления lua/config/telegram.lua
+  <leader>mr             ✈ Ответить через tele lua/config/telegram.lua
+  <leader>mS             ✈ Строку → сообщение в tele lua/config/telegram.lua
+  <leader>m?             ✈ Шпаргалка по мосту lua/config/telegram.lua
   <leader>nS             📓 История черновиков   lua/plugins/snacks.lua
   <leader>nh             Убрать подсветку поиска init.lua
   <leader>ns             📓 Черновик                      lua/plugins/snacks.lua
@@ -113,8 +128,9 @@
   [[                     Предыдущее слово            lua/plugins/snacks.lua
   ]]                     Следующее слово              lua/plugins/snacks.lua
 
---- РЕЖИМ: V (14) -------------------------------------------------------
+--- РЕЖИМ: V (15) -------------------------------------------------------
   <                      Отступ влево                    init.lua
+  <leader>ms             ✈ Выделение → сообщение в tele lua/config/telegram.lua
   <M-H>                  ⬅ Блок влево                    lua/plugins/move.lua
   <M-L>                  ➡ Блок вправо                  lua/plugins/move.lua
   <M-j>                  ⬇ Блок вниз                      lua/plugins/move.lua
@@ -133,4 +149,5 @@
   au                     —                                        lua/plugins/ts-unit.lua
   iu                     —                                        lua/plugins/ts-unit.lua
 
-Всего маппингов: 121
+Всего маппингов: 138 (из них 16 — Telegram-мост, lua/config/telegram.lua;
+буферные клавиши :TeleInbox/:TeleRead в список не входят)

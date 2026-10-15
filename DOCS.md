@@ -32,6 +32,7 @@
 20. [Как расширять конфиг](#20-как-расширять-конфиг)
 21. [Дорожная карта: Go-микросервисы](#21-дорожная-карта-go-микросервисы)
 22. [Как проверялся конфиг](#22-как-проверялся-конфиг)
+23. [Telegram в редакторе (консольный tele)](#23-telegram-в-редакторе-консольный-tele)
 
 ---
 
@@ -72,6 +73,7 @@ HTTP-запросов** с упором на то, чтобы всё работ�
 | `go`, `gopls`, `golangci-lint`, `delve` | Go-стек (gopls/delve ставит сам Mason) |
 | `docker` + (опц.) `lazydocker` | `<leader>dc/dp/di/dn` |
 | `fish` или любая оболочка | терминал берёт `vim.o.shell` |
+| `tele` + `sqlite3` | Telegram прямо в nvim: `<leader>m…`, §23 |
 | `openssl` + ssh | (будущий live-share) |
 
 ## 3. Установка и перенос на новую машину
@@ -334,6 +336,7 @@ lua/
 | `<leader>d` + буква | Docker (`dc` lazydocker, `dp` ps, `di` images, `dn` сети); `<leader>d` один — диагностика строки (LSP) |
 | `<leader>f` | Поиск telescope/fzf-стиль (`ff/fg/fb/fr/fh/fk/fc/fd`) |
 | `<leader>g` | Go-быстрые (`gb/gl/gt/gm/gv`) и `gg` lazygit |
+| `<leader>m` | Мессенджер: Telegram через консольный `tele` (§23) — `mm/mf/mp` окна, `mi/mt` чтение, `mr/ms` ответ |
 | `<C-\>` | Открыть/скрыть терминал из любого места |
 
 which-key всплывает по `<leader>` автоматически; `<leader>Hfk` и `<leader>fk` —
@@ -438,6 +441,9 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 | `<Esc><Esc>` | выйти в normal внутри терминала |
 
 Оболочка — твой `fish`; тонирование фона выключено (терминал выглядит как в alacritty).
+
+Отдельно `tele` (Telegram-TUI) живёт не здесь, а в `lua/config/telegram.lua` —
+три способа открытия и уведомления внутри редактора, см. §23.
 
 ## 13. Git
 
@@ -578,8 +584,111 @@ dockerls, protols, sqls` (включены в `servers.lua`) + доступны 
   в исходниках; остаются только встроенные nvim (`checkhealth`, `lua`, `nohlsearch`).
 * Аудит репозиториев: каждый `org/repo` проверен через GitHub API на существование
   и archived-статус (см. §19 про два архивных, но рабочих).
+* Мост `config/telegram.lua` прогонялся через тот же приём (Lua-движок +
+  заглушка `vim`, фейковые ФС и sqlite3): 121 проверка — поиск `state.db`,
+  дифф снимков `chats`, мьют/архив/focus, перенос в popup, клавиши в PTY и
+  правка `config.yml` (в т.ч. «секция вместо скаляра» и 4-пробельные отступы).
 * Mason-аудит: каждое имя из `servers.lua` проверено по реестру
   `mason-org/mason-registry` (путь `packages/<name>/package.yaml`).
+
+## 23. Telegram в редакторе (консольный tele)
+
+Мост к [`sorokin-vladimir/tele`](https://github.com/sorokin-vladimir/tele) —
+клавиатурному Telegram-TUI на Go. Код: `lua/config/telegram.lua` (вся логика),
+подключается одной строкой в `init.lua`. Плагина из vim-world здесь нет: `tele`
+— внешний бинарник, а интеграция написана вручную, потому что **у tele нет ни
+CLI для отправки/чтения, ни демона** (`cmd/tele/main.go` знает только
+`--config/-e/--trace/--version/--theme-*`; обещанный resident daemon — это v2.0).
+
+### Как уведомления попадают в nvim
+
+tele пишет всю переписку в локальный SQLite — `~/.local/state/tele/state.db`,
+пачками раз в 2 секунды (`persistFlushInterval`). Мост читает таблицу `chats`
+тем же `sqlite3`, что и остальной конфиг (только чтение), и ловит **рост
+`unread_count`** — единственный признак «входящее, которое ты ещё не видел»
+(`last_message` меняется и от собственных сообщений, и от «прочитано»).
+Отсюда следствия, которые важно принимать осознанно:
+
+* задержка до ~2-3 секунд — быстрее не знает сам tele;
+* tele должен быть запущен **где угодно** (эта вкладка, tmux, любой другой терминал) —
+  уведомления всё равно придут, потому что читается кэш, а не окно;
+* если tele не запущен нигде, новых сообщений физически нет: sync живёт в TUI.
+  В v2.0 с демоном это исчезнет, мост тогда переключится на сокет;
+* нужны `tele` и `sqlite3` (≥ 3.33 ради `--json`). Что не так — показывает
+  `:TeleCheck`, и он же говорит, где искал базу.
+
+Свои уведомления tele (OSC 777/beeep) Neovim перехватить не может, поэтому
+popup рисуется свой — **мимо** фильтра `init.lua`, который глушит всё кроме
+ERROR. Чтобы не было двойни, `:TeleQuiet` выключает `ui.notifications.desktop`
+в конфиге tele (правка точечная, с `config.yml.bak`).
+
+### Клавиши (`<leader>m` — «messenger», префикс был свободен)
+
+| Клавиша | Действие |
+|---|---|
+| `<leader>mm` | tele в маленьком плавающем окне (быстро глянуть и закрыть) |
+| `<leader>mf` | tele **на весь экран** (режим редактора, `direction=editor`) |
+| `<leader>mp` | tele **боковой панелью** рядом с кодом (≈68 колонок) |
+| `<leader>mh` | спрятать окно, **не убивая процесс** → уведомления идут дальше |
+| `<leader>mc` | выбрать чат списком и открыться сразу на нём |
+| `<leader>mo` | открыть чат последнего уведомления |
+| `<leader>mi` | `:TeleInbox` — лента входящих прямо в nvim |
+| `<leader>mt` | читать переписку чата, **не открывая tele** (`:TeleRead`) |
+| `<leader>mr` | ответить: печать в PTY tele (`Esc → i → текст → Enter`) |
+| `<leader>mq` | ответить в чат последнего уведомления |
+| `<leader>ms` (v) | отправить выделение как сообщение |
+| `<leader>mS` | отправить текущую строку |
+| `<leader>mn` | режим тишины: счётчик растёт, popup молчит |
+| `<leader>mb` | гудок терминала на входящее |
+| `<leader>md` | `:TeleCheck` — диагностика |
+| `<leader>mk` | убить процесс tele |
+| `<leader>m?` | шпаргалка (`:TeleDocs`) |
+
+Все три окна — **один и тот же процесс**: у tele lock на `state_dir`, второй
+экземпляр сразу умирает с «tele is already running», поэтому переключается
+геометрия, а не процесс.
+
+### Команды
+
+`:Tele full|panel|chat|<имя чата>` · `:TeleInbox` · `:TeleRead {чат}` ·
+`:TeleChatPick` · `:TeleReply` · `:TeleSend` (range) · `:TeleHide` · `:TeleKill` ·
+`:TeleDnd` · `:TeleFocus {чаты}` / `:TeleIgnore {чаты}` · `:TeleBell` ·
+`:TeleTheme mocha|black` · `:TeleQuiet [off]` · `:TeleStart`/`:TeleStop`/`:TeleToggle` ·
+`:TeleDb {путь}` · `:TeleCheck` · `:TeleStatus` · `:TeleTest` · `:TeleDocs`
+
+Один ответ на вопрос «а можно совсем без списка чатов и папок»: сам tele так не
+умеет (`internal/ui/layout/layout.go` всегда делит ширину на sidebar + chat),
+поэтому «чистый» вид — это `:TeleRead` (нативное окно nvim из кэша), а `<leader>mc`
+— маленький float, куда чат открывается сразу.
+
+### Цвет
+
+`:TeleTheme` кладёт в `~/.config/tele/themes/nvim-mocha.yml` тему на базе
+вшитой в tele `catppuccin-macchiato`, перекрашенной в **точную палитру mocha**
+(та же, что у `colorscheme.lua`), и прописывает `ui.theme` в конфиг tele.
+`black` — вариант для тех, кто красит `Normal` в `#000000` (как делает `init.lua`
+здесь): фон отдаётся терминалу. Нужен перезапуск tele; проверить: `tele --theme-check`.
+
+### Настройка
+
+```lua
+require("config.telegram").setup({
+  poll = 2000,               -- мс, чаще 2000 смысла нет (см. выше)
+  style = "auto",            -- auto | notify | float | echo | none
+  timeout = 5000,
+  bell = false,
+  respect_mute = true,       -- мьют Telegram = не всплывать
+  loud_mentions = true,      -- @mention разбуди даже в мьюте
+  focus = {},                -- {"Иван", "#go-prod"} — только эти чаты
+  mode = "chat",             -- режим <leader>mm по умолчанию
+  kill_on_exit = true,       -- убить tele при выходе из nvim
+})
+```
+
+Свои реакции на входящие: `require("config.telegram").on_message(function(ev) … end)`
+или autocmd `User TeleMessage` (`ev.data = {id,title,text,author,unread,kind,at}`),
+для счётчиков — `User TeleUnread`. Компонент в статус-баре уже подключён в
+`lualine.lua` (`✈ N`, с `!` при упоминаниях).
 
 ---
 
