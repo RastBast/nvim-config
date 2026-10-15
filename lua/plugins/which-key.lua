@@ -263,6 +263,8 @@ return {
         --  хранится в конфиге: логин в самом приложении или DISCORDO_TOKEN.
         -------------------------------------------------------------
         { "<leader>Hy", group = "💬 Чаты (терминал)" },
+        { "<leader>y", group = "📋 Буфер обмена" },
+        { "<leader>yr", function() require("config.yank_ring").pick() end, desc = "📋 Кольцо буфера обмена (1–9)" },
         { "<leader>Hyd", require("config.termcmd").make("discordo", 150, "discordo"), desc = "💬 Discordo — Discord в терминале (⚠ риск для аккаунта, см. доку)" },
 
         -------------------------------------------------------------
