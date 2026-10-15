@@ -322,7 +322,6 @@ function H.render()
     H.state.buf = vim.api.nvim_create_buf(false, true)
     vim.bo[H.state.buf].bufhidden = "hide"
     vim.bo[H.state.buf].swapfile = false
-    vim.bo[H.state.buf].spell = false
     vim.bo[H.state.buf].filetype = "hud"
   end
   vim.bo[H.state.buf].modifiable = true
@@ -340,6 +339,9 @@ function H.render()
   }
   if not H.state.win or not vim.api.nvim_win_is_valid(H.state.win) then
     H.state.win = vim.api.nvim_open_win(H.state.buf, false, cfg)
+    -- spell — window-локальная опция: ставим на окно, не на буфер
+    -- (vim.bo[...].spell даёт E5113 «cannot be passed for window-local option»).
+    pcall(function() vim.wo[H.state.win].spell = false end)
   else
     pcall(vim.api.nvim_win_set_config, H.state.win, cfg)
   end

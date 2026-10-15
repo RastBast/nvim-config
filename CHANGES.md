@@ -23,6 +23,7 @@
 | `lua/config/hover_ru.lua`, `lua/config/diag_ru.lua` | Счётчик `pending` считался в цикле: если перевод первого куска был в кеше, колбэк шёл синхронно, `finish()` отдавал ответ LSP до перевода остальных кусков (остальные оставались по-английски) | Сначала собираются все куски, потом запускается перевод. Проверено тестом: старая версия — ошибка, новая — ок |
 | `lua/config/telegram.lua` | `nvim_create_user_command(..., { range = "?" })` — недопустимое значение: Neovim падает с `E5113: Invalid 'range'` и `telegram.setup()` не доходит до конца (команды после `TeleSend` не создаются) | `range = true` (текущая строка или выделение) |
 | `lua/plugins/avante.lua` | Не указана обязательная зависимость `ColinKennedy/mega.cmdparse` (и `mega.logging`): `module 'mega.cmdparse' not found` при загрузке avante на `VeryLazy` | Добавлена в `dependencies` (как в README avante) |
+| `lua/config/hud.lua`, `lua/config/telegram.lua` (inbox, read_chat) | `vim.bo[buf].spell = false` — `spell` window-локальная опция; Neovim: `E5113 'buf' cannot be passed for window-local option 'spell'`, HUD падал при старте | `spell` ставится на окно: `vim.wo[win].spell = false` (после `nvim_open_win`) |
 
 Заметки:
 - `CHANGES.md` ранее утверждал, что `prompt_library` «больше не хранит промпты» —

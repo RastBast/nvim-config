@@ -636,10 +636,10 @@ function T.open_inbox()
   vim.bo[buf].bufhidden = "hide"
   vim.bo[buf].buftype = "nofile"
   vim.bo[buf].swapfile = false
-  vim.bo[buf].spell = false
   vim.bo[buf].filetype = "teleinbox"
   local win = vim.api.nvim_open_win(buf, true, { split = true, height = 16 })
   T.state.inbox_win = win
+  vim.wo[win].spell = false -- window-локальная: на окно, не на буфер
   vim.wo[win].number = false
   vim.wo[win].relativenumber = false
   vim.wo[win].signcolumn = "no"
@@ -1398,10 +1398,10 @@ function T.read_chat(name, limit)
     local buf = vim.api.nvim_create_buf(false, true)
     vim.bo[buf].buftype = "nofile"
     vim.bo[buf].bufhidden = "wipe"
-    vim.bo[buf].spell = false
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     local win = vim.api.nvim_open_win(buf, true, { split = true, height = math.min(#lines, 26) })
     vim.bo[buf].modifiable = false
+    vim.wo[win].spell = false -- window-локальная: на окно, не на буфер
     vim.wo[win].number = false
     vim.wo[win].relativenumber = false
     vim.wo[win].signcolumn = "no"
