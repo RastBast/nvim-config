@@ -87,65 +87,62 @@ vim.diagnostic.config({
 vim.api.nvim_create_autocmd("ColorScheme", {
   pattern = "*",
   callback = function()
-    -- ПАЛИТРА: яркие, немного «кислотные», на тёмном фоне.
-    -- Фон тёмный (#061115), синее свечение — #0d00ff: рамки, выделение, поиск.
-    -- Свечения как анимации нет: яркость достигается насыщенностью цветов.
+    -- ПАЛИТРА (по выбору пользователя). Фон — строго чёрный.
     local P = {
-      bg = "#061115",     -- тёмный фон (не меняем)
+      black = "#000000",  -- фон (обязательно)
+      violet = "#6902de", -- комментарии, номера строк, константы
+      orange = "#ff9500", -- типы, параметры, активный номер строки
+      green = "#2bff00",  -- переменные и поля
+      red = "#ff0000",    -- ключевые слова
+      yellow = "#fffb00", -- строки в кавычках
+      cyan = "#00eeff",   -- функции и методы
       glow = "#0d00ff",   -- синее свечение: рамки, выделение, поиск
-      violet = "#d46bff", -- ключевые слова: def, if, return, pub fn…
-      blue = "#4aa8ff",   -- функции и методы
-      acid = "#d4ff3a",   -- строки и активный номер строки (кислотный)
-      lime = "#b8ff5c",   -- переменные
-      amber = "#ffae42",  -- числа и константы
-      pink = "#ff6fb5",   -- параметры
-      cyan = "#4ff0ff",   -- типы
-      coral = "#ff5470",  -- клавиши which-key
-      dim = "#2e3a55",    -- номера строк, разделители
-      text = "#e6ecff",   -- основной светлый текст подсказок
+      text = "#e6e6e6",   -- описания в подсказках
     }
 
-    -- 1. ФОН (окна, меню, плавающие панели): тёмный, без изменений
+    -- 1. ФОН — чёрный везде: окна, меню, плавающие панели
     local highlights = {
       "Normal", "NormalFloat", "SignColumn", "MsgArea",
       "StatusLine", "StatusLineNC", "Pmenu", "NormalNC",
     }
     for _, group in ipairs(highlights) do
-      vim.api.nvim_set_hl(0, group, { bg = P.bg })
+      vim.api.nvim_set_hl(0, group, { bg = P.black })
     end
 
-    -- 2. СИНЕЕ СВЕЧЕНИЕ: рамки плавающих окон, разделители, выделение, поиск
-    vim.api.nvim_set_hl(0, "FloatBorder", { fg = P.glow, bg = P.bg })
+    -- 2. СИНЕЕ СВЕЧЕНИЕ: рамки, разделители, выделение, поиск
+    vim.api.nvim_set_hl(0, "FloatBorder", { fg = P.glow, bg = P.black })
     vim.api.nvim_set_hl(0, "WinSeparator", { fg = P.glow })
     vim.api.nvim_set_hl(0, "Visual", { bg = P.glow, fg = "#ffffff" })
     vim.api.nvim_set_hl(0, "Search", { bg = P.glow, fg = "#ffffff" })
     vim.api.nvim_set_hl(0, "IncSearch", { bg = P.glow, fg = "#ffffff", bold = true })
 
     -- 3. НОМЕРА СТРОК
-    vim.api.nvim_set_hl(0, "CursorLineNr", { fg = P.acid, bold = true })
-    vim.api.nvim_set_hl(0, "LineNr", { fg = P.dim })
+    vim.api.nvim_set_hl(0, "CursorLineNr", { fg = P.orange, bold = true })
+    vim.api.nvim_set_hl(0, "LineNr", { fg = P.violet })
 
-    -- 4. СИНТАКСИС
-    vim.api.nvim_set_hl(0, "@keyword", { fg = P.violet, bold = true })
-    vim.api.nvim_set_hl(0, "@keyword.function", { fg = P.violet, bold = true })
-    vim.api.nvim_set_hl(0, "@repeat", { fg = P.violet })
-    vim.api.nvim_set_hl(0, "@conditional", { fg = P.violet })
-    vim.api.nvim_set_hl(0, "@function", { fg = P.blue, underline = true })
-    vim.api.nvim_set_hl(0, "@function.call", { fg = P.blue, underline = true })
-    vim.api.nvim_set_hl(0, "@function.builtin", { fg = P.blue, underline = true })
-    vim.api.nvim_set_hl(0, "@method", { fg = P.blue, underline = true })
-    vim.api.nvim_set_hl(0, "@variable", { fg = P.lime })
-    vim.api.nvim_set_hl(0, "@variable.member", { fg = P.lime })
-    vim.api.nvim_set_hl(0, "@parameter", { fg = P.pink, italic = true })
-    vim.api.nvim_set_hl(0, "@string", { fg = P.acid })
-    vim.api.nvim_set_hl(0, "@number", { fg = P.amber })
-    vim.api.nvim_set_hl(0, "@boolean", { fg = P.amber })
-    vim.api.nvim_set_hl(0, "@constant", { fg = P.amber })
-    vim.api.nvim_set_hl(0, "@type", { fg = P.cyan })
+    -- 4. СИНТАКСИС. Переменные (зелёные) и строки (жёлтые) различаются.
+    vim.api.nvim_set_hl(0, "@keyword", { fg = P.red, bold = true })
+    vim.api.nvim_set_hl(0, "@keyword.function", { fg = P.red, bold = true })
+    vim.api.nvim_set_hl(0, "@repeat", { fg = P.red })
+    vim.api.nvim_set_hl(0, "@conditional", { fg = P.red })
+    vim.api.nvim_set_hl(0, "@function", { fg = P.cyan, underline = true })
+    vim.api.nvim_set_hl(0, "@function.call", { fg = P.cyan, underline = true })
+    vim.api.nvim_set_hl(0, "@function.builtin", { fg = P.cyan, underline = true })
+    vim.api.nvim_set_hl(0, "@method", { fg = P.cyan, underline = true })
+    vim.api.nvim_set_hl(0, "@variable", { fg = P.green })
+    vim.api.nvim_set_hl(0, "@variable.member", { fg = P.green })
+    vim.api.nvim_set_hl(0, "@parameter", { fg = P.orange, italic = true })
+    vim.api.nvim_set_hl(0, "@variable.parameter", { fg = P.orange, italic = true })
+    vim.api.nvim_set_hl(0, "@string", { fg = P.yellow })
+    vim.api.nvim_set_hl(0, "@string.special", { fg = P.yellow })
+    vim.api.nvim_set_hl(0, "@number", { fg = P.violet, bold = true })
+    vim.api.nvim_set_hl(0, "@boolean", { fg = P.violet, bold = true })
+    vim.api.nvim_set_hl(0, "@constant", { fg = P.violet, bold = true })
+    vim.api.nvim_set_hl(0, "@type", { fg = P.orange })
 
-    -- 5. ПОДСКАЗКИ WHICH-KEY: клавиша яркая, группа синяя, описание светлое
-    vim.api.nvim_set_hl(0, "WhichKey", { fg = P.coral, bold = true })
-    vim.api.nvim_set_hl(0, "WhichKeyGroup", { fg = P.blue, bold = true })
+    -- 5. ПОДСКАЗКИ WHICH-KEY: клавиша красная, группа голубая, описание светлое
+    vim.api.nvim_set_hl(0, "WhichKey", { fg = P.red, bold = true })
+    vim.api.nvim_set_hl(0, "WhichKeyGroup", { fg = P.cyan, bold = true })
     vim.api.nvim_set_hl(0, "WhichKeyDesc", { fg = P.text })
     vim.api.nvim_set_hl(0, "WhichKeySeparator", { fg = P.glow })
   end,
