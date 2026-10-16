@@ -836,7 +836,7 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 | cpp | `clangd` | `clang-format` |  |
 | java | `jdtls` | `google-java-format` |  |
 | kotlin | `kotlin_language_server` | `ktlint` |  |
-| scala | `metals` | `scalafmt` |  |
+| scala | — | `scalafmt` | LSP `metals`: в реестре Mason его нет, системный тулчейн. Установка: `cs install metals` (Coursier) |
 | cs | `csharp_ls` | `csharpier` | системный тулчейн, Mason не ставит |
 | ruby | `ruby_lsp` | `rubocop` |  |
 | php | `intelephense` | `php_cs_fixer` |  |

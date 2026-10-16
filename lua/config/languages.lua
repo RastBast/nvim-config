@@ -45,7 +45,8 @@ M.list = {
   { ft = "cpp", parser = "cpp", lsp = { "clangd" }, fmt = { "clang-format" } },
   { ft = "java", parser = "java", lsp = { "jdtls" }, fmt = { "google-java-format" } },
   { ft = "kotlin", parser = "kotlin", lsp = { "kotlin_language_server" }, fmt = { "ktlint" } },
-  { ft = "scala", parser = "scala", lsp = { "metals" }, fmt = { "scalafmt" } },
+  -- metals нет в реестре Mason: ставится через coursier (cs install metals), поэтому toolchain
+  { ft = "scala", parser = "scala", toolchain = { "metals" }, fmt = { "scalafmt" } },
   { ft = "cs", parser = "c_sharp", toolchain = { "csharp_ls" }, fmt = { "csharpier" } },
   { ft = "ruby", parser = "ruby", lsp = { "ruby_lsp" }, fmt = { "rubocop" } },
   { ft = "php", parser = "php", lsp = { "intelephense" }, fmt = { "php_cs_fixer" } },
