@@ -119,7 +119,7 @@ local function parse_deepl(stdout)
 end
 
 --- Ключ DeepL — ТОЛЬКО из переменной окружения DEEPL_API_KEY (в конфиг и в git не пишется).
---- Пример для ~/.zshrc:  export DEEPL_API_KEY="…"
+--- Пример для fish (постоянно):  set -Ux DEEPL_API_KEY "…"
 function M.deepl_key()
   local k = vim.env.DEEPL_API_KEY
   if type(k) == "string" and k ~= "" then
