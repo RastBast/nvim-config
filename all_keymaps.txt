@@ -1,162 +1,371 @@
 СПИСОК ГОРЯЧИХ КЛАВИШ — RastBast/nvim-config
-Сгенерировано автоматически из init.lua, lua/config/keymaps.lua и lua/plugins/*.lua
+Обновлено: 2026-10-16. Собрано из исходников (vim.keymap.set, keys = {}, which-key, Super Mode, cmp, БД).
+Тот же список в DOCS.md, раздел 6. <leader> = пробел.
 ==============================================================================
 
---- РЕЖИМ: I (1) -------------------------------------------------------
-  jk                     Выход в Normal                       init.lua
+--- Нормальный режим (`n`) — клавиши с `<leader>` (пробел) (291) ------
+  <leader>A                Группа: 🤖 AI (avante) · 🦊 Firefox                which-key
+  <leader>a                Группа: 🌳 Структура (aerial)                     which-key
+  <leader>b                Группа: 📑 Буферы                                 which-key
+  <leader>c                Группа: 🛠 Код                                    which-key
+  <leader>D                Группа: 🗄 Базы данных (каталог)                  which-key
+  <leader>Dc               Группа: 🏠 ClickHouse                             which-key
+  <leader>Dm               Группа: 🐬 MySQL / MariaDB                        which-key
+  <leader>Do               Группа: 🏛 Oracle                                 which-key
+  <leader>Dp               Группа: 🐘 PostgreSQL                             which-key
+  <leader>Ds               Группа: 🪶 SQLite                                 which-key
+  <leader>Dx               Группа: 🟦 SQL Server                             which-key
+  <leader>G                Группа: 🐙 GitHub · 🦊 GitLab · 📰 Хабр             which-key
+  <leader>g                Группа: 🐹 Go и LazyGit                           which-key
+  <leader>H                Группа: 🎛 Главное меню                           which-key
+  <leader>h                Группа: 📌 Harpoon (закладки)                     which-key
+  <leader>Ha               Группа: 🤖 AI и Структура                         which-key
+  <leader>Hb               Группа: 📋 Буфер обмена и macOS                   which-key
+  <leader>Hc               Группа: 📂 Создать файл/директорию                which-key
+  <leader>Hd               Группа: 🗄 Базы и Отладка                         which-key
+  <leader>Hf               Группа: 🔍 Поиск и Файлы                          which-key
+  <leader>Hg               Группа: 🌿 Git и Go                               which-key
+  <leader>HG               Группа: 🐹 Go: K8s · Docker · Kafka               which-key
+  <leader>HGa              Группа: 📨 Kafka                                  which-key
+  <leader>HGd              Группа: 🐳 Docker                                 which-key
+  <leader>HGk              Группа: ☸ Kubernetes                             which-key
+  <leader>Hgm              Группа: ⚔ Мерж-конфликты                         which-key
+  <leader>Hh               Группа: 📌 Harpoon                                which-key
+  <leader>Hk               Группа: 📚 Шпаргалки (cheat.sh)                   which-key
+  <leader>Hn               Группа: 📦 Прочее                                 which-key
+  <leader>Ho               Группа: 💎 Obsidian                               which-key
+  <leader>Hp               Группа: 🔌 Плагины                                which-key
+  <leader>Hq               Группа: ❓ Справка по клавишам                    which-key
+  <leader>Ht               Группа: 🧪 Тесты                                  which-key
+  <leader>Hu               Группа: 🎨 Визуал и UI                            which-key
+  <leader>HW               Группа: 🧰 Утилиты и диагностика                  which-key
+  <leader>Hx               Группа: ⚠️ Диагностика                           which-key
+  <leader>Hy               Группа: 💬 Чаты (терминал)                        which-key
+  <leader>j                Группа: 🧾 JSON                                   which-key
+  <leader>k                Группа: ⌨️ Показ нажатий                         which-key
+  <leader>m                Группа: TG ✈ Telegram (tele)                     which-key
+  <leader>n                Группа: 📓 Черновики и подсветка                  which-key
+  <leader>o                Группа: 💎 Obsidian                               which-key
+  <leader>P                Группа: 🧊 Protobuf (buf)                         which-key
+  <leader>p                Группа: ⏱ Pomodoro (таймер)                      which-key
+  <leader>q                Группа: 🚪 Закрыть окно · сессии                  which-key
+  <leader>r                Группа: 🚀 HTTP и переименование                  which-key
+  <leader>s                Группа: 🎵 Spotify · 📸 скриншот                   which-key
+  <leader>T                Группа: 🖥 Терминал (toggleterm)                  which-key
+  <leader>t                Группа: 🌐 Перевод · 🧪 Тесты · 📖 Док              which-key
+  <leader>u                Группа: 🎨 Визуал и тема · 🐾 Питомцы              which-key
+  <leader>W                Группа: 🪟 Окна: дерево · код · терминал          which-key
+  <leader>x                Группа: ⚠️ Ошибки (Trouble)                      which-key
+  <leader>y                Группа: 📋 Буфер обмена                           which-key
+  <leader>-                Горизонтальный сплит                                 keymaps
+  <leader>?                ❓ Справка по клавише (не выполняет)                  keydoc
+  <leader>?m               ❓ Режим справки вкл/выкл                             keydoc
+  <leader>a                📑 Структура кода                                     aerial
+  <leader>Ab               🦊 Спросить в Firefox (запрос)                        browser_ask
+  <leader>aj               🌳 Дерево JSON/структура                              aerial
+  <leader>bd               Закрыть буфер                                        snacks
+  <leader>cf               🎨 Форматировать файл                                 format
+  <leader>cj               🔀 Разбить/собрать конструкцию (переключить)          which-key
+  <leader>cJ               🔗 Собрать конструкцию в одну строку                  which-key
+  <leader>cl               🔍 Линтеры для этого файла                            lint
+  <leader>cs               ✂ Разбить конструкцию на строки                      which-key
+  <leader>db               🛑 Точка остановки                                    dap
+  <leader>dc               🐳 Docker: lazydocker (TUI)                           toggleterm
+  <leader>di               🐳 Docker: образы                                     toggleterm
+  <leader>dn               🐳 Docker: сети                                       toggleterm
+  <leader>dp               🐳 Docker: контейнеры                                 toggleterm
+  <leader>dr               🔍 Найти текущую БД                                   dadbod-ultimate
+  <leader>dt               🧪 Отладка теста                                      dap
+  <leader>du               🗄 Панель БД (IDE Style)                              dadbod-ultimate
+  <leader>e                🌲 Дерево файлов: вкл/выкл                            nvim-tree
+  <leader>fb               🗂 Буферы                                             telescope
+  <leader>fc               🧰 Все команды                                        telescope
+  <leader>fd               ⚠️ Диагностика проекта                               telescope
+  <leader>ff               📂 Найти файл                                         telescope
+  <leader>fg               🔎 Поиск по содержимому                               telescope
+  <leader>fh               ❓ Поиск по справке                                   telescope
+  <leader>fk               ⌨️ Все горячие клавиши                               telescope
+  <leader>fL               🚀 Код потёк!                                         matrix
+  <leader>fn               💎 Поиск в Obsidian                                   telescope
+  <leader>fr               🕑 Недавние файлы                                     telescope
+  <leader>ft               Найти TODO                                           todo
+  <leader>gb               🔨 Собрать                                            go-tools
+  <leader>gg               LazyGit                                              lazygit
+  <leader>gl               🧹 Линтер                                             go-tools
+  <leader>gm               🎭 Сгенерировать мок                                  go-tools
+  <leader>gt               🧪 Тесты пакета                                       go-tools
+  <leader>gv               🛡 Проверить уязвимости                               go-tools
+  <leader>h1               Harpoon: файл 1                                      harpoon
+  <leader>h2               Harpoon: файл 2                                      harpoon
+  <leader>ha               Добавить в Harpoon                                   harpoon
+  <leader>Hac              ✚ ✨ Команда в CodeCompanion                          which-key
+  <leader>Hae              📤 Отправить выделение ИИ                             which-key
+  <leader>Hai              🛠 AI‑меню действий                                   which-key
+  <leader>Has              📑 Показать структуру файла                           which-key
+  <leader>Hat              💬 Открыть чат с ИИ                                   which-key
+  <leader>Hbk              ⌨ Экранная клавиатура macOS (⌃⌥⌘K)                   which-key
+  <leader>Hbm              🍎 macOS: клавиатура и Maccy (инструкция)             which-key
+  <leader>Hbr              📋 Кольцо буфера обмена (1–9)                         which-key
+  <leader>Hcf              🆕 Дерево: создать файл (клавиша a)                   which-key
+  <leader>Hch              ⚙️ Checkhealth                                       which-key
+  <leader>Hcr              ✏️ Переименовать файл                                which-key
+  <leader>Hda              ➕ Добавить подключение                               which-key
+  <leader>Hdb              ⛔ Точка останова                                     which-key
+  <leader>Hde              🚀 Выполнить запрос                                   which-key
+  <leader>Hdf              ✚ 🔍 Найти БД буфера                                  which-key
+  <leader>Hdi              🔽 Шаг в                                              which-key
+  <leader>Hdo              ⏭ Шаг через                                          which-key
+  <leader>Hdr              ▶️ Старт/Продолжить                                  which-key
+  <leader>Hdt              🧪 Тест в режиме отладки                              which-key
+  <leader>Hdu              💾 Открыть панель БД                                  which-key
+  <leader>He               🗂 Дерево файлов (nvim‑tree)                          which-key
+  <leader>Hfb              🗂 Открыть буферы                                     which-key
+  <leader>Hfc              ✚ ⌨️ Все команды Neovim                              which-key
+  <leader>Hff              📂 Найти файл                                         which-key
+  <leader>Hfg              🔎 Live grep                                          which-key
+  <leader>Hfh              ❓ Поиск по справке                                   which-key
+  <leader>Hfk              ⌨️ Все горячие клавиши                               which-key
+  <leader>Hfm              ✚ 🔖 Метки (marks)                                    which-key
+  <leader>Hfr              🕑 Недавние файлы                                     which-key
+  <leader>Hfs              🧩 Заполнить struct                                   which-key
+  <leader>Hft              📝 TODO/FIXME                                         which-key
+  <leader>Hfw              ✚ 🔍 Найти слово под курсором                         which-key
+  <leader>HGab             🖧 kafkactl: брокеры                                  which-key
+  <leader>HGag             👥 kafkactl: consumer-группы                          which-key
+  <leader>HGak             📨 ktea — Kafka TUI (топики, группы, сообщения)       which-key
+  <leader>HGat             📋 kafkactl: топики                                   which-key
+  <leader>Hgb              🕵️‍♂️ Показать автора строки                         which-key
+  <leader>Hgd              ✚ 🔀 Diff текущего файла                              which-key
+  <leader>HGdd             🐳 lazydocker — TUI Docker                            which-key
+  <leader>HGdi             🖼 docker images                                      which-key
+  <leader>HGdp             📦 docker ps -a                                       which-key
+  <leader>HGf              🧱 Поля struct'а под курсором                         go-tools
+  <leader>Hgf              🕰 История файла (Diffview)                           which-key
+  <leader>Hgg              ✚ 🐙 LazyGit                                          which-key
+  <leader>Hgh              🔎 Предпросмотр изменений                             which-key
+  <leader>HGkc             🔀 kubectl: контексты                                 which-key
+  <leader>HGkk             ☸ k9s — TUI кластера                                 which-key
+  <leader>HGkp             📦 kubectl: поды текущего namespace                   which-key
+  <leader>Hgl              ✚ 👤 Blame строки вкл/выкл                            which-key
+  <leader>Hgm0             🚫 Убрать оба куска                                   which-key
+  <leader>Hgmb             ⬌ Оставить оба куска                                 which-key
+  <leader>Hgml             📋 Все конфликты в quickfix                           which-key
+  <leader>Hgmn             ⏭ Следующий конфликт                                 which-key
+  <leader>Hgmo             ⬅ Оставить СВОЁ (ours)                               which-key
+  <leader>Hgmp             ⏮ Предыдущий конфликт                                which-key
+  <leader>Hgmt             ➡ Оставить ЧУЖОЁ (theirs)                            which-key
+  <leader>Hgq              ❌ Закрыть Diffview                                   which-key
+  <leader>HGS              🧩 Формочка struct (выбор из списка)                  go-tools
+  <leader>Hgs              📦 Stage hunk                                         which-key
+  <leader>Hgt              🧪 Запуск Go-тестов                                   which-key
+  <leader>Hgu              ↩️ Undo stage hunk                                   which-key
+  <leader>Hgv              🆚 Diffview: сравнить изменения                       which-key
+  <leader>hh               Меню Harpoon                                         harpoon
+  <leader>Hh1              🚀 Перейти к 1‑му файлу                               which-key
+  <leader>Hh2              🚀 Перейти к 2‑му файлу                               which-key
+  <leader>Hha              📍 Добавить файл в Harpoon                            which-key
+  <leader>Hhh              📂 Открыть меню Harpoon                               which-key
+  <leader>Hie              ❗ Авто‑if err                                        which-key
+  <leader>Him              ⚙️ Сгенерировать impl                                which-key
+  <leader>Hj2s             📦 JSON → struct                                      which-key
+  <leader>Hkc              📚 Шпаргалка по запросу (cheat.sh)                    which-key
+  <leader>Hkl              📋 Поиск по всем шпаргалкам                           which-key
+  <leader>Hli              📝 LspInfo                                            which-key
+  <leader>Hm               🪟 Развернуть/восстановить окно                       which-key
+  <leader>Hnh              🔎 Убрать подсветку поиска                            which-key
+  <leader>Hof              🔗 Перейти по ссылке                                  which-key
+  <leader>Hon              📝 Новая заметка                                      which-key
+  <leader>Hos              🔎 Поиск заметок                                      which-key
+  <leader>Hot              ☑ Тоггл чекбокса                                     which-key
+  <leader>Hpc              ✚ 🎨 Чем форматируется файл                           which-key
+  <leader>Hpl              📦 Открыть Lazy UI                                    which-key
+  <leader>Hpm              🛠 Открыть Mason UI                                   which-key
+  <leader>Hps              ⏱️ Стоп Pomodoro                                     which-key
+  <leader>Hpt              ⏱️ Старт Pomodoro                                    which-key
+  <leader>Hpy              ✚ 🔄 Lazy sync (поставить новые плагины)              which-key
+  <leader>Hq?              ❓ Справка по клавише (не выполняет)                  which-key
+  <leader>Hqm              ❓ Режим справки вкл/выкл                             which-key
+  <leader>Hrr              🚀 HTTP‑запрос (Kulala)                               which-key
+  <leader>Hsc              📸 Скриншот кода (Silicon)                            which-key
+  <leader>Htf              📂 Запуск всех тестов в файле                         which-key
+  <leader>Hti              🏷 Добавить json‑теги                                 which-key
+  <leader>Htn              ⬇️ Следующий тест                                    which-key
+  <leader>Hto              📄 Показать вывод ошибки                              which-key
+  <leader>Htr              ▶️ Запуск теста под курсором                         which-key
+  <leader>Hts              🗂 Окно со статусом тестов                            which-key
+  <leader>Hua              ✨ Переключить анимации                               which-key
+  <leader>Huc              🕐 HUD: 12/24-часовой формат                          hud
+  <leader>Hud              🕐 HUD: что он видит (диагностика)                    hud
+  <leader>Huh              🕐 HUD: плашка в углу (вкл/выкл)                      hud
+  <leader>Hui              🌐 HUD: какой IP (lan → public → both → off)          hud
+  <leader>Huk              🔥 HUD: огонёк за коммиты (:Streak)                   hud
+  <leader>Hum              🪟 Развернуть/восстановить окно                       maximizer
+  <leader>HuM              🪟 Принудительно вернуть раскладку                    maximizer
+  <leader>Huo              🙈 HUD: IP в углу — скрыть/показать                   hud
+  <leader>Hup              🐾 Питомец (Pets)                                     which-key
+  <leader>Hvc              🔐 Проверка уязвимостей                               which-key
+  <leader>HWa              🔕 Огонёк: без уведомлений                            which-key
+  <leader>HWA              🔔 Огонёк: уведомления вкл                            which-key
+  <leader>HWb              🔥 Огонёк: день до 03:00 МСК                          which-key
+  <leader>HWc              🕐 Часы: 24 часа                                      which-key
+  <leader>HWC              🕐 Часы: 12 часов                                     which-key
+  <leader>HWd              🩺 Русские ошибки LSP: вкл/выкл                       which-key
+  <leader>HWe              🧪 Проверка PATH и утилит                             which-key
+  <leader>HWg              🔥 Огонёк: цель 1 коммит в день                       which-key
+  <leader>HWh              🌐 Перевод подсказок K: вкл/выкл                      which-key
+  <leader>HWm              🟢 Дождь из символов                                  which-key
+  <leader>HWn              🔔 Русские уведомления: вкл/выкл                      which-key
+  <leader>HWr              🌐 Проверить переводчики                              which-key
+  <leader>HWt              🕐 Обновить часы и HUD                                which-key
+  <leader>HWz              🕐 Пояс UTC+3 (МСК)                                   which-key
+  <leader>Hxl              📋 Location list                                      which-key
+  <leader>Hxq              📋 Quickfix list                                      which-key
+  <leader>Hxs              ✚ 🧭 Символы файла (Trouble)                          which-key
+  <leader>Hxt              ✚ 📝 TODO‑комментарии (Trouble)                       which-key
+  <leader>Hxx              ❗ Показать все ошибки (Trouble)                      which-key
+  <leader>Hyd              💬 Discordo — Discord в терминале (⚠ риск для аккаунта, см. доку) which-key
+  <leader>Hz               🧘 Дзен‑режим                                         which-key
+  <leader>jq               🔎 jq-запрос по JSON                                  json-pro
+  <leader>jx               🔍 Список ключей JSON                                 json-pro
+  <leader>kk               ⌨️ Показ нажатий: вкл/выкл                           keyshow
+  <leader>M                🦹 Super Mode                                         hydra
+  <leader>m?               📋 шпаргалка по telegram-мосту                        which-key
+  <leader>mb               🔔 гудок вкл/выкл                                     which-key
+  <leader>mc               🎯 выбрать чат и сесть на него                        which-key
+  <leader>md               🩺 диагностика (:TeleCheck)                           which-key
+  <leader>mf               🖥 tele: на весь экран                                which-key
+  <leader>mh               🙈 спрятать окно (tele останется живым)               which-key
+  <leader>mi               📥 история входящих                                   which-key
+  <leader>mk               💀 убить процесс tele                                 which-key
+  <leader>mm               🗕 tele: маленькое окно (float)                       which-key
+  <leader>mn               🔇 режим тишины (dnd)                                 which-key
+  <leader>mo               ↩︎ открыть чат последнего уведомления                which-key
+  <leader>mp               ▐ tele: боковой панелью                              which-key
+  <leader>mq               ↩︎ ответить в чат последнего уведомления             which-key
+  <leader>mr               ✍️ ответить через tele                               which-key
+  <leader>ms               📤 отправить выделение в tele (visual)                which-key
+  <leader>mS               📤 отправить текущую строку в tele                    which-key
+  <leader>mt               📖 прочитать чат, не открывая tele                    which-key
+  <leader>ns               📓 Черновик                                           snacks
+  <leader>nS               📓 История черновиков                                 snacks
+  <leader>ob               🔗 Связь с Obsidian                                   obsidian-bridge
+  <leader>Pb               🧊 buf build (валидация proto)                        toggleterm
+  <leader>Pg               🧊 buf generate (codegen по buf.gen.yaml)             toggleterm
+  <leader>Pl               🧊 buf lint (стиль proto)                             toggleterm
+  <leader>pp               ⏸ Пауза                                              pomo
+  <leader>pr               ▶ Снять с паузы                                      pomo
+  <leader>ps               ⏱️ Остановить таймер                                 pomo
+  <leader>pt               ⏱️ Запустить таймер (25м)                            pomo
+  <leader>q                Закрыть окно                                         keymaps
+  <leader>qs               🕑 Восстановить сессию этого проекта                  persistence
+  <leader>rr               🚀 Запустить запрос                                   kulala
+  <leader>S                Поиск и замена во всем проекте                       spectre
+  <leader>sb               🎵 Назад                                              spotify
+  <leader>sd               🎵 Spotify устройства                                 spotify
+  <leader>sn               🎵 Вперёд                                             spotify
+  <leader>so               🎵 Spotify поиск                                      spotify
+  <leader>sp               🎵 Пауза/Плей                                         spotify
+  <leader>Ta               ❎ Показать/скрыть все терминалы                      toggleterm
+  <leader>Tc               ❎ Закрыть все терминалы                              toggleterm
+  <leader>tf               Запустить тесты в файле                              neotest
+  <leader>Tg               🌿 git status                                         toggleterm
+  <leader>TG               🌿 lazygit в терминале                                toggleterm
+  <leader>Th               📟 Терминал снизу                                     toggleterm
+  <leader>Tl               ➡ Строку в терминал                                  toggleterm
+  <leader>to               Показать лог ошибки                                  neotest
+  <leader>tr               Запустить тест под курсором                          neotest
+  <leader>ts               Панель тестов (IDE style)                            neotest
+  <leader>Tt               📟 Плавающий терминал                                 toggleterm
+  <leader>tt               🌐 Перевести слово (ru)                               translate
+  <leader>Tv               📟 Терминал справа                                    toggleterm
+  <leader>ua               Переключить анимации                                 animate
+  <leader>uc               🖱 Плавный курсор вкл/выкл                            smoothcursor
+  <leader>un               🔕 Спрятать уведомления                               snacks
+  <leader>uo               😴 Питомец: сон                                       pets
+  <leader>up               🐾 Призвать питомца                                   pets
+  <leader>uT               🎨 Выбрать тему (новая / старая)                      themes
+  <leader>ux               💀 Убрать питомцев                                    pets
+  <leader>w                Сохранить                                            keymaps
+  <leader>Wc               💻 Фокус: файл (код)                                  winnav
+  <leader>Wf               🌲 Фокус: дерево файлов                               winnav
+  <leader>Wo               🪟 Оставить только это окно                           winnav
+  <leader>Wt               📟 Фокус: терминал                                    winnav
+  <leader>Wx               ✖ Закрыть окно                                       winnav
+  <leader>xx               Список всех ошибок                                   trouble
+  <leader>yr               📋 Кольцо буфера обмена (1–9)                         yank_ring
+  <leader>z                Дзен режим                                           zen
+  <leader>|                Вертикальный сплит                                   keymaps
 
---- РЕЖИМ: N (122) -------------------------------------------------------
-  <C-Down>               Ниже                                   init.lua
-  <C-Up>                 Выше                                   init.lua
-  <C-h>                  Окно слева                        init.lua
-  <C-j>                  Окно снизу                        init.lua
-  <C-k>                  Окно сверху                      init.lua
-  <C-l>                  Окно справа                      init.lua
-  <F10>                  ↷ Шаг через                      lua/plugins/dap.lua
-  <F11>                  ↴ Шаг в                              lua/plugins/dap.lua
-  <F5>                   ▶ Запуск / Продолжить    lua/plugins/dap.lua
-  <M-H>                  ⬅ Слово влево                  lua/plugins/move.lua
-  <M-L>                  ➡ Слово вправо                lua/plugins/move.lua
-  <M-h>                  Уже                                     init.lua
-  <M-j>                  ⬇ Строку вниз                  lua/plugins/move.lua
-  <M-k>                  ⬆ Строку вверх                lua/plugins/move.lua
-  <M-l>                  Шире                                   init.lua
-  <S-Tab>                —                                        lua/plugins/bufferline.lua
-  <Tab>                  —                                        lua/plugins/bufferline.lua
-  <c-\>                  📟 Переключить терминал lua/plugins/toggleterm.lua
-  <leader>-              Горизонтальный сплит    init.lua
-  <leader>Hac            ✨ Команда в CodeCompanion        lua/plugins/ai.lua
-  <leader>Hae            📤 Отправить выделение ИИ lua/plugins/ai.lua
-  <leader>Hai            🛠 Действия AI                   lua/plugins/ai.lua
-  <leader>Hat            💬 Чат с Kimi                        lua/plugins/ai.lua
-  <leader>Hum            🪟 Развернуть/восстановить окно lua/plugins/maximizer.lua
-  <leader>HuM            🪟 Принудительно вернуть раскладку lua/plugins/maximizer.lua
-  <leader>Huc            🕐 HUD: 12/24-часовой формат lua/config/hud.lua
-  <leader>Hud            🐞 HUD: что он видит (диагностика) lua/config/hud.lua
-  <leader>Huh            🕐 HUD: плашка в углу (вкл/выкл) lua/config/hud.lua
-  <leader>Hui            🌐 HUD: какой IP (lan/public/both/off) lua/config/hud.lua
-  <leader>Huk            🔥 Огонёк за коммиты (:Streak) lua/config/hud.lua
-  <leader>S              Поиск и замена во всем проекте lua/plugins/spectre.lua
-  <leader>TG             🌿 lazygit в терминале         lua/plugins/toggleterm.lua
-  <leader>Ta             ❎ Показать/скрыть все терминалы lua/plugins/toggleterm.lua
-  <leader>Tg             🌿 git status                            lua/plugins/toggleterm.lua
-  <leader>Th             📟 Терминал снизу           lua/plugins/toggleterm.lua
-  <leader>Tl             ➡ Строку в терминал       lua/plugins/toggleterm.lua
-  <leader>Tt             📟 Плавающий терминал   lua/plugins/toggleterm.lua
-  <leader>Tv             📟 Терминал справа         lua/plugins/toggleterm.lua
-  <leader>a              📑 Структура кода           lua/plugins/aerial.lua
-  <leader>aj             🌳 Дерево JSON/структура  lua/plugins/aerial.lua
-  <leader>bd             Закрыть буфер                  lua/plugins/bufdelete.lua
-  <leader>cf             🎨 Форматировать файл   lua/plugins/format.lua
-  <leader>db             🛑 Точка остановки         lua/plugins/dap.lua
-  <leader>dc             🐳 Docker: lazydocker (TUI)              lua/plugins/toggleterm.lua
-  <leader>di             🐳 Docker: образы                  lua/plugins/toggleterm.lua
-  <leader>dn             🐳 Docker: сети                      lua/plugins/toggleterm.lua
-  <leader>dp             🐳 Docker: контейнеры          lua/plugins/toggleterm.lua
-  <leader>dr             🔍 Найти текущую БД        lua/plugins/dadbod-ultimate.lua
-  <leader>dt             🧪 Отладка теста             lua/plugins/dap.lua
-  <leader>du             🗄 Панель БД (IDE Style)         lua/plugins/dadbod-ultimate.lua
-  <leader>e              —                                        lua/plugins/nvim-tree.lua
-  <leader>fL             🚀 Код потёк!                    lua/plugins/matrix.lua
-  <leader>fb             🗂 Буферы                          lua/plugins/telescope.lua
-  <leader>fc             🧰 Все команды                 lua/plugins/telescope.lua
-  <leader>fd             ⚠️ Диагностика проекта lua/plugins/telescope.lua
-  <leader>ff             📂 Найти файл                   lua/plugins/telescope.lua
-  <leader>fg             🔎 Поиск по содержимому lua/plugins/telescope.lua
-  <leader>fh             ❓ Поиск по справке         lua/plugins/telescope.lua
-  <leader>fk             ⌨️ Все горячие клавиши lua/plugins/telescope.lua
-  <leader>fn             💎 Поиск в Obsidian                lua/plugins/telescope.lua
-  <leader>fr             🕑 Недавние файлы           lua/plugins/telescope.lua
-  <leader>ft             Найти TODO                            lua/plugins/todo.lua
-  <leader>gb             🔨 Собрать                        lua/plugins/go-tools.lua
-  <leader>gl             🧹 Линтер                          lua/plugins/go-tools.lua
-  <leader>gm             🎭 Сгенерировать мок     lua/plugins/go-tools.lua
-  <leader>gt             🧪 Тесты пакета               lua/plugins/go-tools.lua
-  <leader>gv             🛡 Проверить уязвимости lua/plugins/go-tools.lua
-  <leader>h1             Harpoon: файл 1                        lua/plugins/harpoon.lua
-  <leader>h2             Harpoon: файл 2                        lua/plugins/harpoon.lua
-  <leader>ha             Добавить в Harpoon                lua/plugins/harpoon.lua
-  <leader>hh             Меню Harpoon                           lua/plugins/harpoon.lua
-  <leader>jq             🔎 jq-запрос по JSON             lua/plugins/json-pro.lua
-  <leader>jx             🔍 Список ключей JSON        lua/plugins/json-pro.lua
-  <leader>mb             ✈ Гудок терминала вкл/выкл lua/config/telegram.lua
-  <leader>mc             ✈ Выбрать чат и сесть на него lua/config/telegram.lua
-  <leader>md             ✈ Диагностика Telegram-моста lua/config/telegram.lua
-  <leader>mf             ✈ tele на весь экран lua/config/telegram.lua
-  <leader>mh             ✈ Спрятать окно (процесс жив) lua/config/telegram.lua
-  <leader>mi             ✈ Лента входящих Telegram lua/config/telegram.lua
-  <leader>mk             ✈ Убить процесс tele lua/config/telegram.lua
-  <leader>mm             ✈ tele в маленьком окне lua/config/telegram.lua
-  <leader>mn             ✈ Режим тишины lua/config/telegram.lua
-  <leader>mo             ✈ Чат последнего уведомления lua/config/telegram.lua
-  <leader>mp             ✈ tele боковой панелью lua/config/telegram.lua
-  <leader>mq             ✈ Ответить в чат посл. уведомления lua/config/telegram.lua
-  <leader>mr             ✈ Ответить через tele lua/config/telegram.lua
-  <leader>mS             ✈ Строку → сообщение в tele lua/config/telegram.lua
-  <leader>m?             ✈ Шпаргалка по мосту lua/config/telegram.lua
-  <leader>nS             📓 История черновиков   lua/plugins/snacks.lua
-  <leader>nh             Убрать подсветку поиска init.lua
-  <leader>ns             📓 Черновик                      lua/plugins/snacks.lua
-  <leader>ob             🔗 Связь с Obsidian                lua/plugins/obsidian-bridge.lua
-  <leader>pp             ⏸ Пауза                             lua/plugins/pomo.lua
-  <leader>pr             ▶ Снять с паузы               lua/plugins/pomo.lua
-  <leader>ps             ⏱️ Остановить таймер   lua/plugins/pomo.lua
-  <leader>pt             ⏱️ Запустить таймер (25м) lua/plugins/pomo.lua
-  <leader>q              Закрыть окно                    init.lua
-  <leader>qs             —                                        lua/plugins/persistence.lua
-  <leader>rr             🚀 Запустить запрос       lua/plugins/kulala.lua
-  <leader>tD             📑 Открыть доку в новом окне init.lua
-  <leader>tf             Запустить тесты в файле lua/plugins/neotest.lua
-  <leader>to             Показать лог ошибки       lua/plugins/neotest.lua
-  <leader>tr             Запустить тест под курсором lua/plugins/neotest.lua
-  <leader>ts             Панель тестов (IDE style)      lua/plugins/neotest.lua
-  <leader>ua             Переключить анимации    lua/plugins/animate.lua
-  <leader>uc             🖱 Плавный курсор вкл/выкл lua/plugins/smoothcursor.lua
-  <leader>un             🔕 Спрятать уведомления lua/plugins/snacks.lua
-  <leader>uo             😴 Питомец: сон                lua/plugins/pets.lua
-  <leader>up             🐾 Призвать питомца       lua/plugins/pets.lua
-  <leader>ux             💀 Убрать питомцев         lua/plugins/pets.lua
-  <leader>w              Сохранить                         init.lua
-  <leader>xx             Список всех ошибок         lua/plugins/trouble.lua
-  <leader>z              Дзен режим                        lua/plugins/zen.lua
-  <leader>|              Вертикальный сплит        init.lua
-  K                      Предпросмотр свёрнутого блока lua/plugins/folding.lua
-  [[                     Предыдущее слово            lua/plugins/snacks.lua
-  ]]                     Следующее слово              lua/plugins/snacks.lua
-  x                      —                                        init.lua
-  zM                     Свернуть всё                    lua/plugins/folding.lua
-  zR                     Развернуть всё                lua/plugins/folding.lua
-  zm                     Свернуть блоки                lua/plugins/folding.lua
-  zr                     Развернуть, кроме…        lua/plugins/folding.lua
+--- Визуальный режим (`v`, `x`) — клавиши с `<leader>` (12) ----------
+  <leader>Ab               x | 🦊 Спросить в Firefox (выделение)                 browser_ask
+  <leader>Ax               n, v | 🤖 Объяснить код/ошибку (Gemini)               avante
+  <leader>Hac              n, v | ✨ Команда в CodeCompanion                     ai
+  <leader>Hae              n, v | 📤 Отправить выделение ИИ                      ai
+  <leader>Hai              n, v | 🛠 Действия AI                                 ai
+  <leader>Hat              n, v | 💬 Чат с Kimi                                  ai
+  <leader>ms               v | ✈ отправить выделение в tele                     telegram
+  <leader>r                v | Запустить кусок кода                             sniprun
+  <leader>sc               v | 📸 Скриншот Silicon                               silicon
+  <leader>te               n, v | 🌐 Перевести на английский                     translate
+  <leader>Tl               v | ➡ Выделение в терминал                           toggleterm
+  <leader>tt               v | 🌐 Перевести выделение (ru)                       translate
 
---- РЕЖИМ: T (3) -------------------------------------------------------
-  <Esc><Esc>             Выйти в Normal в терминале init.lua
-  [[                     Предыдущее слово            lua/plugins/snacks.lua
-  ]]                     Следующее слово              lua/plugins/snacks.lua
+--- Обычный режим (`n`) — остальные клавиши (24) ---------------------
+  <C-\>                    📟 Переключить терминал                               toggleterm
+  <C-Down>                 Ниже                                                 keymaps
+  <C-h>                    Окно слева                                           keymaps
+  <C-j>                    Окно снизу (терминал — сразу ввод)                   keymaps
+  <C-k>                    Окно сверху                                          keymaps
+  <C-l>                    Окно справа                                          keymaps
+  <C-Up>                   Выше                                                 keymaps
+  <Esc>                    Выйти из режима справки                              keydoc
+  <F10>                    ↷ Шаг через                                          dap
+  <F11>                    ↴ Шаг в                                              dap
+  <F5>                     ▶ Запуск / Продолжить                                dap
+  <M-h>                    Уже                                                  keymaps
+  <M-H>                    ⬅ Слово влево                                        move
+  <M-j>                    ⬇ Строку вниз                                        move
+  <M-k>                    ⬆ Строку вверх                                       move
+  <M-l>                    Шире                                                 keymaps
+  <M-L>                    ➡ Слово вправо                                       move
+  <S-Tab>                  Предыдущий буфер                                     bufferline
+  <Tab>                    Следующий буфер                                      bufferline
+  K                        Предпросмотр свёрнутого блока; если блока нет — документация LSP (hover) folding
+  zM                       Свернуть всё                                         folding
+  zm                       Свернуть блоки                                       folding
+  zR                       Развернуть всё                                       folding
+  zr                       Развернуть, кроме…                                   folding
 
---- РЕЖИМ: V (15) -------------------------------------------------------
-  <                      Отступ влево                    init.lua
-  <leader>ms             ✈ Выделение → сообщение в tele lua/config/telegram.lua
-  <M-H>                  ⬅ Блок влево                    lua/plugins/move.lua
-  <M-L>                  ➡ Блок вправо                  lua/plugins/move.lua
-  <M-j>                  ⬇ Блок вниз                      lua/plugins/move.lua
-  <M-k>                  ⬆ Блок вверх                    lua/plugins/move.lua
-  <leader>Hac            ✨ Команда в CodeCompanion        lua/plugins/ai.lua
-  <leader>Hae            📤 Отправить выделение ИИ lua/plugins/ai.lua
-  <leader>Hai            🛠 Действия AI                   lua/plugins/ai.lua
-  <leader>Hat            💬 Чат с Kimi                        lua/plugins/ai.lua
-  <leader>Tl             ➡ Выделение в терминал lua/plugins/toggleterm.lua
-  <leader>r              Запустить кусок кода     lua/plugins/sniprun.lua
-  <leader>sc             📸 Скриншот Silicon              lua/plugins/silicon.lua
-  >                      Отступ вправо                  init.lua
-  p                      Вставить, не затирая регистр init.lua
+--- Визуальный и операторный режимы — остальные клавиши (17) ---------
+  b                        n, o, x | Умное b (подслова)                         spider
+  e                        n, o, x | Умное e (подслова)                         spider
+  ge                       n, o, x | Умное ge (подслова)                        spider
+  s                        n, o, x | Прыжок                                     flash
+  w                        n, o, x | Умное w (подслова)                         spider
+  [[                       n, t | Предыдущее слово                              snacks
+  ]]                       n, t | Следующее слово                               snacks
+  <C-n>                    n, x | Несколько курсоров: выделить слово            visual-multi
+  <                        v | Отступ влево                                     keymaps
+  <M-H>                    v | ⬅ Блок влево                                     move
+  <M-j>                    v | ⬇ Блок вниз                                      move
+  <M-k>                    v | ⬆ Блок вверх                                     move
+  <M-L>                    v | ➡ Блок вправо                                    move
+  >                        v | Отступ вправо                                    keymaps
+  p                        v | Вставить, не затирая регистр                     keymaps
+  au                       x | Внешняя единица кода (treesitter-unit)           ts-unit
+  iu                       x | Внутренняя единица кода (treesitter-unit)        ts-unit
 
---- РЕЖИМ: X (2) -------------------------------------------------------
-  au                     —                                        lua/plugins/ts-unit.lua
-  iu                     —                                        lua/plugins/ts-unit.lua
+--- Режим вставки (`i`) и терминала (`t`) (1) -----------------------
+  <Esc><Esc>               t | Выйти в Normal в терминале                       keymaps
 
-Всего маппингов: 143 (из них 16 — Telegram-мост, lua/config/telegram.lua;
-буферные клавиши :TeleInbox/:TeleRead в список не входят.
-🕐/🔥 — 7 клавиш lua/config/hud.lua (<leader>Huc/Hud/Huh/Hui/Huk) и
-lua/plugins/maximizer.lua (<leader>Hum/HuM); счётчики пересчитаны по фактическим
-строкам файла — в прошлой ревизии заголовок РЕЖИМ: N отставал на одну строку.)
+--- Клавиши LSP (появляются, когда у буфера подключился сервер) (8) ---
+  <F2>                     i, n                                                 ✏️ Переименовать
+  <leader>ca               n                                                    💡 Действия кода
+  <leader>d                n                                                    🩺 Диагностика строки
+  <leader>f                n                                                    🎨 Формат (LSP)
+  <leader>rn               n                                                    ✏️ Переименовать
+  [d                       n                                                    ⬆ Пред. ошибка
+  ]d                       n                                                    ⬇ След. ошибка
+  gD                       n                                                    📌 К декларации
+
+Всего строк: 353
