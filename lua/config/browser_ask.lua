@@ -3,6 +3,11 @@
 -- ========================================================================== --
 -- <leader>Ab  (обычный режим): Neovim спрашивает запрос, открывает Firefox
 --             с готовым поиском/ответом.
+-- Сервис выбирается префиксом в начале запроса:
+--   P=как сделать X    → Perplexity   (можно и ?P=как сделать X)
+--   G=как сделать X    → Google       (можно и ?G=как сделать X)
+--   D= / C=            → DuckDuckGo / ChatGPT
+--   без префикса       → сервис по умолчанию (M.engine)
 -- <leader>Ab  (визуальный):    в запрос сразу подставляется выделенный текст.
 -- :Ask [текст]                 то же из командной строки.
 --
@@ -18,6 +23,14 @@ local ENGINES = {
 }
 
 M.engine = "perplexity"
+
+-- Префикс запроса → сервис
+local PREFIX = {
+  P = "perplexity",
+  G = "google",
+  D = "duckduckgo",
+  C = "chatgpt",
+}
 
 local function encode(text)
   if vim.uri_encode then
@@ -42,19 +55,31 @@ local function open_firefox(url)
   vim.fn.jobstart(cmd, { detach = true })
 end
 
+--- Разбор запроса: возвращает сервис и текст без префикса.
+--- «P=текст», «?P=текст», «G=текст», «?G=текст» и т. д.
+function M.parse(query)
+  query = vim.trim(query or "")
+  local key, rest = query:match("^%??([PGDCpgdc])=(.*)$")
+  if key then
+    return PREFIX[key:upper()], vim.trim(rest)
+  end
+  return M.engine, query
+end
+
 --- Открыть запрос в браузере. Пустой запрос ничего не делает.
 function M.ask(query)
-  query = vim.trim(query or "")
-  if query == "" then
+  local engine, text = M.parse(query)
+  if text == "" then
+    vim.notify("Пустой запрос: напиши текст после префикса (например P=как ...)", vim.log.levels.WARN)
     return
   end
-  local base = ENGINES[M.engine] or ENGINES.perplexity
-  open_firefox(base .. encode(query))
+  local base = ENGINES[engine] or ENGINES[M.engine] or ENGINES.perplexity
+  open_firefox(base .. encode(text))
 end
 
 --- Спросить через ввод (vim.ui.input), с необязательным текстом по умолчанию.
 function M.prompt(default)
-  vim.ui.input({ prompt = "Запрос в Firefox: ", default = default or "" }, function(text)
+  vim.ui.input({ prompt = "Запрос в Firefox (P= Perplexity, G= Google): ", default = default or "" }, function(text)
     if text == nil then
       return -- отмена (Esc)
     end
