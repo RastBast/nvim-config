@@ -97,7 +97,10 @@ T.defaults = {
 
   panel = { direction = "vertical", size = 68 },
   float = { width = 96, height = 24 },
-  full = { direction = "editor" },
+  -- "tab" — штатный полноэкранный режим toggleterm (открывает терминал во всю ширину
+  -- и высоту в отдельной вкладке). "editor" не существует: падало с
+  -- «Invalid terminal direction» (terminal.lua:466).
+  full = { direction = "tab" },
 
   theme = { name = "nvim-mocha", palette = "mocha" },
 }
@@ -626,7 +629,7 @@ function T.open_inbox()
       T.render_inbox()
       return
     end
-    T.state.inbox_win = vim.api.nvim_open_win(buf, true, { split = true, height = 16 })
+    T.state.inbox_win = vim.api.nvim_open_win(buf, true, { split = "below", height = 16 })
     T.render_inbox()
     return
   end
@@ -637,7 +640,7 @@ function T.open_inbox()
   vim.bo[buf].buftype = "nofile"
   vim.bo[buf].swapfile = false
   vim.bo[buf].filetype = "teleinbox"
-  local win = vim.api.nvim_open_win(buf, true, { split = true, height = 16 })
+  local win = vim.api.nvim_open_win(buf, true, { split = "below", height = 16 })
   T.state.inbox_win = win
   vim.wo[win].spell = false -- window-локальная: на окно, не на буфер
   vim.wo[win].number = false
@@ -1399,7 +1402,7 @@ function T.read_chat(name, limit)
     vim.bo[buf].buftype = "nofile"
     vim.bo[buf].bufhidden = "wipe"
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-    local win = vim.api.nvim_open_win(buf, true, { split = true, height = math.min(#lines, 26) })
+    local win = vim.api.nvim_open_win(buf, true, { split = "below", height = math.min(#lines, 26) })
     vim.bo[buf].modifiable = false
     vim.wo[win].spell = false -- window-локальная: на окно, не на буфер
     vim.wo[win].number = false

@@ -12,10 +12,20 @@
 --   * <leader>s — группа поиска (spectre/telescope), поэтому сплиты на - и |
 
 -- ПЕРЕМЕЩЕНИЕ между окнами (Ctrl + hjkl)
-vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Окно слева" })
-vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Окно снизу" })
-vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Окно сверху" })
-vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Окно справа" })
+-- Если попали в терминал (toggleterm) — сразу включаем режим ввода (startinsert).
+local function win_nav(dir)
+  return function()
+    vim.cmd("wincmd " .. dir)
+    if vim.bo.buftype == "terminal" then
+      vim.cmd("startinsert")
+    end
+  end
+end
+vim.keymap.set("n", "<C-h>", win_nav("h"), { desc = "Окно слева" })
+vim.keymap.set("n", "<C-j>", win_nav("j"), { desc = "Окно снизу (терминал — сразу ввод)" })
+vim.keymap.set("n", "<C-k>", win_nav("k"), { desc = "Окно сверху" })
+vim.keymap.set("n", "<C-l>", win_nav("l"), { desc = "Окно справа" })
+-- Из терминала: <C-\><C-n> → обычный режим, потом <C-h/j/k/l> или <leader>W*
 
 -- ИЗМЕНЕНИЕ РАЗМЕРА окон
 -- На Маке клавиша Alt — это Option (⌥)

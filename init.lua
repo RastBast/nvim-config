@@ -247,6 +247,8 @@ end, { desc = "📑 Открыть доку в новом окне" })
 -- ========================================================================== --
 require("config.keymaps")
 require("config.yank_ring").setup() -- кольцо буфера обмена: "1…"9, <leader>yr
+require("config.winnav").setup() -- <leader>W*: фокус дерево / код / терминал
+require("config.keyshow").setup() -- показ нажатий: <leader>kk
 require("config.keydoc").setup() -- справка по клавишам: <leader>? и режим <leader>?m
 
 -- Русский перевод LSP-подсказок (hover): переводится только проза,

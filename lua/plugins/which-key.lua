@@ -244,6 +244,8 @@ return {
         { "<leader>HWg", "<cmd>StreakGoal 1<cr>", desc = "🔥 Огонёк: цель 1 коммит в день" },
         { "<leader>HWb", "<cmd>StreakHour 3<cr>", desc = "🔥 Огонёк: день до 03:00 МСК" },
         { "<leader>T", group = "🖥 Терминал (toggleterm)" },
+        { "<leader>W", group = "🪟 Окна: дерево · код · терминал" },
+        { "<leader>k", group = "⌨️ Показ нажатий" },
         { "<leader>Tt", desc = "📟 Плавающий терминал" },
         { "<leader>Th", desc = "📟 Терминал снизу" },
         { "<leader>Tv", desc = "📟 Терминал справа" },
