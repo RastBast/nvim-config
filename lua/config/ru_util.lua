@@ -153,8 +153,16 @@ M.endpoints = {
 }
 
 --- DeepL — первый по приоритету, когда задан DEEPL_API_KEY.
---- Free-ключи (заканчиваются на «:fx») работают на api-free.deepl.com.
-local DEEPL = { name = "DeepL (api-free.deepl.com)", parse = parse_deepl, deepl = true }
+--- Хост выбирается по ключу: Free-ключи (заканчиваются на «:fx») работают на
+--- api-free.deepl.com, Pro-ключи — на api.deepl.com. Раньше хост был жёстко
+--- api-free, и Pro-ключ молча откатывался на Google.
+local DEEPL = { name = "DeepL", parse = parse_deepl, deepl = true }
+
+--- Хост DeepL по суффиксу ключа.
+local function deepl_url(key)
+  local host = key:match(":fx$") and "api-free.deepl.com" or "api.deepl.com"
+  return "https://" .. host .. "/v2/translate"
+end
 
 --- Один запрос к эндпоинту. cb(res): res.code (0 = ок), res.stdout.
 local function call(ep, text, cb)
@@ -168,7 +176,7 @@ local function call(ep, text, cb)
     local cfg = 'header = "Authorization: DeepL-Auth-Key ' .. key .. '"\n'
     vim.system({
       "curl", "-sS", "--max-time", "5", "-K", "-",
-      "-X", "POST", "https://api-free.deepl.com/v2/translate",
+      "-X", "POST", deepl_url(key),
       "-H", "Content-Type: application/json",
       "-d", body,
     }, { text = true, stdin = cfg }, cb)

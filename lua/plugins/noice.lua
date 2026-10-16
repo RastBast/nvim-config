@@ -9,6 +9,12 @@ return {
     config = function()
       require('noice').setup({
         lsp = {
+          -- ВАЖНО: hover выключен. По умолчанию noice подменяет vim.lsp.buf.hover
+          -- на свою функцию и показывает подсказку в своём окне, мимо
+          -- vim.lsp.util.open_floating_preview. Из-за этого перехват перевода
+          -- (lua/config/hover_ru.lua) на K не срабатывал. С hover = false K
+          -- идёт штатным путём и перевод показывается сразу.
+          hover = { enabled = false },
           override = {
             ['vim.lsp.util.convert_input_to_markdown_lines'] = true,
             ['vim.lsp.util.stylize_markdown'] = true,
