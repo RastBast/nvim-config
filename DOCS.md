@@ -952,7 +952,7 @@ require("config.streak").setup({
 | Клавиша / команда | Что делает | Нужно один раз |
 |---|---|---|
 | `<leader>Gh` | `gh dash`: PR и issues GitHub в плавающем терминале | `brew install gh`, `gh auth login`, `gh extension install dlvhdr/gh-dash` |
-| `<leader>Gl` | `gitlab-tui`: merge requests и issues GitLab | `cargo install gitlab-tui`, токен GitLab в `~/.netrc` |
+| `<leader>Gl` | `glab-tui`: merge requests и issues GitLab | `brew install glab`, `glab auth login`, установка glab-tui (github.com/rcieri/glab-tui) |
 | `<leader>Gb` / `:Habr` | Список статей Хабра, чтение во вкладке nvim | ничего (нужен `curl`, есть в macOS); `pandoc` по желанию |
 
 * В статье: `q` закрыть вкладку, `o` открыть в браузере.

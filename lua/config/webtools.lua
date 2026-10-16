@@ -2,13 +2,13 @@
 --             GITHUB · GITLAB · ХАБР — прямо в Neovim                       --
 -- ========================================================================== --
 -- <leader>Gh  — GitHub: дашборд PR и issues (gh dash) в плавающем терминале
--- <leader>Gl  — GitLab: merge requests и issues (gitlab-tui) в терминале
+-- <leader>Gl  — GitLab: merge requests и issues (glab-tui) в терминале
 -- <leader>Gb  — Хабр: список свежих статей → статья во вкладке, читается в nvim
 -- :Habr        — то же, что <leader>Gb
 --
 -- Требования (ставятся один раз на Mac):
 --   GitHub: brew install gh && gh auth login && gh extension install dlvhdr/gh-dash
---   GitLab: cargo install gitlab-tui   (токен GitLab в ~/.netrc, см. README проекта)
+--   GitLab: brew install glab && glab auth login && установка glab-tui (github.com/rcieri/glab-tui)
 --   Хабр:   curl (есть в macOS). pandoc — по желанию, даёт аккуратную разметку.
 local M = {}
 
@@ -38,7 +38,7 @@ local function github_dash()
   termcmd.make("gh dash", 120, "GitHub (gh dash)")()
 end
 
-local GITLAB_BIN = "gitlab-tui" -- можно заменить на glab-tui (см. README проекта)
+local GITLAB_BIN = "glab-tui" -- альтернатива: "gitlab-tui" (см. README проекта)
 
 local function gitlab_tui()
   termcmd.make(GITLAB_BIN, 121, "GitLab (" .. GITLAB_BIN .. ")")()
@@ -233,7 +233,7 @@ end
 
 function M.setup()
   vim.keymap.set("n", "<leader>Gh", github_dash, { desc = "🐙 GitHub: дашборд PR и issues (gh dash)" })
-  vim.keymap.set("n", "<leader>Gl", gitlab_tui, { desc = "🦊 GitLab: MR и issues (gitlab-tui)" })
+  vim.keymap.set("n", "<leader>Gl", gitlab_tui, { desc = "🦊 GitLab: MR и issues (glab-tui)" })
   vim.keymap.set("n", "<leader>Gb", M.habr, { desc = "📰 Хабр: читать статьи во вкладке" })
   vim.api.nvim_create_user_command("Habr", M.habr, { desc = "Хабр: лента и чтение статьи" })
 end

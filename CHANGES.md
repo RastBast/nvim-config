@@ -499,7 +499,7 @@ Lua с заглушкой `vim` (фейковые ФС, `pmset`, `git`, `curl`, 
 ## Часть 17: GitHub, GitLab и Хабр прямо в Neovim
 
 * **`<leader>Gh`** — GitHub: `gh dash` (дашборд PR и issues) в плавающем терминале, как `tele`. Если нет `gh` или расширения `dlvhdr/gh-dash`, показывает команду установки и не открывает терминал.
-* **`<leader>Gl`** — GitLab: `gitlab-tui` (merge requests и issues) в плавающем терминале. Имя утилиты задаётся константой `GITLAB_BIN` в `lua/config/webtools.lua`; можно заменить на `glab-tui`.
+* **`<leader>Gl`** — GitLab: `glab-tui` (merge requests и issues GitLab, работает поверх `glab`) в плавающем терминале. Имя утилиты задаётся константой `GITLAB_BIN` в `lua/config/webtools.lua`; альтернатива — `gitlab-tui`.
 * **`<leader>Gb`** и **`:Habr`** — читалка Хабра. Список свежих статей берётся из RSS `habr.com/ru/rss/articles/`, `vim.ui.select` выбирает статью. Текст берётся из JSON API (`/kek/v2/articles/{id}/?fl=ru&hl=ru`, поле `textHtml`) и открывается во вкладке scratch-буфера в markdown. `q` закрывает вкладку, `o` открывает статью в браузере.
 * Конвертация HTML в текст: `pandoc`, если установлен; иначе встроенный конвертер на Lua (абзацы, заголовки, списки, `<pre>`, HTML-сущности).
 * Группа `<leader>G` («🐙 GitHub · 🦊 GitLab · 📰 Хабр») видна в which-key и справке `<leader>?`. Подсказки установки добавлены в `termcmd.hints`.
@@ -508,5 +508,5 @@ Lua с заглушкой `vim` (фейковые ФС, `pmset`, `git`, `curl`, 
 ### Проверки
 * Синтаксис всех изменённых Lua-файлов проверен через `load` (luacheck из pip не ставится в sandbox).
 * RSS-разбор и HTML→текст проверены на вымышленных примерах: заголовки с CDATA, даты, сущности, списки, `<pre>`.
-* Не проверено: живой запрос к habr.com и `gh`/`gitlab-tui` с вашими токенами. Sandbox не ходит на habr.com напрямую. Проверяется на Mac: `:Habr`, `<leader>Gb`, `<leader>Gh`, `<leader>Gl`.
-* Вход в GitHub и GitLab нужен один раз: `gh auth login` и токен GitLab в `~/.netrc` для `gitlab-tui`.
+* Не проверено: живой запрос к habr.com и `gh`, `glab-tui` с вашими токенами. Sandbox не ходит на habr.com напрямую. Проверяется на Mac: `:Habr`, `<leader>Gb`, `<leader>Gh`, `<leader>Gl`.
+* Вход в GitHub и GitLab нужен один раз: `gh auth login` и `glab auth login`.
