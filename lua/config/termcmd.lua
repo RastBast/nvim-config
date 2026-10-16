@@ -20,6 +20,9 @@ M.hints = {
   sqlplus = "Oracle Instant Client: https://www.oracle.com/database/technologies/instant-client.html",
   sqlcmd = "brew install sqlcmd / Microsoft mssql-tools",
   clickhouse = "https://clickhouse.com/docs/install",
+  gh = "brew install gh && gh auth login && gh extension install dlvhdr/gh-dash",
+  ["gitlab-tui"] = "cargo install gitlab-tui · токен GitLab в ~/.netrc · https://github.com/niklastreml/gitlab-tui",
+  ["glab-tui"] = "https://github.com/rcieri/glab-tui (нужен glab: brew install glab && glab auth login)",
 }
 
 --- Обработчик клавиши: открыть `cmd` в плавающем терминале (id — свой на каждую утилиту).

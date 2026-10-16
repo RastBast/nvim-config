@@ -218,6 +218,7 @@ require("config.yank_ring").setup() -- кольцо буфера обмена: "
 require("config.winnav").setup() -- <leader>W*: фокус дерево / код / терминал
 require("config.keyshow").setup() -- показ нажатий: <leader>kk
 require("config.browser_ask").setup() -- <leader>Ab / :Ask: запрос в Firefox
+require("config.webtools").setup() -- <leader>Gh/Gl/Gb: GitHub, GitLab, Хабр; :Habr
 require("config.keydoc").setup() -- справка по клавишам: <leader>? и режим <leader>?m
 
 -- Русский перевод LSP-подсказок (hover): переводится только проза,

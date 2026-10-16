@@ -245,6 +245,7 @@ return {
         { "<leader>HWb", "<cmd>StreakHour 3<cr>", desc = "🔥 Огонёк: день до 03:00 МСК" },
         { "<leader>T", group = "🖥 Терминал (toggleterm)" },
         { "<leader>A", group = "🤖 AI (avante) · 🦊 Firefox" },
+        { "<leader>G", group = "🐙 GitHub · 🦊 GitLab · 📰 Хабр" },
         { "<leader>P", group = "🧊 Protobuf (buf)" },
         { "<leader>a", group = "🌳 Структура (aerial)" },
         { "<leader>b", group = "📑 Буферы" },

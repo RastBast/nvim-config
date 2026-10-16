@@ -947,3 +947,14 @@ require("config.streak").setup({
 
 Выбор сохраняется между запусками (`stdpath("state")/theme.txt`).
 
+## GitHub, GitLab и Хабр в Neovim
+
+| Клавиша / команда | Что делает | Нужно один раз |
+|---|---|---|
+| `<leader>Gh` | `gh dash`: PR и issues GitHub в плавающем терминале | `brew install gh`, `gh auth login`, `gh extension install dlvhdr/gh-dash` |
+| `<leader>Gl` | `gitlab-tui`: merge requests и issues GitLab | `cargo install gitlab-tui`, токен GitLab в `~/.netrc` |
+| `<leader>Gb` / `:Habr` | Список статей Хабра, чтение во вкладке nvim | ничего (нужен `curl`, есть в macOS); `pandoc` по желанию |
+
+* В статье: `q` закрыть вкладку, `o` открыть в браузере.
+* Утилита GitLab задаётся в `lua/config/webtools.lua` (`GITLAB_BIN`).
+* Проверка на Mac: `:Habr`, затем открыть любую статью; `<leader>Gh` без расширения должен показать команду установки.
