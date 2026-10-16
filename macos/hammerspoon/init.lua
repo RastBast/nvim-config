@@ -44,7 +44,6 @@ local canvas = nil
 local pillIdx = nil        -- индекс элемента-плашки на холсте
 local keyEls = {}          -- код клавиши → индекс элемента-прямоугольника
 local down = {}            -- код → true, пока клавиша нажата
-local pillText = ""
 local hideTimer = nil
 local tap = nil
 
@@ -115,7 +114,6 @@ local function paint_keys()
 end
 
 local function show_pill(text)
-  pillText = text
   if canvas then
     canvas:elementAttribute(pillIdx, "text", text)
   end
