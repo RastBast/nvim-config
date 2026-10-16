@@ -4,7 +4,7 @@
 -- Раньше темы в конфиге не было вообще: init.lua делал
 -- `colorscheme <vim.g.colors_name or "habamax">`, а colors_name на старте
 -- всегда nil — то есть всегда включался дефолтный habamax.
--- Теперь тема есть и применяется в init.lua через pcall.
+-- Тему выбирают через <leader>uT / :Theme (lua/config/themes.lua).
 return {
   {
     "catppuccin/nvim",
@@ -21,15 +21,7 @@ return {
           functions = { "bold" },
           keywords = { "bold" },
         },
-        custom_highlights = function()
-          -- init.lua всё равно перекрашивает фон в #000000 (чёрный),
-          -- здесь только добираем то, что ему не покрыто
-          return {
-            CursorLineNr = { fg = "#ff9500", bold = true },
-            CursorLine = { bg = "#0a0a1a" },
-            LineNr = { fg = "#6902de" },
-          }
-        end,
+        -- Подсветка задаётся темами (lua/config/themes.lua), здесь не дублируется
         integrations = {
           treesitter = true,
           native_lsp = { enabled = true },

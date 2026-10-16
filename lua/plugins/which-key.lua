@@ -258,7 +258,7 @@ return {
         { "<leader>r", group = "🚀 HTTP и переименование" },
         { "<leader>s", group = "🎵 Spotify · 📸 скриншот" },
         { "<leader>t", group = "🌐 Перевод · 🧪 Тесты · 📖 Док" },
-        { "<leader>u", group = "🎨 Визуал · 🐾 Питомцы" },
+        { "<leader>u", group = "🎨 Визуал и тема · 🐾 Питомцы" },
         { "<leader>x", group = "⚠️ Ошибки (Trouble)" },
         { "<leader>W", group = "🪟 Окна: дерево · код · терминал" },
         { "<leader>k", group = "⌨️ Показ нажатий" },
