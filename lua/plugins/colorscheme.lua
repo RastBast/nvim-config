@@ -22,12 +22,12 @@ return {
           keywords = { "bold" },
         },
         custom_highlights = function()
-          -- init.lua всё равно перекрашивает фон в #000000,
+          -- init.lua всё равно перекрашивает фон в #061115,
           -- здесь только добираем то, что ему не покрыто
           return {
-            CursorLineNr = { fg = "#00ff00", bold = true },
-            CursorLine = { bg = "#0d0d0d" },
-            LineNr = { fg = "#4d4d4d" },
+            CursorLineNr = { fg = "#d8b878", bold = true },
+            CursorLine = { bg = "#0b1a20" },
+            LineNr = { fg = "#3a4a52" },
           }
         end,
         integrations = {

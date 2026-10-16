@@ -5,7 +5,7 @@ return {
     opts = {},
     config = function()
       -- Space + qs восстановить сессию проекта
-      vim.keymap.set('n', '<leader>qs', function() require('persistence').load() end)
+      vim.keymap.set('n', '<leader>qs', function() require('persistence').load() end, { desc = '🕑 Восстановить сессию этого проекта' })
     end
   }
 }
