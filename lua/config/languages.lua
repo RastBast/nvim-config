@@ -67,7 +67,9 @@ M.list = {
   { ft = "typst", parser = "typst", lsp = { "tinymist" }, fmt = { "typstyle" } },
   { ft = "clojure", parser = "clojure", lsp = { "clojure_lsp" }, fmt = { "cljfmt" } },
   { ft = "perl", parser = "perl", lsp = { "perlnavigator" }, fmt = { "perltidy" } },
-  { ft = "cmake", parser = "cmake", lsp = { "cmake" }, fmt = { "cmake_format" } },
+  -- LSP: neocmake (neocmakelsp, готовый бинарник из GitHub). Не cmake-language-server:
+  -- он на PyPI и поддерживает только Python < 3.14, поэтому Mason падал на новом Python.
+  { ft = "cmake", parser = "cmake", lsp = { "neocmake" }, fmt = { "cmake_format" } },
   { ft = "groovy", parser = "groovy", toolchain = { "groovyls" }, fmt = {} },
 }
 
