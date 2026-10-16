@@ -87,35 +87,45 @@ vim.diagnostic.config({
 vim.api.nvim_create_autocmd("ColorScheme", {
   pattern = "*",
   callback = function()
-    -- ПАЛИТРА: яркие, но приглушённые цвета (снято с примера в скриншоте).
-    -- Без неона: ни один цвет не выставлен на полную насыщенность.
+    -- ПАЛИТРА: яркие, немного «кислотные», на тёмном фоне.
+    -- Фон тёмный (#061115), синее свечение — #0d00ff: рамки, выделение, поиск.
+    -- Свечения как анимации нет: яркость достигается насыщенностью цветов.
     local P = {
-      bg = "#061115",     -- почти чёрный с холодным оттенком (не чистый #000000)
-      violet = "#c888e8", -- ключевые слова (def, if, return, pub fn…)
-      blue = "#68a8c8",   -- функции и методы
-      gold = "#d8b878",   -- строки и активный номер строки
-      orange = "#c88848", -- числа и константы
-      sand = "#d8c888",   -- переменные
-      peach = "#e89878",  -- параметры
-      sky = "#78a8d8",    -- типы
-      coral = "#e86868",  -- ключевые клавиши which-key
-      dim = "#3a4a52",    -- номера строк, разделители
+      bg = "#061115",     -- тёмный фон (не меняем)
+      glow = "#0d00ff",   -- синее свечение: рамки, выделение, поиск
+      violet = "#d46bff", -- ключевые слова: def, if, return, pub fn…
+      blue = "#4aa8ff",   -- функции и методы
+      acid = "#d4ff3a",   -- строки и активный номер строки (кислотный)
+      lime = "#b8ff5c",   -- переменные
+      amber = "#ffae42",  -- числа и константы
+      pink = "#ff6fb5",   -- параметры
+      cyan = "#4ff0ff",   -- типы
+      coral = "#ff5470",  -- клавиши which-key
+      dim = "#2e3a55",    -- номера строк, разделители
+      text = "#e6ecff",   -- основной светлый текст подсказок
     }
 
-    -- 1. ФОН (окна, меню, плавающие панели)
+    -- 1. ФОН (окна, меню, плавающие панели): тёмный, без изменений
     local highlights = {
       "Normal", "NormalFloat", "SignColumn", "MsgArea",
-      "StatusLine", "StatusLineNC", "Pmenu", "NormalNC", "FloatBorder",
+      "StatusLine", "StatusLineNC", "Pmenu", "NormalNC",
     }
     for _, group in ipairs(highlights) do
       vim.api.nvim_set_hl(0, group, { bg = P.bg })
     end
 
-    -- 2. НОМЕРА СТРОК
-    vim.api.nvim_set_hl(0, "CursorLineNr", { fg = P.gold, bold = true })
+    -- 2. СИНЕЕ СВЕЧЕНИЕ: рамки плавающих окон, разделители, выделение, поиск
+    vim.api.nvim_set_hl(0, "FloatBorder", { fg = P.glow, bg = P.bg })
+    vim.api.nvim_set_hl(0, "WinSeparator", { fg = P.glow })
+    vim.api.nvim_set_hl(0, "Visual", { bg = P.glow, fg = "#ffffff" })
+    vim.api.nvim_set_hl(0, "Search", { bg = P.glow, fg = "#ffffff" })
+    vim.api.nvim_set_hl(0, "IncSearch", { bg = P.glow, fg = "#ffffff", bold = true })
+
+    -- 3. НОМЕРА СТРОК
+    vim.api.nvim_set_hl(0, "CursorLineNr", { fg = P.acid, bold = true })
     vim.api.nvim_set_hl(0, "LineNr", { fg = P.dim })
 
-    -- 3. СИНТАКСИС
+    -- 4. СИНТАКСИС
     vim.api.nvim_set_hl(0, "@keyword", { fg = P.violet, bold = true })
     vim.api.nvim_set_hl(0, "@keyword.function", { fg = P.violet, bold = true })
     vim.api.nvim_set_hl(0, "@repeat", { fg = P.violet })
@@ -124,20 +134,20 @@ vim.api.nvim_create_autocmd("ColorScheme", {
     vim.api.nvim_set_hl(0, "@function.call", { fg = P.blue, underline = true })
     vim.api.nvim_set_hl(0, "@function.builtin", { fg = P.blue, underline = true })
     vim.api.nvim_set_hl(0, "@method", { fg = P.blue, underline = true })
-    vim.api.nvim_set_hl(0, "@variable", { fg = P.sand })
-    vim.api.nvim_set_hl(0, "@variable.member", { fg = P.sand })
-    vim.api.nvim_set_hl(0, "@parameter", { fg = P.peach, italic = true })
-    vim.api.nvim_set_hl(0, "@string", { fg = P.gold })
-    vim.api.nvim_set_hl(0, "@number", { fg = P.orange })
-    vim.api.nvim_set_hl(0, "@boolean", { fg = P.orange })
-    vim.api.nvim_set_hl(0, "@constant", { fg = P.orange })
-    vim.api.nvim_set_hl(0, "@type", { fg = P.sky })
+    vim.api.nvim_set_hl(0, "@variable", { fg = P.lime })
+    vim.api.nvim_set_hl(0, "@variable.member", { fg = P.lime })
+    vim.api.nvim_set_hl(0, "@parameter", { fg = P.pink, italic = true })
+    vim.api.nvim_set_hl(0, "@string", { fg = P.acid })
+    vim.api.nvim_set_hl(0, "@number", { fg = P.amber })
+    vim.api.nvim_set_hl(0, "@boolean", { fg = P.amber })
+    vim.api.nvim_set_hl(0, "@constant", { fg = P.amber })
+    vim.api.nvim_set_hl(0, "@type", { fg = P.cyan })
 
-    -- 4. ПОДСКАЗКИ WHICH-KEY: контраст — клавиша золотая, группа синяя, описание светлое
+    -- 5. ПОДСКАЗКИ WHICH-KEY: клавиша яркая, группа синяя, описание светлое
     vim.api.nvim_set_hl(0, "WhichKey", { fg = P.coral, bold = true })
     vim.api.nvim_set_hl(0, "WhichKeyGroup", { fg = P.blue, bold = true })
-    vim.api.nvim_set_hl(0, "WhichKeyDesc", { fg = "#e6e6e6" })
-    vim.api.nvim_set_hl(0, "WhichKeySeparator", { fg = P.dim })
+    vim.api.nvim_set_hl(0, "WhichKeyDesc", { fg = P.text })
+    vim.api.nvim_set_hl(0, "WhichKeySeparator", { fg = P.glow })
   end,
 })
 
@@ -271,6 +281,7 @@ require("config.keymaps")
 require("config.yank_ring").setup() -- кольцо буфера обмена: "1…"9, <leader>yr
 require("config.winnav").setup() -- <leader>W*: фокус дерево / код / терминал
 require("config.keyshow").setup() -- показ нажатий: <leader>kk
+require("config.browser_ask").setup() -- <leader>Ab / :Ask: запрос в Firefox
 require("config.keydoc").setup() -- справка по клавишам: <leader>? и режим <leader>?m
 
 -- Русский перевод LSP-подсказок (hover): переводится только проза,

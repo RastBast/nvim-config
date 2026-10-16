@@ -244,7 +244,7 @@ return {
         { "<leader>HWg", "<cmd>StreakGoal 1<cr>", desc = "🔥 Огонёк: цель 1 коммит в день" },
         { "<leader>HWb", "<cmd>StreakHour 3<cr>", desc = "🔥 Огонёк: день до 03:00 МСК" },
         { "<leader>T", group = "🖥 Терминал (toggleterm)" },
-        { "<leader>A", group = "🤖 AI (avante)" },
+        { "<leader>A", group = "🤖 AI (avante) · 🦊 Firefox" },
         { "<leader>P", group = "🧊 Protobuf (buf)" },
         { "<leader>a", group = "🌳 Структура (aerial)" },
         { "<leader>b", group = "📑 Буферы" },

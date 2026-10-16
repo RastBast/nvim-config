@@ -25,9 +25,9 @@ return {
           -- init.lua всё равно перекрашивает фон в #061115,
           -- здесь только добираем то, что ему не покрыто
           return {
-            CursorLineNr = { fg = "#d8b878", bold = true },
-            CursorLine = { bg = "#0b1a20" },
-            LineNr = { fg = "#3a4a52" },
+            CursorLineNr = { fg = "#d4ff3a", bold = true },
+            CursorLine = { bg = "#080a26" },
+            LineNr = { fg = "#2e3a55" },
           }
         end,
         integrations = {
