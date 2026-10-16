@@ -182,6 +182,7 @@ return {
         { "<leader>Huh", desc = "🕐 HUD: плашка в углу (вкл/выкл)" },
         { "<leader>Hud", desc = "🐞 HUD: что он видит (диагностика)" },
         { "<leader>Hui", desc = "🌐 HUD: какой IP — lan → public → both → off" },
+        { "<leader>Huo", desc = "🙈 HUD: IP в углу — скрыть/показать" },
         { "<leader>Huc", desc = "🕐 HUD: 12/24-часовой формат" },
         { "<leader>Huk", desc = "🔥 Огонёк за коммиты (:Streak)" },
 
@@ -235,7 +236,6 @@ return {
         { "<leader>HWe", "<cmd>EnvCheck<cr>", desc = "🧪 Проверка PATH и утилит" },
         { "<leader>HWm", "<cmd>Matrix<cr>", desc = "🟢 Дождь из символов" },
         { "<leader>HWt", "<cmd>HudNow<cr>", desc = "🕐 Обновить часы и HUD" },
-        { "<leader>HWi", "<cmd>HudIp toggle<cr>", desc = "🌐 IP в углу: вкл/выкл" },
         { "<leader>HWc", "<cmd>HudClock 24<cr>", desc = "🕐 Часы: 24 часа" },
         { "<leader>HWC", "<cmd>HudClock 12<cr>", desc = "🕐 Часы: 12 часов" },
         { "<leader>HWz", "<cmd>HudTz 3<cr>", desc = "🕐 Пояс UTC+3 (МСК)" },

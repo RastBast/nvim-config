@@ -357,3 +357,13 @@ Lua с заглушкой `vim` (фейковые ФС, `pmset`, `git`, `curl`, 
 ### Не проверено
 * Запуск настоящего `nvim`: в песочнице релизы Neovim недоступны. Нужно `:Lazy sync`, `:checkhealth`, затем `:Streak` и коммит в тестовом репозитории.
 * `picker.ui_select` в snacks: поведение проверено по исходникам upstream, но не в живом Neovim (например, выбор структуры в `go_extras`).
+
+## Часть 10: скрыть IP в углу
+
+* **`<leader>Huo`** — скрыть / показать IP в правом верхнем углу HUD. Время и заряд остаются. Пока IP скрыт, публичный адрес по сети не запрашивается.
+* **`:HudIp hide | show | toggle`** — то же из командной строки. Прежние режимы `lan | public | both | off` работают как раньше.
+* `<leader>Hui` по-прежнему циклически переключает режимы IP (lan → public → both → off).
+* Исправлено: клавиша `HWi` из группы «🧰 Утилиты» вызывала `:HudIp toggle`, которого не существовало. Она удалена, её функцию теперь выполняет `<leader>Huo`.
+
+### Предупреждение «Origin has changed» в :Lazy
+После переименования репозиториев (часть 9) lazy видит, что плагин склонирован со старого адреса. Это одноразово. Выполните `:Lazy update avante.nvim kulala.nvim mason.nvim mason-lspconfig.nvim mini.ai mini.animate mini.diff mini.surround nvim-colorizer.lua` (или просто `:Lazy update`). Lazy переклонирует каталоги с нового адреса.

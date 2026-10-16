@@ -220,6 +220,8 @@ function H.read_lan_ip()
 end
 
 function H.read_public_ip()
+  -- скрытый IP по сети не запрашиваем: и не светим его, и не тратим запросы
+  if not H.opts.segments.ip then return end
   if H.opts.ip_mode == "lan" or H.opts.ip_mode == "off" then return end
   run({ "curl", "-s", "--max-time", tostring(H.opts.public_timeout), H.opts.public_url },
     function(out, err)
@@ -515,6 +517,27 @@ end
 
 local ip_cycle = { lan = "public", public = "both", both = "off", off = "lan" }
 
+--- Скрыть/показать IP в правом верхнем углу. Время и заряд остаются.
+--- a: "hide" | "show" | "toggle"
+function H.set_ip_visible(a)
+  local show
+  if a == "show" then
+    show = true
+  elseif a == "hide" then
+    show = false
+  else
+    show = not H.opts.segments.ip
+  end
+  H.opts.segments.ip = show
+  if show then H.read_public_ip() end
+  H.render()
+  vim.api.nvim_echo({ { "🌐 IP в углу: " .. (show and "показан" or "скрыт"), "Normal" } }, false, {})
+end
+
+function H.toggle_ip()
+  H.set_ip_visible("toggle")
+end
+
 function H.keymaps()
   local map = vim.keymap.set
   map("n", "<leader>Huh", function()
@@ -528,6 +551,7 @@ function H.keymaps()
     H.render()
     vim.api.nvim_echo({ { "🌐 ip: " .. H.opts.ip_mode, "Normal" } }, false, {})
   end, { desc = "🌐 HUD: какой IP (lan → public → both → off)" })
+  map("n", "<leader>Huo", H.toggle_ip, { desc = "🙈 HUD: IP в углу — скрыть/показать" })
   map("n", "<leader>Huc", function()
     H.opts.clock = (H.opts.clock == 12) and 24 or 12
     H.render()
@@ -560,15 +584,18 @@ function H.commands()
 
   vim.api.nvim_create_user_command("HudIp", function(o)
     local a = vim.trim((o.args or "both"):lower())
+    if a == "hide" or a == "show" or a == "toggle" then
+      return H.set_ip_visible(a)
+    end
     if a ~= "lan" and a ~= "public" and a ~= "both" and a ~= "off" then
-      return vim.api.nvim_echo({ { "HudIp lan | public | both | off", "WarningMsg" } }, false, {})
+      return vim.api.nvim_echo({ { "HudIp lan | public | both | off | hide | show | toggle", "WarningMsg" } }, false, {})
     end
     H.opts.ip_mode = a
     H.read_public_ip()
     H.render()
   end, {
-    nargs = "?", desc = "🌐 какой IP показывать",
-    complete = function() return { "lan", "public", "both", "off" } end,
+    nargs = "?", desc = "🌐 какой IP показывать (lan|public|both|off) или скрыть/показать (hide|show|toggle)",
+    complete = function() return { "lan", "public", "both", "off", "hide", "show", "toggle" } end,
   })
 
   vim.api.nvim_create_user_command("HudClock", function(o)

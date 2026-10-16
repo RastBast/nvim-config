@@ -347,9 +347,9 @@ streak) добавлены вручную в §23–§24 — там они с п
 | Префикс | Смысл |
 |---|---|
 | `<leader>H` | Главное меню which-key: подгруппы `Hf` поиск, `Hg` git, `Hd` БД+отладка, `HG` Go, `Ht` тесты, `Hu` визуал+🕐HUD+🔥стрик, `Hx` диагностика, `Ho` obsidian, `Hh` harpoon, `Hp` плагины, `Hc` файлы, `Ha` AI |
-| `<leader>Hu` | Визуал и UI: `us/ur/uz/um/uM/up/ua/ut/uP` плагины и pomodoro, `h/d/i/c` — сам HUD (показать, debug, IP, 12/24), `k` — огонёк за коммиты (§24) |
+| `<leader>Hu` | Визуал и UI: `us/ur/uz/um/uM/up/ua/ut/uP` плагины и pomodoro, `h/d/i/c/o` — сам HUD (показать, debug, IP, 12/24, `o` — скрыть/показать IP в углу), `k` — огонёк за коммиты (§24) |
 | `<leader>T` | Терминалы toggleterm (`Tt/Th/Tv/Ta/Tc/Tl/Tg/TG`); `Tc` — закрыть все |
-| `<leader>HW` | 🧰 Утилиты (заглавная W — строчные буквы под `<leader>H` уже заняты): `HWr` переводчики, `HWh/HWd/HWn` переводы K/LSP/уведомлений, `HWe` PATH, `HWm` матрица, `HWt/HWi/HWc/HWC/HWz` HUD, `HWa/HWA/HWg/HWb` огонёк |
+| `<leader>HW` | 🧰 Утилиты (заглавная W — строчные буквы под `<leader>H` уже заняты): `HWr` переводчики, `HWh/HWd/HWn` переводы K/LSP/уведомлений, `HWe` PATH, `HWm` матрица, `HWt/HWc/HWC/HWz` HUD, `HWa/HWA/HWg/HWb` огонёк |
 | `<leader>d` + буква | Docker (`dc` lazydocker, `dp` ps, `di` images, `dn` сети); `<leader>d` один — диагностика строки (LSP) |
 | `<leader>f` | Поиск telescope/fzf-стиль (`ff/fg/fb/fr/fh/fk/fc/fd`) |
 | `<leader>g` | Go-быстрые (`gb/gl/gt/gm/gv`) и `gg` lazygit |
