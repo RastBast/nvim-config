@@ -224,6 +224,7 @@ require("config.keydoc").setup() -- справка по клавишам: <leade
 -- Русский перевод LSP-подсказок (hover): переводится только проза,
 -- код в ```-блоках и inline `code` не трогается. Выкл: :HoverRu off
 require("config.hover_ru").setup()
+require("config.gloss").setup() -- K (визуал) и <leader>Kw: английский по словам с частью речи; :Gloss
 
 -- Русские ошибки LSP на лету (Go/Docker/SQL/proto/...): выкл: :DiagRu off
 require("config.diag_ru").setup()

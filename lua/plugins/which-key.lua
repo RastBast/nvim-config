@@ -246,6 +246,7 @@ return {
         { "<leader>T", group = "🖥 Терминал (toggleterm)" },
         { "<leader>A", group = "🤖 AI (avante) · 🦊 Firefox" },
         { "<leader>G", group = "🐙 GitHub · 🦊 GitLab · 📰 Хабр" },
+        { "<leader>K", group = "📖 Английский: перевод слов" },
         { "<leader>P", group = "🧊 Protobuf (buf)" },
         { "<leader>a", group = "🌳 Структура (aerial)" },
         { "<leader>b", group = "📑 Буферы" },
