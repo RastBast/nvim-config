@@ -21,6 +21,7 @@ local GROUPS = {
   "config.keydocs.g6_missing",
   "config.keydocs.g7_insert",
   "config.keydocs.g8_utils",
+  "config.keydocs.g9_tui",
 }
 
 local ESC = "\27"

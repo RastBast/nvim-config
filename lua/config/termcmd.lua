@@ -25,12 +25,26 @@ M.hints = {
   ["glab-tui"] = "https://github.com/rcieri/glab-tui (нужен glab: brew install glab && glab auth login)",
 }
 
---- Обработчик клавиши: открыть `cmd` в плавающем терминале (id — свой на каждую утилиту).
+-- Номера терминалов toggleterm. Раньше их задавали руками, и они совпадали:
+-- k9s и gh dash оба были 120, kubectl pods и GitLab — 121. Из-за этого разные
+-- утилиты могли делить один терминал. Теперь номер выдаётся по самой команде:
+-- одна и та же команда — тот же терминал, разные команды — разные.
+local term_ids, next_term_id = {}, 200
+local function id_for(cmd)
+  if not term_ids[cmd] then
+    term_ids[cmd] = next_term_id
+    next_term_id = next_term_id + 1
+  end
+  return term_ids[cmd]
+end
+
+--- Обработчик клавиши: открыть `cmd` в плавающем терминале.
 ---@param cmd string   команда целиком, например "k9s -n default"
----@param id number    id терминала toggleterm
+---@param _id number   не используется (оставлен для совместимости вызовов); номер — id_for(cmd)
 ---@param title string
 ---@return function
-function M.make(cmd, id, title)
+function M.make(cmd, _id, title)
+  local id = id_for(cmd)
   return function()
     local bin = cmd:match("^(%S+)")
     if vim.fn.executable(bin) == 0 then

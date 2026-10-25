@@ -244,6 +244,7 @@ return {
         { "<leader>HWg", "<cmd>StreakGoal 1<cr>", desc = "🔥 Огонёк: цель 1 коммит в день" },
         { "<leader>HWb", "<cmd>StreakHour 3<cr>", desc = "🔥 Огонёк: день до 03:00 МСК" },
         { "<leader>T", group = "🖥 Терминал (toggleterm)" },
+        { "<leader>U", group = "🧰 TUI-утилиты (k9s, iredis, pgcli…)" },
         { "<leader>A", group = "🤖 AI (avante) · 🦊 Firefox" },
         { "<leader>G", group = "🐙 GitHub · 🦊 GitLab · 📰 Хабр" },
         { "<leader>K", group = "📖 Английский: перевод слов" },
