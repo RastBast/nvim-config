@@ -1,26 +1,23 @@
 -- ========================================================================== --
 --        АНГЛИЙСКИЙ ПО СЛОВАМ: перевод выделения с разбором (учим язык)        --
 -- ========================================================================== --
--- Что делает (нажал K в визуальном режиме на фразе, или <leader>Kw на слове):
+-- Что делает (K в визуальном режиме на фразе, <leader>Kw на слове, :Gloss):
 --   1) исходный английский текст;
 --   2) перевод всей фразы на русский;
---   3) разбор по словам в порядке следования в тексте:
---        слово · транскрипция (как читается) · часть речи · перевод слова
---        ↳ значение (по-английски и по-русски) — грамматический смысл слова.
--- :Gloss — то же для диапазона строк.
+--   3) разбор по словам в порядке следования, каждое слово в формате:
+--        - **слово** [транскрипция по-русски] — «перевод в этом контексте» (часть речи, грамматика)
 --
--- Откуда данные:
---   * перевод фразы и слов — lua/config/ru_util.lua (DeepL, если задан
---     DEEPL_API_KEY; иначе Google/MyMemory);
---   * транскрипция, часть речи и первое значение — бесплатный словарь
---     dictionaryapi.dev (ключ не нужен). Если слова там нет — «—».
+-- Два источника разбора:
+--   * ИИ (основной): Gemini, тот же ключ, что у avante — GEMINI_API_KEY (или
+--     AVANTE_GEMINI_API_KEY), модель — GEMINI_MODEL. Даёт перевод и грамматику
+--     с учётом контекста фразы («are — форма to be для you»).
+--   * Словарь (запасной, без ключа): dictionaryapi.dev даёт IPA-транскрипцию,
+--     часть речи и первое значение. IPA переводится в русскую транскрипцию
+--     таблицей, перевод слова — через ru_util (DeepL / Google / MyMemory).
+--     Контекста словарь не знает, поэтому разбор менее точный.
 --
--- Ограничения (честно):
---   * Грамматика — это часть речи и значение из словаря. Полного разбора времён
---     и падежей здесь нет: для формы «ran» словарь обычно пишет «past tense of run».
---   * Слова переводятся по отдельности, без контекста: «bank» даст «банк».
---     Смысл всей фразы — в строке «Перевод фразы».
---   * За раз разбирается не больше MAX_WORDS слов.
+-- Честно: русская транскрипция от ИИ — его оценка, не словарь произношения.
+-- Из-за IPA → кириллица в запасном варианте возможны расхождения.
 
 local M = {}
 
@@ -28,7 +25,8 @@ local RU = require("config.ru_util")
 
 local MAX_WORDS = 40
 local ENTRY_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/"
-local DEF_MAX = 160 -- длина английского значения в окне (символов)
+local GEMINI_TIMEOUT = 40 -- секунд
+local NOTE_MAX = 140      -- длина значения в запасном варианте
 
 -- Части речи по-русски (ключи — то, что отдаёт словарь)
 local POS_RU = {
@@ -47,7 +45,12 @@ local POS_RU = {
   abbreviation = "сокращение",
 }
 
-M.entry_cache = {} -- слово (нижний регистр) -> таблица записи или false
+M.entry_cache = {}  -- слово (нижний регистр) -> запись словаря или false
+M.gemini_cache = {} -- фраза -> результат ИИ
+
+-- ---------------------------------------------------------------------------
+-- Токенизация
+-- ---------------------------------------------------------------------------
 
 --- Слова латиницей в порядке следования. Апостроф и дефис входят в слово.
 --- Возвращает список слов и флаг «слов было больше лимита».
@@ -63,9 +66,77 @@ function M.tokens(text)
   return out, limited
 end
 
---- Разбор ответа dictionaryapi.dev. Возвращает {ipa, pos, def} или nil.
+-- ---------------------------------------------------------------------------
+-- IPA → русская транскрипция (запасной вариант, без ИИ)
+-- ---------------------------------------------------------------------------
+
+-- Порядок важен: сначала более длинные сочетания
+local IPA_MULTI = {
+  { "juː", "ю" }, { "ju", "ю" },
+  { "aɪ", "ай" }, { "eɪ", "эй" }, { "ɔɪ", "ой" }, { "aʊ", "ау" },
+  { "oʊ", "оу" }, { "əʊ", "оу" },
+  { "ɪə", "иа" }, { "eə", "эа" }, { "ʊə", "уа" },
+  { "tʃ", "ч" }, { "dʒ", "дж" },
+}
+
+local IPA_SINGLE = {
+  ["i"] = "и", ["ɪ"] = "и", ["e"] = "е", ["ɛ"] = "э", ["æ"] = "э",
+  ["a"] = "а", ["ɑ"] = "а", ["ʌ"] = "а", ["ə"] = "а", ["ɜ"] = "ё",
+  ["ɒ"] = "о", ["ɔ"] = "о", ["o"] = "о", ["ʊ"] = "у", ["u"] = "у",
+  ["p"] = "п", ["b"] = "б", ["t"] = "т", ["d"] = "д", ["k"] = "к",
+  ["g"] = "г", ["ɡ"] = "г", ["f"] = "ф", ["v"] = "в", ["θ"] = "с",
+  ["ð"] = "з", ["s"] = "с", ["z"] = "з", ["ʃ"] = "ш", ["ʒ"] = "ж",
+  ["h"] = "х", ["m"] = "м", ["n"] = "н", ["ŋ"] = "нг", ["l"] = "л",
+  ["r"] = "р", ["ɹ"] = "р", ["ɾ"] = "р", ["j"] = "й", ["w"] = "у",
+}
+
+-- Служебные знаки IPA, которые ничего не озвучивают
+local IPA_SKIP = { "ˈ", "ˌ", "ː", "ˑ", "͡", ".", "/", "[", "]", "ʔ" }
+
+--- Транскрипция IPA (например «/ɪf/») → кириллица («иф»). nil, если нечего переводить.
+function M.ipa_to_ru(ipa)
+  if type(ipa) ~= "string" or ipa == "" then
+    return nil
+  end
+  local s = ipa
+  for _, m in ipairs(IPA_SKIP) do
+    s = s:gsub(vim.pesc(m), "")
+  end
+  local out, i = {}, 1
+  while i <= #s do
+    local hit = false
+    for _, pair in ipairs(IPA_MULTI) do
+      local ipa_part, ru = pair[1], pair[2]
+      if s:sub(i, i + #ipa_part - 1) == ipa_part then
+        out[#out + 1] = ru
+        i = i + #ipa_part
+        hit = true
+        break
+      end
+    end
+    if not hit then
+      -- один символ UTF-8 целиком
+      local ch = s:match("^[\0-\127\194-\244][\128-\191]*", i)
+      if not ch then
+        break
+      end
+      if IPA_SINGLE[ch] then
+        out[#out + 1] = IPA_SINGLE[ch]
+      end
+      i = i + #ch
+    end
+  end
+  local res = table.concat(out)
+  return res ~= "" and res or nil
+end
+
+-- ---------------------------------------------------------------------------
+-- Словарь (dictionaryapi.dev): IPA, часть речи, первое значение
+-- ---------------------------------------------------------------------------
+
+--- Разбор ответа словаря. Возвращает {ipa, pos, def} или nil.
 --- Ответ: [ { phonetic, phonetics=[{text}], meanings=[{partOfSpeech, definitions=[{definition}]}] } ]
---- При неизвестном слове приходит объект {title, message} — тогда nil.
+--- Для неизвестного слова приходит объект {title, message} — тогда nil.
 function M.parse_entry(stdout)
   local ok, data = pcall(vim.json.decode, stdout)
   if not ok or type(data) ~= "table" or type(data[1]) ~= "table" then
@@ -74,7 +145,6 @@ function M.parse_entry(stdout)
   local e = data[1]
   local res = {}
 
-  -- Транскрипция: сначала верхнеуровневая, иначе первая непустая из phonetics
   if type(e.phonetic) == "string" and e.phonetic ~= "" then
     res.ipa = e.phonetic
   elseif type(e.phonetics) == "table" then
@@ -86,7 +156,6 @@ function M.parse_entry(stdout)
     end
   end
 
-  -- Часть речи и первое значение первой группы значений
   if type(e.meanings) == "table" and type(e.meanings[1]) == "table" then
     local m = e.meanings[1]
     if type(m.partOfSpeech) == "string" and m.partOfSpeech ~= "" then
@@ -130,17 +199,158 @@ function M.fetch_entry(word, cb)
       cb(e)
     end)
   end)
-  if not ok then -- нет curl: просто без словаря
+  if not ok then -- нет curl
     cb(nil)
   end
 end
 
--- Выравнивание по видимой ширине (кириллица учитывается)
-local function pad(s, width)
-  return s .. string.rep(" ", math.max(0, width - vim.fn.strdisplaywidth(s)))
+-- ---------------------------------------------------------------------------
+-- Gemini: разбор фразы целиком (перевод + транскрипция + грамматика по контексту)
+-- ---------------------------------------------------------------------------
+
+function M.gemini_key()
+  local k = vim.env.AVANTE_GEMINI_API_KEY
+  if k == nil or k == "" then
+    k = vim.env.GEMINI_API_KEY
+  end
+  if k == nil or k == "" then
+    return nil
+  end
+  return k
 end
 
--- Значение поля для строки: «…» пока грузится, «—» если словарь пуст
+function M.gemini_model()
+  return vim.env.GEMINI_MODEL or "gemini-3.6-flash"
+end
+
+function M.gemini_endpoint()
+  return vim.env.GEMINI_ENDPOINT or "https://generativelanguage.googleapis.com/v1beta/models"
+end
+
+local GEMINI_PROMPT = [[
+Ты — репетитор английского для русскоязычного ученика. Разбери фразу ниже и верни JSON.
+Поля:
+- sentence_ru: перевод всей фразы на естественный русский язык.
+- words: по одному объекту на каждое английское слово в порядке следования в тексте
+  (повторы тоже). Сокращение вроде don't — одно слово.
+  - word: слово, как оно написано в тексте.
+  - tr: русская транскрипция, как читается слово, без квадратных скобок. Пример: if → иф, you → ю, like → лайк.
+  - ru: перевод этого слова именно в этом контексте, одно-два слова по-русски.
+  - pos: часть речи по-русски (существительное, глагол, местоимение, союз…).
+  - note: короткая грамматическая заметка по-русски, что значит форма или роль слова в предложении.
+    Пример: «сокращение от do not», «форма глагола to be для you». Без повтора части речи. Пустая строка, если заметки не нужно.
+Фраза:
+]]
+
+--- Разбор ответа Gemini. Возвращает {sentence_ru, words} или nil, причина.
+function M.parse_gemini(stdout)
+  local ok, data = pcall(vim.json.decode, stdout)
+  if not ok or type(data) ~= "table" then
+    return nil, "ответ не JSON"
+  end
+  if type(data.error) == "table" then
+    local msg = data.error.message
+    return nil, "Gemini: " .. (type(msg) == "string" and msg or "ошибка")
+  end
+  local cand = type(data.candidates) == "table" and data.candidates[1] or nil
+  local parts = type(cand) == "table" and type(cand.content) == "table" and cand.content.parts or nil
+  local text = type(parts) == "table" and type(parts[1]) == "table" and parts[1].text or nil
+  if type(text) ~= "string" then
+    return nil, "пустой ответ Gemini"
+  end
+  local ok2, res = pcall(vim.json.decode, text)
+  if not ok2 or type(res) ~= "table" or type(res.words) ~= "table" then
+    return nil, "Gemini вернул не тот формат"
+  end
+  local words = {}
+  for _, w in ipairs(res.words) do
+    if type(w) == "table" and type(w.word) == "string" then
+      words[#words + 1] = {
+        word = w.word,
+        tr = type(w.tr) == "string" and w.tr or nil,
+        ru = type(w.ru) == "string" and w.ru or nil,
+        pos = type(w.pos) == "string" and w.pos or nil,
+        note = type(w.note) == "string" and w.note ~= "" and w.note or nil,
+      }
+    end
+  end
+  if #words == 0 then
+    return nil, "Gemini не вернул слов"
+  end
+  return {
+    sentence_ru = type(res.sentence_ru) == "string" and res.sentence_ru or nil,
+    words = words,
+  }
+end
+
+--- Разбор фразы через Gemini. cb(result|nil, причина|nil), асинхронно.
+function M.gemini_analyze(text, cb)
+  local key = M.gemini_key()
+  if not key then
+    return cb(nil, "нет GEMINI_API_KEY")
+  end
+  local hit = M.gemini_cache[text]
+  if hit then
+    return cb(hit)
+  end
+
+  local body = vim.json.encode({
+    contents = { { role = "user", parts = { { text = GEMINI_PROMPT .. text } } } },
+    generationConfig = {
+      temperature = 0.2,
+      responseMimeType = "application/json",
+      responseSchema = {
+        type = "OBJECT",
+        properties = {
+          sentence_ru = { type = "STRING" },
+          words = {
+            type = "ARRAY",
+            items = {
+              type = "OBJECT",
+              properties = {
+                word = { type = "STRING" },
+                tr = { type = "STRING" },
+                ru = { type = "STRING" },
+                pos = { type = "STRING" },
+                note = { type = "STRING" },
+              },
+              required = { "word", "tr", "ru", "pos", "note" },
+            },
+          },
+        },
+        required = { "sentence_ru", "words" },
+      },
+    },
+  })
+  local url = ("%s/%s:generateContent"):format(M.gemini_endpoint(), M.gemini_model())
+  local ok = pcall(vim.system, {
+    "curl", "-sS", "--max-time", tostring(GEMINI_TIMEOUT),
+    "-H", "Content-Type: application/json",
+    "-H", "x-goog-api-key: " .. key,
+    "-d", "@-", url,
+  }, { text = true, stdin = body }, function(res)
+    vim.schedule(function()
+      if res.code ~= 0 or not res.stdout or res.stdout == "" then
+        local err = vim.trim(res.stderr or "")
+        return cb(nil, "сеть: " .. (err ~= "" and err or "curl код " .. tostring(res.code)))
+      end
+      local parsed, why = M.parse_gemini(res.stdout)
+      if parsed then
+        M.gemini_cache[text] = parsed
+      end
+      cb(parsed, why)
+    end)
+  end)
+  if not ok then
+    cb(nil, "нет curl")
+  end
+end
+
+-- ---------------------------------------------------------------------------
+-- Вывод
+-- ---------------------------------------------------------------------------
+
+-- Значение поля: «…» пока грузится, «—» если данных нет
 local function field(done, v)
   if not done then
     return "…"
@@ -155,8 +365,28 @@ local function clip(s, n)
   return s
 end
 
---- Собрать строки окна из текущего состояния.
---- st = { src, sentence, rows = { {word, ipa, pos, def, def_ru, tr, ...} }, note }
+--- Строка разбора: - **слово** [транскр] — «перевод» (часть речи, заметка)
+local function word_line(r)
+  local tr = field(r.tr_done, r.tr)
+  local ru = field(r.ru_done, r.ru)
+  local ru_txt = (ru == "…" or ru == "—") and ru or ("«" .. ru .. "»")
+  local parts = {}
+  if r.pos and r.pos ~= "" then
+    parts[#parts + 1] = r.pos
+  elseif not r.pos_done then
+    parts[#parts + 1] = "…"
+  end
+  if r.note and r.note ~= "" then
+    parts[#parts + 1] = r.note
+  elseif r.note_pending then
+    parts[#parts + 1] = "…"
+  end
+  local tail = #parts > 0 and (" (" .. table.concat(parts, ", ") .. ")") or ""
+  return ("- **%s** [%s] — %s%s"):format(r.word, tr, ru_txt, tail)
+end
+
+--- Собрать строки окна из состояния.
+--- st = { src, sentence, rows, note }
 function M.render(st)
   local lines = {}
   local function add(s)
@@ -169,23 +399,10 @@ function M.render(st)
 
   if #st.rows > 0 then
     add("")
-    add("Разбор по словам (слово · как читается · часть речи · перевод):")
-    local ww, wi = 0, 0
+    add("**Разбор по словам (Vocabulary)**")
+    add("")
     for _, r in ipairs(st.rows) do
-      ww = math.max(ww, vim.fn.strdisplaywidth(r.word))
-      wi = math.max(wi, vim.fn.strdisplaywidth(field(r.entry_done, r.ipa)))
-    end
-    local num_w = #tostring(#st.rows)
-    for i, r in ipairs(st.rows) do
-      local ipa = field(r.entry_done, r.ipa)
-      local pos = field(r.entry_done, M.pos_ru(r.pos))
-      local tr = field(r.tr_done, r.tr)
-      add(("%s. %s  %s  %s  → %s"):format(
-        pad(tostring(i), num_w), pad(r.word, ww), pad(ipa, wi), pos, tr))
-      if r.def then
-        add("     ↳ значение: " .. clip(r.def, DEF_MAX))
-        add("       по-русски: " .. field(r.def_done, r.def_ru))
-      end
+      add(word_line(r))
     end
   end
 
@@ -203,12 +420,18 @@ local function set_buf_lines(buf, lines)
 end
 
 local function window_size(lines)
-  local width = 0
+  local longest = 0
   for _, l in ipairs(lines) do
-    width = math.max(width, vim.fn.strdisplaywidth(l))
+    longest = math.max(longest, vim.fn.strdisplaywidth(l))
   end
-  width = math.min(math.max(width + 4, 40), vim.o.columns - 6)
-  local height = math.min(#lines, vim.o.lines - 6)
+  local width = math.min(math.max(longest + 4, 40), vim.o.columns - 6)
+  -- высота с учётом переноса длинных строк (wrap включён)
+  local rows = 0
+  for _, l in ipairs(lines) do
+    local w = vim.fn.strdisplaywidth(l)
+    rows = rows + math.max(1, math.ceil(w / (width - 2)))
+  end
+  local height = math.min(rows + 1, vim.o.lines - 6)
   return width, math.max(height, 3)
 end
 
@@ -223,7 +446,56 @@ local function place(win, lines)
   })
 end
 
---- Основная работа: окно, перевод фразы, разбор каждого слова.
+--- Запасной вариант: словарь + перевод слов. Заполняет st.rows по мере ответов.
+local function dictionary_fallback(st, refresh)
+  local by_word, order = {}, {}
+  for _, r in ipairs(st.rows) do
+    local key = r.word:lower()
+    if not by_word[key] then
+      by_word[key] = {}
+      order[#order + 1] = key
+    end
+    table.insert(by_word[key], r)
+  end
+
+  for _, key in ipairs(order) do
+    local group = by_word[key]
+
+    RU.translate(group[1].word, function(tr)
+      for _, r in ipairs(group) do
+        r.ru = tr
+        r.ru_done = true
+      end
+      refresh()
+    end)
+
+    M.fetch_entry(key, function(e)
+      local ipa_ru = M.ipa_to_ru(e and e.ipa or nil)
+      for _, r in ipairs(group) do
+        r.tr = ipa_ru
+        r.tr_done = true
+        r.pos = M.pos_ru(e and e.pos or nil)
+        r.pos_done = true
+      end
+      refresh()
+      if e and e.def then
+        for _, r in ipairs(group) do
+          r.note_pending = true
+        end
+        refresh()
+        RU.translate(e.def, function(def_ru)
+          for _, r in ipairs(group) do
+            r.note = def_ru and clip(def_ru, NOTE_MAX) or nil
+            r.note_pending = false
+          end
+          refresh()
+        end)
+      end
+    end)
+  end
+end
+
+--- Основная работа: окно, перевод фразы, разбор слов (ИИ или словарь).
 function M.show(text)
   local src = vim.trim(text):gsub("%s+", " ")
   if src == "" or not src:find("%a%a%a") then
@@ -244,14 +516,11 @@ function M.show(text)
   if #words == 0 then
     st.note = "В выделении нет английских слов."
   end
-  for i, w in ipairs(words) do
-    st.rows[i] = { word = w, entry_done = false, tr_done = false, def_done = false }
-  end
 
-  local lines = M.render(st)
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
   vim.bo[buf].filetype = "markdown"
+  local lines = M.render(st)
   set_buf_lines(buf, lines)
   local width, height = window_size(lines)
   local win = vim.api.nvim_open_win(buf, true, {
@@ -267,6 +536,7 @@ function M.show(text)
   })
   vim.wo[win].wrap = true
   vim.wo[win].linebreak = true
+  vim.wo[win].conceallevel = 2
   for _, k in ipairs({ "q", "<Esc>" }) do
     vim.keymap.set("n", k, function()
       if vim.api.nvim_win_is_valid(win) then
@@ -284,57 +554,62 @@ function M.show(text)
     place(win, new)
   end
 
-  -- Фраза целиком
-  RU.translate(src, function(tr)
-    st.sentence = tr or "не удалось перевести (нет сети или переводчика)"
+  if #words == 0 then
+    refresh()
+    return
+  end
+
+  for i, w in ipairs(words) do
+    st.rows[i] = { word = w }
+  end
+
+  -- Перевод фразы (запасной вариант; ИИ тоже даёт перевод, но он придёт с разбором)
+  local function fallback_sentence()
+    RU.translate(src, function(tr)
+      st.sentence = tr or "не удалось перевести (нет сети или переводчика)"
+      refresh()
+    end)
+  end
+
+  local function use_dictionary(reason)
+    if reason then
+      st.note = ("(ИИ-разбор недоступен: %s. Показан словарь — без контекста.)"):format(reason)
+    end
+    for _, r in ipairs(st.rows) do
+      r.tr_done, r.ru_done, r.pos_done = false, false, false
+    end
+    fallback_sentence()
+    dictionary_fallback(st, refresh)
+    refresh()
+  end
+
+  if not M.gemini_key() then
+    st.note = "Для разбора с учётом контекста задай ключ Gemini: set -Ux GEMINI_API_KEY \"…\" (fish). Пока — словарь."
+    use_dictionary(nil)
+    return
+  end
+
+  -- ИИ: одна фраза — один запрос; пока ждём, показываем «…»
+  st.note = "…разбираю фразу"
+  refresh()
+  M.gemini_analyze(src, function(res, why)
+    if not res then
+      return use_dictionary(why)
+    end
+    st.note = nil
+    st.sentence = res.sentence_ru or "…"
+    st.rows = {}
+    for i, w in ipairs(res.words) do
+      st.rows[i] = {
+        word = w.word,
+        tr = w.tr, tr_done = true,
+        ru = w.ru, ru_done = true,
+        pos = w.pos, pos_done = true,
+        note = w.note,
+      }
+    end
     refresh()
   end)
-
-  -- По одному запросу на уникальное слово: словарь и перевод
-  local by_word, order = {}, {}
-  for _, r in ipairs(st.rows) do
-    local key = r.word:lower()
-    if not by_word[key] then
-      by_word[key] = {}
-      order[#order + 1] = key
-    end
-    table.insert(by_word[key], r)
-  end
-  for _, key in ipairs(order) do
-    local group = by_word[key]
-    local first = group[1].word
-
-    RU.translate(first, function(tr)
-      for _, r in ipairs(group) do
-        r.tr = tr
-        r.tr_done = true
-      end
-      refresh()
-    end)
-
-    M.fetch_entry(key, function(e)
-      for _, r in ipairs(group) do
-        r.ipa = e and e.ipa or nil
-        r.pos = e and e.pos or nil
-        r.def = e and e.def or nil
-        r.entry_done = true
-      end
-      refresh()
-      if e and e.def then
-        RU.translate(e.def, function(def_ru)
-          for _, r in ipairs(group) do
-            r.def_ru = def_ru
-            r.def_done = true
-          end
-          refresh()
-        end)
-      else
-        for _, r in ipairs(group) do
-          r.def_done = true
-        end
-      end
-    end)
-  end
   refresh()
 end
 
@@ -352,7 +627,7 @@ function M.from_visual()
 end
 
 function M.setup()
-  vim.keymap.set("x", "K", M.from_visual, { desc = "📖 Английский: перевод выделения и разбор по словам" })
+  vim.keymap.set("x", "K", M.from_visual, { desc = "📖 Английский: перевод и разбор выделения" })
   vim.keymap.set("n", "<leader>Kw", function()
     M.show(vim.fn.expand("<cword>"))
   end, { desc = "📖 Слово под курсором: транскрипция, часть речи, перевод" })
