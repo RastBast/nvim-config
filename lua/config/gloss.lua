@@ -628,9 +628,11 @@ end
 
 function M.setup()
   vim.keymap.set("x", "K", M.from_visual, { desc = "📖 Английский: перевод и разбор выделения" })
-  vim.keymap.set("n", "<leader>Kw", function()
-    M.show(vim.fn.expand("<cword>"))
-  end, { desc = "📖 Слово под курсором: транскрипция, часть речи, перевод" })
+  for _, lhs in ipairs({ "<leader>Kw", "<leader>HKw" }) do -- второй — в главном меню <leader>H
+    vim.keymap.set("n", lhs, function()
+      M.show(vim.fn.expand("<cword>"))
+    end, { desc = "📖 Слово под курсором: транскрипция, часть речи, перевод" })
+  end
   vim.api.nvim_create_user_command("Gloss", function(o)
     local lines = vim.api.nvim_buf_get_lines(0, o.line1 - 1, o.line2, false)
     M.show(table.concat(lines, " "))

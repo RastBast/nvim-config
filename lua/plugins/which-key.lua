@@ -229,6 +229,8 @@ return {
         -- 🧰 Утилиты: команды, которые раньше были без клавиш. Строчные буквы под
         -- <leader>H заняты, поэтому префикс — заглавная <leader>HW.
         { "<leader>HW", group = "🧰 Утилиты и диагностика" },
+        { "<leader>HU", group = "🧰 TUI-утилиты (k9s, iredis, pgcli…)" },
+        { "<leader>HK", group = "📖 Английский: перевод слов" },
         { "<leader>HWr", "<cmd>RuCheck<cr>", desc = "🌐 Проверить переводчики" },
         { "<leader>HWh", "<cmd>HoverRu toggle<cr>", desc = "🌐 Перевод подсказок K: вкл/выкл" },
         { "<leader>HWd", "<cmd>DiagRu toggle<cr>", desc = "🩺 Русские ошибки LSP: вкл/выкл" },

@@ -162,13 +162,16 @@ function M.check()
 end
 
 function M.setup()
-  for _, t in ipairs(M.tools) do
-    vim.keymap.set("n", "<leader>U" .. t.key, function()
-      M.run(t)
-    end, { desc = t.icon .. " " .. t.name .. " — " .. t.what })
+  -- Одни и те же клавиши дважды: <leader>U… (короткие) и <leader>HU… (видны в главном меню <leader>H)
+  for _, prefix in ipairs({ "<leader>U", "<leader>HU" }) do
+    for _, t in ipairs(M.tools) do
+      vim.keymap.set("n", prefix .. t.key, function()
+        M.run(t)
+      end, { desc = t.icon .. " " .. t.name .. " — " .. t.what })
+    end
+    vim.keymap.set("n", prefix .. "u", M.pick, { desc = "🧰 Все TUI-утилиты (меню)" })
+    vim.keymap.set("n", prefix .. "h", M.check, { desc = "🩺 Проверить TUI-утилиты (что установлено)" })
   end
-  vim.keymap.set("n", "<leader>Uu", M.pick, { desc = "🧰 Все TUI-утилиты (меню)" })
-  vim.keymap.set("n", "<leader>Uh", M.check, { desc = "🩺 Проверить TUI-утилиты (что установлено)" })
   vim.api.nvim_create_user_command("Tui", M.pick, { desc = "🧰 Меню TUI-утилит" })
   vim.api.nvim_create_user_command("TuiCheck", M.check, { desc = "🩺 Проверка TUI-утилит" })
 end
