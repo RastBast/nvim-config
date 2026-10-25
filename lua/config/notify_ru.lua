@@ -2,7 +2,7 @@
 --     РУССКИЕ УВЕДОМЛЕНИЯ: вывод сборок/линтов (go.nvim и прочие плагины)    --
 -- ========================================================================== --
 -- Перехватывает vim.notify. Покрывает то, что НЕ является LSP-диагностикой:
---   * «build exited with code: 1 … package X is not in std …» после <leader>HGb,
+--   * «build exited with code: 1 … package X is not in std …» после сборки Go (go.nvim),
 --   * вывод GoLint, SnipRun, прочих плагинов, пишущих в notify.
 --
 -- Работает через кеш ru_util (файл stdpath("cache")/ru_cache.json):

@@ -1,9 +1,9 @@
 # RastBast/nvim-config — ПОЛНАЯ ДОКУМЕНТАЦИЯ
 
-> Ветка: `arena/a58e587f-nvim-config`. Обновлено: **2026-10-16**.
+> Ветка: `arena/a58e587f-nvim-config`. Обновлено: **2026-10-25**.
 > Целевой Neovim: **0.11+** (конфиг использует `vim.lsp.config` / `vim.lsp.enable`). Для treesitter-unit (`iu`/`au`) нужен Neovim **0.12+**.
 > Что проверено и как — §22. Живой запуск nvim в sandbox не выполнялся: поведение проверяется на Mac.
-> Размер справки: клавиш с описанием — см. §6, команд — §25, плагинов — §26.
+> Навигация: по технологиям — §27 (Go §28, БД §29, Redis §30, Docker §31, Kubernetes §32, Kafka §33, Protobuf §34, HTTP §35, Git §36, терминал и TUI §37, переводы §38, ИИ §39, мессенджеры §40). Все клавиши — §41 и §6, все команды — §25, плагины — §26.
 
 ---
 
@@ -19,22 +19,37 @@
 8. [Go-стек](#8-go-стек)
 9. [Docker](#9-docker)
 10. [Базы данных и SQL](#10-базы-данных-и-sql)
-11. [HTTP / gRPC-запросы (Kulala)](#11-http--grpc-запросы-kulala)
+11. [HTTP / gRPC / Protobuf (Kulala + proto-стек)](#11-http--grpc--protobuf-kulala--proto-стек)
 12. [Терминал](#12-терминал)
 13. [Git](#13-git)
 14. [Метки (marks.nvim)](#14-метки-marksnvim)
 15. [Lua-разработка](#15-lua-разработка)
 16. [Визуал и UX](#16-визуал-и-ux)
 17. [AI, Obsidian и прочее](#17-ai-obsidian-и-прочее)
-18. [LSP / Mason: что ставится](#18-lsp--mason-что-ставится)
-19. [Troubleshooting (известные грабли и их лечение)](#19-troubleshooting)
+18. [LSP / Mason и языки](#18-lsp--mason-и-языки)
+19. [Troubleshooting](#19-troubleshooting)
 20. [Как расширять конфиг](#20-как-расширять-конфиг)
 21. [Дорожная карта: Go-микросервисы](#21-дорожная-карта-go-микросервисы)
 22. [Как проверялся конфиг](#22-как-проверялся-конфиг)
 23. [Telegram в редакторе (консольный tele)](#23-telegram-в-редакторе-консольный-tele)
-24. [🕐 HUD в углу (время МСК, батарея, IP) и 🔥 огонёк за коммиты](#24-hud-в-углу-время-мск-батарея-ip-и-огонёк-за-коммиты)
+24. [HUD в углу (время МСК, батарея, IP) и огонёк за коммиты](#24-hud-в-углу-время-мск-батарея-ip-и-огонёк-за-коммиты)
 25. [Команды (`:`)](#25-команды-)
 26. [Плагины](#26-плагины)
+27. [По технологиям: указатель](#27-по-технологиям-указатель)
+28. [Go](#28-go)
+29. [PostgreSQL и другие базы (SQL)](#29-postgresql-и-другие-базы-sql)
+30. [Redis](#30-redis)
+31. [Docker](#31-docker)
+32. [Kubernetes](#32-kubernetes)
+33. [Kafka](#33-kafka)
+34. [Protobuf и gRPC](#34-protobuf-и-grpc)
+35. [HTTP-запросы (kulala)](#35-http-запросы-kulala)
+36. [Git, GitHub и GitLab](#36-git-github-и-gitlab)
+37. [Терминал и TUI-утилиты](#37-терминал-и-tui-утилиты)
+38. [Переводы и английский](#38-переводы-и-английский)
+39. [ИИ](#39-ии)
+40. [Мессенджеры](#40-мессенджеры)
+41. [Полный список клавиш](#41-полный-список-клавиш)
 
 ---
 
@@ -166,6 +181,8 @@ lua/
   `:DiagRu on|off|toggle` (перевод ошибок LSP на лету, см. §19).
 
 ## 6. ПОЛНАЯ ТАБЛИЦА ГОРЯЧИХ КЛАВИШ
+
+> Ниже — по категориям. Полный список всех записей справки с описаниями — §41. Новое: `<leader>U` и `<leader>HU` (TUI-утилиты, §37), `<leader>Kw` и `<leader>HKw` (английский, §38).
 
 Таблица собрана из исходников конфига 2026-10-16: все `vim.keymap.set`, `keys = {}`, which-key-спеки, клавиши Super Mode, автодополнения, буферные клавиши (telegram, Habr, справка) и клавиши баз данных `<leader>D…`. `<leader>` = пробел.
 
@@ -617,7 +634,49 @@ lua/
 | 🟦 SQL Server | `x` | `<leader>Dxc` | `<leader>Dxr` | `<leader>Dxt` | `<leader>Dxd` | `<leader>Dxn` | `<leader>Dxu` |
 | 🏠 ClickHouse | `c` | `<leader>Dcc` | `<leader>Dcr` | `<leader>Dct` | `<leader>Dcd` | `<leader>Dcn` | `<leader>Dcu` |
 
-`<leader>Dr` в визуальном режиме выполняет выделение. Список всех баз: `<leader>D`.
+`<leader>D` + код СУБД + `r` выполняет буфер (обычный режим) или выделение (визуальный режим), например `<leader>Dpr` для PostgreSQL. Списка баз по `<leader>D` нет, есть каталог по СУБД выше.
+
+### Новое: TUI-утилиты (`<leader>U` и зеркало `<leader>HU`)
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>Uu` | n | Меню всех TUI-утилит |
+| `<leader>Uh` | n | Проверка TUI-утилит |
+| `<leader>Uk` | n | k9s — Kubernetes |
+| `<leader>Ur` | n | iredis — Redis с автодополнением |
+| `<leader>Uc` | n | redis-cli — Redis классический |
+| `<leader>Up` | n | pgcli — PostgreSQL с автодополнением |
+| `<leader>Ul` | n | lazysql — TUI-клиент БД |
+| `<leader>Ud` | n | lazydocker — Docker |
+| `<leader>Ui` | n | dive — слои Docker-образа |
+| `<leader>Ub` | n | btop — монитор ресурсов |
+| `<leader>Ua` | n | ktea — Kafka TUI |
+| `<leader>HUu` | n | Меню всех TUI-утилит |
+| `<leader>HUh` | n | Проверка TUI-утилит |
+| `<leader>HUk` | n | k9s — Kubernetes |
+| `<leader>HUr` | n | iredis — Redis с автодополнением |
+| `<leader>HUc` | n | redis-cli — Redis классический |
+| `<leader>HUp` | n | pgcli — PostgreSQL с автодополнением |
+| `<leader>HUl` | n | lazysql — TUI-клиент БД |
+| `<leader>HUd` | n | lazydocker — Docker |
+| `<leader>HUi` | n | dive — слои Docker-образа |
+| `<leader>HUb` | n | btop — монитор ресурсов |
+| `<leader>HUa` | n | ktea — Kafka TUI |
+
+### Новое: перевод по словам и подсказки
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `K` | x | Английский по словам |
+| `<leader>Kw` | n | Слово под курсором: транскрипция, часть речи, перевод |
+| `<leader>HKw` | n | Английский: слово под курсором (то же, что <leader>Kw) |
+| `<leader>tt` | n | Перевести слово (ru) |
+| `<leader>te` | n | Перевести на английский |
+| `<leader>tD` | n | Документация в боковом окне |
+| `<leader>HWr` | n | Проверить переводчики |
+| `<leader>HWh` | n | Перевод подсказок K вкл/выкл |
+| `<leader>HWd` | n | Русские ошибки LSP вкл/выкл |
+| `<leader>HWn` | n | Русские уведомления вкл/выкл |
 
 ## 7. Система префиксов
 
@@ -638,25 +697,45 @@ which-key всплывает по `<leader>` автоматически; `<leade
 
 ## 8. Go-стек
 
+> Подробно по технологии: **§28**.
+
 LSP — `gopls` (Mason). Поверх — `ray-x/go.nvim` (**единственный** спек, файл
 `go-tools.lua`): автоформат `goimports` при сохранении, команды `GoBuild/GoTest/
 GoTestFunc/GoLint/GoVulnCheck/GoMockGen/GoImpl/GoIfErr/GoJson2Struct…`.
 
-| Клавиша | Действие |
-|---|---|
-| `<leader>gb` / `<leader>HGb` | Собрать (`:GoBuild`) |
-| `<leader>gt` / `<leader>HGo` | Тесты пакета (`:GoTest`) |
-| `<leader>gl` / `<leader>HGl` | golangci-lint (`:GoLint`) |
-| `<leader>gv` / `<leader>HGv` | Уязвимости (`:GoVulnCheck`) |
-| `<leader>gm` | Моки (`:GoMockGen`) |
-| `<leader>HGe` | Авто-if-err (`:GoIfErr`) |
-| `<leader>HGj` | JSON → struct (`:GoJson2Struct`) |
-| `<leader>HGi` | json-теги на struct |
-| `<leader>HGs` | Заполнить struct |
-| `<leader>HGm` | `:GoImpl` |
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>gb` | n | Собрать |
+| `<leader>gt` | n | Тесты пакета |
+| `<leader>Hgt` | n | Запуск Go-тестов |
+| `<leader>gl` | n | Линтер |
+| `<leader>gv` | n | Проверить уязвимости |
+| `<leader>Hvc` | n | Проверка уязвимостей |
+| `<leader>gm` | n | Сгенерировать мок |
+| `<leader>Hie` | n | Авто if err |
+| `<leader>Hti` | n | Добавить json-теги |
+| `<leader>Hj2s` | n | JSON → struct |
+| `<leader>Hfs` | n | Заполнить struct |
+| `<leader>Him` | n | Сгенерировать impl |
+| `<leader>HGS` | n | Формочка struct (выбор из списка) |
+| `<leader>HGf` | n | Поля struct'а под курсором |
+| `<leader>db` | n | Точка останова |
+| `<leader>dt` | n | Отладка теста (Go) |
+| `<leader>Hdt` | n | Тест в режиме отладки |
+| `<leader>Hdr` | n | Старт/Продолжить |
+| `<leader>Hdi` | n | Шаг в |
+| `<leader>Hdo` | n | Шаг через |
+| `<leader>Hdb` | n | Точка останова |
+| `<F5>` | n | Запуск / продолжить (DAP) |
+| `<F10>` | n | Шаг через (DAP) |
+| `<F11>` | n | Шаг в (DAP) |
+| `<leader>tr` | n | Тест под курсором |
+| `<leader>tf` | n | Тесты в файле |
+| `<leader>ts` | n | Панель тестов |
+| `<leader>to` | n | Лог ошибки теста |
 
 **Умный Go (как в VSCode).** `<leader>HGS` — «формочка»: пикер struct'ов
-(красивый через dressing), вставляется сниппет со ВСЕМИ полями, курсор прыгает
+(красивый через snacks.picker), вставляется сниппет со ВСЕМИ полями, курсор прыгает
 по значениям `<Tab>`, дефолты — нулевые значения Go по типу поля.
 `<leader>HGf` — то же для struct'а под курсором. Сниппет `gstr` в
 автодополнении — динамическая формочка ближайшего struct'а. Описания всех
@@ -704,6 +783,8 @@ Go-сниппетов в меню — по-русски (`dstring`). Модул�
 
 ## 9. Docker
 
+> Подробно по технологии: **§31**.
+
 * **Подсветка** Dockerfile/docker-compose — `ekalinin/Dockerfile.vim`.
 * **LSP** — `dockerls` (Mason) + `docker_compose_language_service` доступны в `servers.lua`.
 * **Интерфейс** — «маленькое окно» поверх toggleterm:
@@ -715,6 +796,8 @@ Go-сниппетов в меню — по-русски (`dstring`). Модул�
 * Если бинара нет — конфиг не падает, а вежливо подсказывает, что поставить.
 
 ## 10. Базы данных и SQL
+
+> Подробно по технологии: **§29**.
 
 Связка **vim-dadbod + dadbod-ui + dadbod-completion**:
 
@@ -729,9 +812,11 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 
 ## 11. HTTP / gRPC / Protobuf (Kulala + proto-стек)
 
+> Подробно по технологии: **§35**.
+
 `mistweaverco/kulala.nvim` — RestClient прямо в nvim: файлы `*.http`, `*.rest`.
-`<leader>Hur` — выполнить запрос под курсором; поддерживает **gRPC**
-(`GRPC http://host:50051/pkg.Service/Method` в .http-файле). Скретчпад — `:KulalaScratchpad`.
+`<leader>rr` (или `<leader>Hrr`) — выполнить запрос под курсором; поддерживает **gRPC**
+(`GRPC http://host:50051/pkg.Service/Method` в .http-файле).
 
 ### Protobuf: полный стек
 
@@ -742,12 +827,14 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 | Форматтер | `buf format` через conform, фолбэк — LSP | `lua/plugins/format.lua` (`proto = { "buf" }`) |
 | Линт/сборка/кодоген | `buf lint / build / generate` в плавающем окне | `<leader>Pl / Pb / Pg` (`toggleterm.lua`) |
 | Сниппеты | `hdr` `svc` `msg` `rpc` `enum` `opt` | `lua/plugins/completions.lua` (LuaSnip, ft=proto) |
-| gRPC-запросы | kulala (`GRPC …` в .http) | `<leader>Hur` |
+| gRPC-запросы | kulala (`GRPC …` в .http) | `<leader>rr` |
 
 Внешние бинари (один раз): `:MasonInstall buf protolint` (+ по желанию
 `grpcurl` — https://github.com/fullstorydev/grpcurl для запросов из терминала).
 
 ## 12. Терминал
+
+> Подробно по технологии: **§37**.
 
 `akinsho/toggleterm.nvim` загружается **при старте** (`lazy = false`):
 
@@ -766,6 +853,8 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 три способа открытия и уведомления внутри редактора, см. §23.
 
 ## 13. Git
+
+> Подробно по технологии: **§36**.
 
 `gitsigns.nvim` (hunk'и: `<leader>Hgs` stage, `Hgu` undo, `Hgb` blame-строки,
 `Hgh` предпросмотр) + `lazygit.nvim` (`<leader>gg`, `<leader>Hgg`) +
@@ -801,11 +890,11 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
   `which-key` (меню), `noice`+`nvim-notify`+`fidget` (уведомления/прогресс LSP),
   `indent-blankline`, `nvim-ufo` (супер-фолды + `<Tab>`-peek), `rainbow-delimiters`,
   `colorful-winsep`, `neoscroll`, `mini.animate` (тумблер `<leader>Hua`),
-  `SmoothCursor`, `nvim-colorizer`, `vim-illuminate`, `zen-mode` (`<leader>Huz`),
+  `SmoothCursor`, `nvim-colorizer`, `vim-illuminate`, `zen-mode` (`<leader>z`),
   `maximizer` (`<leader>Hum`), `alpha-nvim` (стартовый экран),
   `cellular-automaton` (`<leader>fL` — «код потёк», пасхалка),
   `pets.nvim` (питомец: `<leader>Hup`, `up/uo/ux`), `nvim-silicon`
-  (скриншот кода `<leader>Hus`), `pomo.nvim` (помодоро `<leader>Hut/HuP`, `pt/ps/pp/pr`),
+  (скриншот кода в визуальном режиме `<leader>sc`), `pomo.nvim` (помодоро `<leader>pt/ps/pp/pr`),
   `translate.nvim` (`<leader>tt/te`), `vim-spotify` (`<leader>so/sd`),
   `vim-numbertoggle`, `vim-highlighturl`, `undotree`-стиль истории через shada.
 
@@ -1304,61 +1393,63 @@ require("config.streak").setup({
 
 ## 25. Команды (`:`)
 
-Все пользовательские команды, которые создаёт конфиг (через `nvim_create_user_command`). Встроенные команды Neovim и команды плагинов (`:Lazy`, `:Mason`, `:Telescope`, `:Trouble`, `:ToggleTerm` и т. п.) сюда не входят — их описания в своих разделах и в `:help`.
+Все пользовательские команды, которые создаёт конфиг (через `nvim_create_user_command` и обёртку `def` в `telegram.lua`). Встроенные команды Neovim и команды плагинов (`:Lazy`, `:Mason`, `:Telescope`, `:Trouble`, `:ToggleTerm` и т. п.) сюда не входят — их описания в своих разделах и в `:help`.
 
 | Команда | Что делает | Файл |
 |---|---|---|
-| `:EnvCheck` | Показать git/curl/tar и PATH этого nvim | `init.lua` |
-| `:RuCheck` | Проверить доступность переводчиков (перевод ошибок/подсказок) | `init.lua` |
 | `:Ask` | Открыть запрос в Firefox | `browser_ask.lua` |
-| `:DiagRu` | — | `diag_ru.lua` |
-| `:HoverRu` | — | `hover_ru.lua` |
-| `:Gloss` | 📖 разбор по словам для выделенных строк (диапазон, например `:'<,'>Gloss`) | `gloss.lua` |
+| `:DiagRu` | Русские подписи ошибок LSP на лету (on \| off \| toggle) | `diag_ru.lua` |
+| `:EnvCheck` | — | `init.lua` |
+| `:Flex` | Анимация «дождь» из символов (плагин cellular-automaton); то же, что Matrix | `matrix.lua` |
+| `:Gloss` | 📖 Английский по словам для диапазона строк | `gloss.lua` |
+| `:Habr` | Хабр: лента и чтение статьи | `webtools.lua` |
+| `:HoverRu` | Перевод окна подсказки K на русский (on \| off \| toggle) | `hover_ru.lua` |
 | `:Hud` | 🕐 плашка в правом верхнем углу (on\|off\|toggle\|refresh\|debug) | `hud.lua` |
-| `:HudIp` | 🌐 какой IP показывать (lan\|public\|both\|off) или скрыть/показать (hide\|show\|toggle) | `hud.lua` |
 | `:HudClock` | 🕐 12 или 24 часа | `hud.lua` |
+| `:HudIp` | 🌐 какой IP показывать (lan\|public\|both\|off) или скрыть/показать (hide\|show\|toggle) | `hud.lua` |
 | `:HudNow` | 🕐 опросить заново, не waiting таймеры | `hud.lua` |
 | `:HudTz` | 🕐 смещение часового пояса (3 = МСК) | `hud.lua` |
 | `:KeyShow` | Показ нажатий в Neovim | `keyshow.lua` |
-| `:NotifyRu` | — | `notify_ru.lua` |
+| `:Matrix` | Анимация «дождь» из символов (плагин cellular-automaton) | `matrix.lua` |
+| `:NotifyRu` | Русские системные уведомления: сборки, линтеры (on \| off \| toggle) | `notify_ru.lua` |
+| `:RuCheck` | — | `init.lua` |
 | `:Streak` | 🔥 огонёк за коммиты: отчёт (sync — пересчитать, reset — обнулить) | `streak.lua` |
-| `:StreakRepo` | 🔥 вручную добавить репозиторий (обычно не нужно: находит сам) | `streak.lua` |
 | `:StreakGoal` | 🔥 сколько коммитов зажигают огонёк | `streak.lua` |
 | `:StreakHour` | 🔥 во сколько МСК день считается законченным | `streak.lua` |
 | `:StreakNotify` | 🔥 сообщения о огоньках | `streak.lua` |
+| `:StreakRepo` | 🔥 вручную добавить репозиторий (обычно не нужно: находит сам) | `streak.lua` |
 | `:Theme` | Выбрать тему: new \| classic (без аргумента — меню) | `themes.lua` |
-| `:Habr` | Хабр: лента и чтение статьи | `webtools.lua` |
-| `:Matrix` | Эффект «матрица» / «дождь» (cellular-automaton) | `matrix.lua` |
-| `:Flex` | Эффект «матрица» / «дождь» (cellular-automaton) | `matrix.lua` |
+| `:Tui` | 🧰 Меню TUI-утилит | `tui_tools.lua` |
+| `:TuiCheck` | 🩺 Проверка TUI-утилит | `tui_tools.lua` |
 | `:Tele` | ✈ tele: full \| panel \| chat \| <имя чата> | `telegram.lua` |
-| `:TeleFull` | ✈ tele на весь экран | `telegram.lua` |
-| `:TelePanel` | ✈ tele боковой панелью рядом с кодом | `telegram.lua` |
+| `:TeleBell` | ✈ гудок терминала на входящее | `telegram.lua` |
 | `:TeleChat` | ✈ tele в маленьком окне, сразу на один чат | `telegram.lua` |
-| `:TeleOpen` | ✈ вернуть окно tele | `telegram.lua` |
-| `:TeleHide` | ✈ спрятать окно, процесс оставить живым | `telegram.lua` |
-| `:TeleKill` | ✈ убить процесс tele | `telegram.lua` |
-| `:TeleInbox` | ✈ буфер истории входящих | `telegram.lua` |
-| `:TeleRead` | ✈ прочитать переписку чата, не открывая tele | `telegram.lua` |
 | `:TeleChatPick` | ✈ то же, но чат выбирается списком | `telegram.lua` |
+| `:TeleCheck` | ✈ что нашлось и что работает | `telegram.lua` |
+| `:TeleDb` | ✈ путь к state.db вручную | `telegram.lua` |
+| `:TeleDnd` | ✈ режим тишины | `telegram.lua` |
+| `:TeleDocs` | ✈ шпаргалка по клавишам и командам | `telegram.lua` |
+| `:TeleFocus` | ✈ всплывать только про эти чаты | `telegram.lua` |
+| `:TeleFull` | ✈ tele на весь экран | `telegram.lua` |
+| `:TeleHide` | ✈ спрятать окно, процесс оставить живым | `telegram.lua` |
+| `:TeleIgnore` | ✈ не всплывать про эти чаты | `telegram.lua` |
+| `:TeleInbox` | ✈ буфер истории входящих | `telegram.lua` |
+| `:TeleKill` | ✈ убить процесс tele | `telegram.lua` |
+| `:TeleOpen` | ✈ вернуть окно tele | `telegram.lua` |
+| `:TelePanel` | ✈ tele боковой панелью рядом с кодом | `telegram.lua` |
+| `:TeleQuiet` | ✈ уведомления только в nvim, без уведомления ОС | `telegram.lua` |
+| `:TeleRead` | ✈ прочитать переписку чата, не открывая tele | `telegram.lua` |
 | `:TeleReply` | ✈ ответить в tele, не выходя из кода | `telegram.lua` |
 | `:TeleReplyLast` | ✈ ответить в чат последнего уведомления | `telegram.lua` |
-| `:TeleSend` | ✈ — | `telegram.lua` |
+| `:TeleSend` | ✈ отправить строки/выделение в tele как сообщение | `telegram.lua` |
 | `:TeleStart` | ✈ включить слежение за state.db | `telegram.lua` |
-| `:TeleStop` | ✈ выключить слежение | `telegram.lua` |
-| `:TeleToggle` | ✈ слежение вкл/выкл | `telegram.lua` |
-| `:TeleDnd` | ✈ режим тишины | `telegram.lua` |
-| `:TeleFocus` | ✈ всплывать только про эти чаты | `telegram.lua` |
-| `:TeleIgnore` | ✈ не всплывать про эти чаты | `telegram.lua` |
-| `:TeleTheme` | ✈ тема tele в палитре nvim (mocha \| black) | `telegram.lua` |
-| `:TeleQuiet` | ✈ уведомления только в nvim, без уведомления ОС | `telegram.lua` |
-| `:TeleBell` | ✈ гудок терминала на входящее | `telegram.lua` |
-| `:TeleDb` | ✈ путь к state.db вручную | `telegram.lua` |
-| `:TeleCheck` | ✈ что нашлось и что работает | `telegram.lua` |
 | `:TeleStatus` | ✈ краткое состояние | `telegram.lua` |
+| `:TeleStop` | ✈ выключить слежение | `telegram.lua` |
 | `:TeleTest` | ✈ показать, как будет выглядеть popup | `telegram.lua` |
-| `:TeleDocs` | ✈ шпаргалка по клавишам и командам | `telegram.lua` |
+| `:TeleTheme` | ✈ тема tele в палитре nvim (mocha \| black) | `telegram.lua` |
+| `:TeleToggle` | ✈ слежение вкл/выкл | `telegram.lua` |
 
-Всего команд: **48** (из них `:Tele*` — 27).
+Всего команд: **51** (из них `:Tele*` — 27).
 
 ---
 
@@ -1487,3 +1578,920 @@ require("config.streak").setup({
 
 Записей, которых нет в конфиге (удалённые плагины): `dressing.nvim`, `bufdelete.nvim` — остались в lock-файле, в конфиге не используются.
 
+---
+
+## 27. По технологиям: указатель
+
+Каждая технология — отдельный раздел (§28–§40). Таблицы клавиш собраны из файлов справки `lua/config/keydocs/` (те же записи показывает `<leader>?`). Полный список всех клавиш — §41, всех команд `:` — §25.
+
+| Технология | Раздел | Главные клавиши | Что работает внутри |
+|---|---|---|---|
+| Go | §28 | `<leader>gt`, `<leader>gb`, `<leader>HGf`, `<leader>db` | gopls, go.nvim, nvim-dap (delve), neotest-go |
+| PostgreSQL и другие SQL | §29 | `<leader>Dp` + действие, `<leader>Up`, `<leader>Ul` | vim-dadbod, DBUI, pgcli, lazysql |
+| Redis | §30 | `<leader>Ur`, `<leader>Uc` | iredis, redis-cli |
+| Docker | §31 | `<leader>dc`, `<leader>dp`, `<leader>Ui` | lazydocker, dive, dockerls, nvim-dap-docker |
+| Kubernetes | §32 | `<leader>HGkk`, `<leader>Uk` | k9s, kubectl |
+| Kafka | §33 | `<leader>HGak`, `<leader>Ua` | ktea, kafkactl |
+| Protobuf и gRPC | §34 | `<leader>Pb`, `<leader>Pl`, `<leader>Pg` | buf, protols |
+| HTTP-запросы | §35 | `<leader>rr` | kulala.nvim |
+| Git, GitHub, GitLab | §36 | `<leader>gg`, `<leader>Hgs`, `<leader>Gh`, `<leader>Gl` | lazygit, gitsigns, diffview, gh-dash, glab-tui |
+| Терминал и TUI-утилиты | §37 | `<leader>Tt`, `<leader>Uu`, `<leader>HUu` | toggleterm, termcmd |
+| Переводы и английский | §38 | `K`, `<leader>Kw`, `<leader>tt` | ru_util, gloss, hover_ru |
+| ИИ | §39 | `<leader>Aa`, `<leader>Hat`, `<C-s>` в чате | avante, CodeCompanion |
+| Мессенджеры | §40 | `<leader>mm`, `<leader>Hyd` | tele, discordo |
+
+---
+
+## 28. Go
+
+**Что стоит.** `gopls` — LSP (ставится через Mason). `ray-x/go.nvim` — единственный спек в `lua/plugins/go-tools.lua`: сборка, тесты, линтер, моки, `if err`, теги для struct, `impl`. Отладка — `nvim-dap` с delve (`dlv`). Тесты под курсором и в файле — `neotest` с адаптером `neotest-go` (`<leader>tr`, `<leader>tf`, `<leader>ts`, `<leader>to`).
+
+**Установка на Mac.**
+```
+brew install go golangci-lint
+go install github.com/go-delve/delve/cmd/dlv@latest
+go install golang.org/x/vuln/cmd/govulncheck@latest
+```
+Остальные утилиты, которые вызывает go.nvim (gomodifytags, impl, iferr, gotests, mockgen), — список в README go.nvim. Проверка: `:checkhealth go` и `:LspInfo` (gopls должен быть подключён).
+
+**Клавиши.**
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>gb` | n | Собрать |
+| `<leader>gt` | n | Тесты пакета |
+| `<leader>Hgt` | n | Запуск Go-тестов |
+| `<leader>gl` | n | Линтер |
+| `<leader>gv` | n | Проверить уязвимости |
+| `<leader>Hvc` | n | Проверка уязвимостей |
+| `<leader>gm` | n | Сгенерировать мок |
+| `<leader>Hie` | n | Авто if err |
+| `<leader>Hti` | n | Добавить json-теги |
+| `<leader>Hj2s` | n | JSON → struct |
+| `<leader>Hfs` | n | Заполнить struct |
+| `<leader>Him` | n | Сгенерировать impl |
+| `<leader>HGS` | n | Формочка struct (выбор из списка) |
+| `<leader>HGf` | n | Поля struct'а под курсором |
+| `<leader>db` | n | Точка останова |
+| `<leader>dt` | n | Отладка теста (Go) |
+| `<leader>Hdt` | n | Тест в режиме отладки |
+| `<leader>Hdr` | n | Старт/Продолжить |
+| `<leader>Hdi` | n | Шаг в |
+| `<leader>Hdo` | n | Шаг через |
+| `<leader>Hdb` | n | Точка останова |
+| `<F5>` | n | Запуск / продолжить (DAP) |
+| `<F10>` | n | Шаг через (DAP) |
+| `<F11>` | n | Шаг в (DAP) |
+| `<leader>tr` | n | Тест под курсором |
+| `<leader>tf` | n | Тесты в файле |
+| `<leader>ts` | n | Панель тестов |
+| `<leader>to` | n | Лог ошибки теста |
+**Умный Go (как в VSCode).** `<leader>HGS` — выбор struct из списка и вставка «формочки» со всеми полями; курсор прыгает по значениям через `<Tab>` / `<S-Tab>`, дефолты — нулевые значения Go по типу поля. `<leader>HGf` — то же для struct под курсором. Модули: `lua/config/go_extras.lua`, `lua/config/go_snips.lua`.
+
+**Команды.** `:GoBuild`, `:GoTest`, `:GoTestFunc`, `:GoLint`, `:GoVulnCheck`, `:GoMockGen`, `:GoImpl`, `:GoIfErr`, `:GoJson2Struct` — из go.nvim. Полный список: §25.
+
+**Грабли.**
+- Раньше в конфиге был второй спек go.nvim (`go-security.lua`); lazy.nvim склеивал их и терял настройки. Файл удалён, всё в `go-tools.lua`.
+- Клавиши `<leader>HGb`, `<leader>HGo`, `<leader>HGl` из старых версий DOCS не существуют. Актуальные — в таблице выше.
+
+---
+
+## 29. PostgreSQL и другие базы (SQL)
+
+Есть три способа работать с базой, они дополняют друг друга.
+
+1. **Каталог `<leader>D`.** Выбираешь СУБД, потом действие. Для PostgreSQL:
+
+| Действие | Клавиша | Что делает |
+|---|---|---|
+| c | `<leader>Dpc` | 🔌 Подключиться (консоль) |
+| r | `<leader>Dpr` | ▶ Выполнить буфер / выделение (SQL) (в визуальном режиме — выделение) |
+| t | `<leader>Dpt` | 📋 Список таблиц |
+| d | `<leader>Dpd` | 🔍 Описание таблицы |
+| n | `<leader>Dpn` | 📄 Новый SQL-буфер с подключением |
+| u | `<leader>Dpu` | 🗄 Панель DBUI |
+Для остальных СУБД — те же действия под своими буквами (`s` SQLite, `m` MySQL, `o` Oracle, `x` SQL Server, `c` ClickHouse). Полная таблица — §41.
+
+2. **vim-dadbod и панель DBUI.** `<leader>du` (или `<leader>Hdu`) — панель баз. `<leader>Hda` — добавить подключение. `<leader>Hdf` — найти БД, которая относится к текущему буферу. `<leader>Hde` — выполнить запрос. Автодополнение таблиц и колонок — `vim-dadbod-completion`.
+
+3. **Терминальные клиенты** (тоже в плавающем окне, см. §37):
+   - `<leader>Up` — pgcli: автодополнение, подсветка, команды `\dt`, `\d имя`, `\q`.
+   - `<leader>Ul` — lazysql: TUI-клиент PostgreSQL, MySQL, SQLite, MSSQL. Подключения добавляются внутри.
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>du` | n | Панель БД |
+| `<leader>Hdu` | n | Открыть панель БД |
+| `<leader>Hda` | n | Добавить подключение |
+| `<leader>Hdf` | n | Найти БД буфера |
+| `<leader>Hde` | n | Выполнить запрос |
+| `<leader>dr` | n | Найти БД буфера |
+| `<leader>Up` | n | pgcli — PostgreSQL с автодополнением |
+| `<leader>Ul` | n | lazysql — TUI-клиент БД |
+| `<leader>HUp` | n | pgcli — PostgreSQL с автодополнением |
+| `<leader>HUl` | n | lazysql — TUI-клиент БД |
+**Адреса подключений.** Из переменных окружения. Пароли в файлы конфига не пишутся, в адресе пароль указывается в виде `%XX` для спецсимволов (см. `:h dadbod-url`).
+
+| Переменная | Пример |
+|---|---|
+| `NVIM_DB_PG` | `postgresql://user@localhost/app` |
+| `NVIM_DB_MYSQL` | `mysql://user@localhost/app` |
+| `NVIM_DB_SQLITE` | `sqlite:./app.db` |
+| `NVIM_DB_ORACLE` | `oracle://user:pass@host:1521/service` |
+| `NVIM_DB_MSSQL` | `sqlserver://user:pass@host:1433/app` |
+| `NVIM_DB_CLICKHOUSE` | `clickhouse://user:pass@host:9000/app` |
+
+Установка на Mac: `brew install libpq` (psql), `brew install pgcli`, `brew install lazysql`. Проверка: `<leader>Uh`.
+
+**Грабли.**
+- `<leader>D<СУБД>r` выполняет буфер (обычный режим) или выделение (визуальный режим). Работает только в SQL-буфере.
+- `<leader>Dr` без буквы СУБД не назначен. Старые версии DOCS указывали его неверно.
+
+---
+
+## 30. Redis
+
+**Что стоит.** `iredis` — клиент с автодополнением команд и ключей, подсветкой и историей. `redis-cli` — классический клиент. Оба открываются в плавающем окне. В каталог `<leader>D` Redis не входит: это клиент командной строки, а не SQL-база.
+
+**Установка на Mac.**
+```
+brew install iredis redis        # iredis; redis даёт redis-cli
+pipx install iredis              # альтернатива через pipx
+```
+
+**Адрес.** Переменная `NVIM_REDIS_URL`, например `redis://localhost:6379/0`. Если её нет — клиенты подключаются к `localhost:6379`.
+
+```
+set -Ux NVIM_REDIS_URL "redis://localhost:6379/0"      # fish
+```
+
+С паролем в адресе: `set -Ux` записывает значение в `~/.config/fish/fish_variables` — на общей машине это небезопасно. Тогда задай переменную только на сессию (`set -x NVIM_REDIS_URL "redis://:пароль@host:6379/0"`) перед запуском nvim.
+
+**Клавиши.**
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>Ur` | n | iredis — Redis с автодополнением |
+| `<leader>Uc` | n | redis-cli — Redis классический |
+| `<leader>HUr` | n | iredis — Redis с автодополнением |
+| `<leader>HUc` | n | redis-cli — Redis классический |
+**Практика.** В iredis и redis-cli `KEYS *` обходит все ключи и блокирует сервер на большой базе. Для просмотра ключей используй `SCAN 0 MATCH user:* COUNT 100`. Выход из iredis — `exit` или `Ctrl-D`, поиск по истории — `Ctrl-R`.
+
+---
+
+## 31. Docker
+
+**Что стоит.** `lazydocker` — TUI: контейнеры, логи, образы, сети. `dive` — слои образа: что добавляет каждый слой и сколько места он занимает. `docker` CLI — в плавающем окне (`ps -a`, `images`, `network ls`). Подсветка `Dockerfile` и `docker-compose` — `Dockerfile.vim`; LSP — `dockerls` (через Mason). Отладка сборки Dockerfile — `docker/nvim-dap-docker` (адаптер `dockerfile`).
+
+Важно: `skanehira/docker.vim` удалён — он не работает в Neovim (падает при старте). Вместо него — lazydocker и кнопки ниже.
+
+**Установка на Mac.**
+```
+brew install lazydocker dive
+```
+Нужен запущенный Docker Desktop (или colima). Проверка: `:TuiCheck` (`<leader>Uh`).
+
+**Клавиши.**
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>dc` | n | Docker: lazydocker (TUI) |
+| `<leader>dp` | n | Docker: контейнеры |
+| `<leader>di` | n | Docker: образы |
+| `<leader>dn` | n | Docker: сети |
+| `<leader>HGd` | n | 🐳 Docker |
+| `<leader>HGdd` | n | lazydocker — TUI Docker |
+| `<leader>HGdp` | n | docker ps -a |
+| `<leader>HGdi` | n | docker images |
+| `<leader>Ud` | n | lazydocker — Docker |
+| `<leader>Ui` | n | dive — слои Docker-образа |
+| `<leader>HUd` | n | lazydocker — Docker |
+| `<leader>HUi` | n | dive — слои Docker-образа |
+**Отладка Dockerfile.** Открой Dockerfile, поставь точку останова `<leader>db`, запусти `<F5>`. Конфигурация «Build (Cache-Only)» собирает образ с `-o type=cacheonly`, то есть без записи результата.
+
+---
+
+## 32. Kubernetes
+
+**Что стоит.** `k9s` — TUI кластера: поды, deployments, сервисы, логи, контексты. `kubectl` — в плавающем окне (`get pods`, `config get-contexts`). Нужен kubeconfig: `~/.kube/config` или путь в `KUBECONFIG`.
+
+**Установка на Mac.**
+```
+brew install derailed/k9s/k9s kubectl
+```
+
+**Клавиши.**
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>HGk` | n | ☸ Kubernetes |
+| `<leader>HGkk` | n | k9s — TUI кластера |
+| `<leader>HGkp` | n | kubectl: поды текущего namespace |
+| `<leader>HGkc` | n | kubectl: контексты |
+| `<leader>Uk` | n | k9s — Kubernetes |
+| `<leader>HUk` | n | k9s — Kubernetes |
+**Внутри k9s.** `:ctx` — сменить контекст, `:ns` — namespace, `:pods` — поды. На строке пода: `l` — логи, `d` — описание, `y` — YAML, `s` — shell в контейнер, `?` — все клавиши.
+
+---
+
+## 33. Kafka
+
+**Что стоит.** `ktea` — TUI: топики, consumer-группы, сообщения. `kafkactl` — CLI: `get topics`, `get consumer-groups`, `get brokers`. Адреса брокеров задаются в конфиге самих утилит (см. README `ktea` и `kafkactl`), в конфиг Neovim они не попадают.
+
+**Установка.** ktea — https://github.com/jonas-grgt/ktea. kafkactl — https://github.com/fgrosse/kafkactl. Проверка: `<leader>Uh`.
+
+**Клавиши.**
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>HGa` | n | 📨 Kafka |
+| `<leader>HGak` | n | ktea — Kafka TUI |
+| `<leader>HGat` | n | kafkactl: топики |
+| `<leader>HGag` | n | kafkactl: consumer-группы |
+| `<leader>HGab` | n | kafkactl: брокеры |
+| `<leader>Ua` | n | ktea — Kafka TUI |
+| `<leader>HUa` | n | ktea — Kafka TUI |
+---
+
+## 34. Protobuf и gRPC
+
+**Стек.**
+- Подсветка и парсер: treesitter `proto`.
+- LSP: `protols` (подсказки, диагностика, переходы). Ставится через Mason.
+- Форматирование: `buf format` через conform, если LSP не справился — LSP (`lua/plugins/format.lua`).
+- Сниппеты: `hdr`, `svc`, `msg`, `rpc`, `enum`, `opt` (LuaSnip, только для `proto`).
+- Сборка, линт, кодогенерация — `buf`, в плавающем окне.
+
+**Установка.**
+```
+brew install bufbuild/buf/buf grpcurl
+```
+`protolint` ставится через Mason (`:MasonInstall protolint`).
+
+**Клавиши.**
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>Pb` | n | buf build (валидация proto) |
+| `<leader>Pl` | n | buf lint (стиль proto) |
+| `<leader>Pg` | n | buf generate (codegen) |
+**gRPC-запросы** — через kulala, см. §35. `grpcurl` нужен для запросов из терминала (`<leader>Tt`).
+
+---
+
+## 35. HTTP-запросы (kulala)
+
+`kulala.nvim` — REST-клиент внутри Neovim. Файлы `*.http` и `*.rest`. Запрос под курсором запускается `<leader>rr` (в меню — `<leader>Hrr`). Поддерживается gRPC: строка `GRPC http://host:50051/pkg.Service/Method` в `.http`-файле.
+
+В конфиге kulala добавлены аргументы curl `-L -k`. `-k` отключает проверку TLS-сертификата. Это удобно для локальных стендов, но на внешних адресах так лучше не делать: уберите `-k` в `lua/plugins/kulala.lua`.
+
+**Клавиши.**
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>rr` | n | Запустить HTTP-запрос |
+| `<leader>Hrr` | n | HTTP-запрос (Kulala) |
+---
+
+## 36. Git, GitHub и GitLab
+
+**Локальный git.** `lazygit` — полный TUI. Внутри файла — `gitsigns`: индикаторы, stage/undo hunk, blame, предпросмотр. `diffview` — сравнение и история файла. Конфликты слияния — `git-conflict.nvim`: оставить своё, чужое или оба куска.
+
+**GitHub и GitLab.** `gh-dash` — дашборд PR и issues (`<leader>Gh`). `glab-tui` — merge requests и issues GitLab (`<leader>Gl`). Имя утилиты задаётся в `lua/config/webtools.lua` (`GITLAB_BIN`), по умолчанию `glab-tui`, альтернатива — `gitlab-tui`.
+
+**Установка на Mac.**
+```
+brew install lazygit gh glab
+gh auth login && gh extension install dlvhdr/gh-dash
+glab auth login
+```
+`glab-tui` — https://github.com/rcieri/glab-tui. Токены — только через `gh auth` и `glab auth`, в конфиг они не попадают.
+
+**Клавиши.**
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>gg` | n | LazyGit |
+| `<leader>Hgg` | n | LazyGit |
+| `<leader>TG` | n | LazyGit в терминале |
+| `<leader>Tg` | n | git status в терминале |
+| `<leader>Hgs` | n | Stage hunk |
+| `<leader>Hgu` | n | Undo stage hunk |
+| `<leader>Hgb` | n | Показать автора строки |
+| `<leader>Hgh` | n | Предпросмотр изменений |
+| `<leader>Hgd` | n | Diff текущего файла |
+| `<leader>Hgl` | n | Blame строки вкл/выкл |
+| `<leader>Hgf` | n | История файла (Diffview) |
+| `<leader>Hgv` | n | Diffview: сравнить изменения |
+| `<leader>Hgq` | n | Закрыть Diffview |
+| `<leader>Hgmo` | n | Оставить СВОЁ (ours) |
+| `<leader>Hgmt` | n | Оставить ЧУЖОЁ (theirs) |
+| `<leader>Hgmb` | n | Оставить оба куска |
+| `<leader>Hgm0` | n | Убрать оба куска |
+| `<leader>Hgmn` | n | Следующий конфликт |
+| `<leader>Hgmp` | n | Предыдущий конфликт |
+| `<leader>Hgml` | n | Все конфликты в quickfix |
+| `<leader>Gh` | n | GitHub: gh dash |
+| `<leader>Gl` | n | GitLab: glab-tui |
+---
+
+## 37. Терминал и TUI-утилиты
+
+**Два способа открыть терминал.** `toggleterm.nvim`: `<leader>Tt` (плавающий), `<leader>Th` (снизу), `<leader>Tv` (справа), `<C-\>` (открыть/скрыть). Процесс в скрытом терминале продолжает работать.
+
+**Утилиты.** Каждая утилита открывается в плавающем окне внутри Neovim — как Telegram-клиент `tele` (§23). Скрыть окно: та же клавиша (повторное нажатие). Процесс при этом продолжает работать; когда программа завершится сама, окно закроется.
+
+Один терминал на одну команду: номер терминала выдаётся по самой команде. Раньше номера задавались вручную и повторялись (k9s и gh dash оба были 120), из-за этого разные утилиты могли делить один терминал.
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>Tt` | n | Плавающий терминал |
+| `<leader>Th` | n | Терминал снизу |
+| `<leader>Tv` | n | Терминал справа |
+| `<leader>Ta` | n | Показать/скрыть все терминалы |
+| `<leader>Tl` | v | Строку в терминал |
+| `<leader>Tc` | n | Закрыть все терминалы |
+| `<leader>Tg` | n | git status в терминале |
+| `<leader>TG` | n | LazyGit в терминале |
+**TUI-утилиты (`<leader>U`).** Тот же набор доступен под `<leader>HU` (видно в главном меню `<leader>H`).
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>Uu` | n | Меню всех TUI-утилит |
+| `<leader>Uh` | n | Проверка TUI-утилит |
+| `<leader>Uk` | n | k9s — Kubernetes |
+| `<leader>Ur` | n | iredis — Redis с автодополнением |
+| `<leader>Uc` | n | redis-cli — Redis классический |
+| `<leader>Up` | n | pgcli — PostgreSQL с автодополнением |
+| `<leader>Ul` | n | lazysql — TUI-клиент БД |
+| `<leader>Ud` | n | lazydocker — Docker |
+| `<leader>Ui` | n | dive — слои Docker-образа |
+| `<leader>Ub` | n | btop — монитор ресурсов |
+| `<leader>Ua` | n | ktea — Kafka TUI |
+Проверка установки всех утилит: `<leader>Uh` или `:TuiCheck`. Меню со всем списком: `<leader>Uu` или `:Tui`. Недостающая утилита не запускается, а показывает команду установки.
+
+---
+
+## 38. Переводы и английский
+
+**Перевод интерфейса и подсказок.** Ошибки LSP, подсказка `K`, уведомления переводятся на русский автоматически: `diag_ru.lua`, `hover_ru.lua`, `notify_ru.lua`. Выключить: `:DiagRu off`, `:HoverRu off`, `:NotifyRu off` или клавиши `<leader>HWd`, `<leader>HWh`, `<leader>HWn`.
+
+**Переводчики.** Цепочка: DeepL (если задан `DEEPL_API_KEY`), затем Google, затем MyMemory. Проверка: `<leader>HWr` или `:RuCheck`.
+```
+set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается в конфиг и в git
+```
+
+**Английский по словам.** Выдели фразу в визуальном режиме и нажми `K`, или поставь курсор на слово и нажми `<leader>Kw` (то же — `<leader>HKw`). Окно показывает исходный текст, перевод фразы и разбор по словам в виде `- **слово** [транскрипция] — «перевод» (часть речи, грамматика)`. Команда `:Gloss` делает то же для строк диапазона.
+
+С ключом Gemini разбор делает ИИ с учётом всей фразы (`GEMINI_API_KEY` или `AVANTE_GEMINI_API_KEY`, модель — `GEMINI_MODEL`). Без ключа — словарь `dictionaryapi.dev`: транскрипция переводится из IPA таблицей, контекста нет. Текст фразы при этом уходит в Google.
+
+**Клавиши.**
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `K` | x | Английский по словам |
+| `<leader>Kw` | n | Слово под курсором: транскрипция, часть речи, перевод |
+| `<leader>HKw` | n | Английский: слово под курсором (то же, что <leader>Kw) |
+| `<leader>tt` | n | Перевести слово (ru) |
+| `<leader>te` | n | Перевести на английский |
+| `<leader>tD` | n | Документация в боковом окне |
+| `<leader>HWr` | n | Проверить переводчики |
+| `<leader>HWh` | n | Перевод подсказок K вкл/выкл |
+| `<leader>HWd` | n | Русские ошибки LSP вкл/выкл |
+| `<leader>HWn` | n | Русские уведомления вкл/выкл |
+**Переводы в тексте.** `<leader>tt` — перевести слово на русский, `<leader>te` — на английский (`translate.nvim`, DeepL/Google). `<leader>tD` — документация символа в боковом окне.
+
+---
+
+## 39. ИИ
+
+**Инструменты.** `avante.nvim` — чат о коде, правка выделения, карта репозитория (группа `<leader>A`). `CodeCompanion` — чат и действия (группа `<leader>Ha`). Подсказки при наборе — inline-подсказки ИИ в режиме вставки.
+
+**Ключи.** Переменные окружения, в конфиг не пишутся.
+
+| Переменная | Для чего |
+|---|---|
+| `GEMINI_API_KEY` или `AVANTE_GEMINI_API_KEY` | Gemini в avante и разбор в окне `K` (`AVANTE_…` важнее) |
+| `GEMINI_MODEL` | модель Gemini (по умолчанию как у avante) |
+| `GEMINI_ENDPOINT` | адрес API, если нужен прокси |
+| `MOONSHOT_API_KEY` | Kimi в CodeCompanion (`<leader>Hat`); нужен `export` в оболочке |
+| `OPENROUTER_API_KEY` | запасной провайдер для avante |
+
+В fish: `set -Ux GEMINI_API_KEY "..."`.
+
+**Клавиши.**
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>Aa` | n | ИИ: чат о коде |
+| `<leader>An` | n | ИИ: новый чат |
+| `<leader>Ae` | n | ИИ: правка выделения |
+| `<leader>Ar` | n | ИИ: обновить окна |
+| `<leader>Af` | n | ИИ: фокус на сайдбар |
+| `<leader>AS` | n | ИИ: остановить генерацию |
+| `<leader>Az` | n | ИИ: дзен-режим |
+| `<leader>At` | n | ИИ: сайдбар вкл/выкл |
+| `<leader>Ad` | n | ИИ: отладочный режим |
+| `<leader>AC` | n | ИИ: окно выбора |
+| `<leader>As` | n | ИИ: подсказка вручную |
+| `<leader>AR` | n | ИИ: карта репозитория |
+| `<leader>Ax` | n | Объяснить код/ошибку (Gemini) |
+| `<leader>Hat` | n | Чат с Kimi |
+| `<leader>Hai` | n | Действия AI |
+| `<leader>Hae` | v | Отправить выделение ИИ |
+| `<leader>Hac` | n | Команда в CodeCompanion |
+| `<M-l>` | i | Принять подсказку ИИ |
+| `<M-]>` | i | Следующая подсказка ИИ |
+| `<M-[>` | i | Предыдущая подсказка ИИ |
+| `<C-]>` | i | Скрыть подсказку ИИ |
+| `<C-s>` | i | Отправить сообщение ИИ |
+| `<C-c>` | i | Закрыть чат ИИ |
+| `<C-c>` | n | Остановить ответ ИИ |
+**Что уходит наружу.** Чат и разбор отправляют код или текст выделения провайдеру. Не выделяй то, что нельзя передавать сторонним сервисам.
+
+---
+
+## 40. Мессенджеры
+
+**Telegram (`tele`).** Консольный клиент, работает в Neovim как окно. Подробно — §23. Клавиши — в таблице ниже.
+
+**Discord (`discordo`).** Клиент Discord в терминале. **Важно:** Discord запрещает клиенты, которые работают от имени пользователя (self-bot). Аккаунт могут заблокировать. Токен не записывай в конфиг: логинься в самом приложении или используй переменную `DISCORDO_TOKEN` на сессию.
+
+**Клавиши.**
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>mm` | n | tele: маленькое окно (float) |
+| `<leader>mf` | n | tele: на весь экран |
+| `<leader>mp` | n | tele: боковой панелью |
+| `<leader>mh` | n | Спрятать окно tele |
+| `<leader>mo` | n | Открыть чат последнего уведомления |
+| `<leader>mc` | n | Выбрать чат и сесть на него |
+| `<leader>mi` | n | История входящих |
+| `<leader>mt` | n | Прочитать чат, не открывая tele |
+| `<leader>mr` | n | Ответить через tele |
+| `<leader>mq` | n | Ответить в чат последнего уведомления |
+| `<leader>ms` | v | Отправить выделение в tele |
+| `<leader>mS` | n | Отправить текущую строку в tele |
+| `<leader>mn` | n | Режим тишины (dnd) |
+| `<leader>mb` | n | Гудок вкл/выкл |
+| `<leader>md` | n | Диагностика (:TeleCheck) |
+| `<leader>mk` | n | Убить процесс tele |
+| `<leader>m?` | n | Шпаргалка по telegram-мосту |
+| `<leader>Hyd` | n | Discordo — Discord в терминале |
+---
+
+## 41. Полный список клавиш
+
+Все клавиши из справки `<leader>?` и клавиши баз данных. Таблица — по группам, с описаниями. Клавиша с `<leader>` — пробел. Режим: `n` обычный, `v` / `x` визуальный, `i` вставка, `t` терминал.
+
+Всего записей справки: **399** (из них клавиши баз данных — 36).
+
+### Окна, редактор, складывание, движение, ИИ-hydra, служебные — 48
+
+| Клавиша | Режим | Что делает | Подробно |
+|---|---|---|---|
+| `<C-h>` | n | Окно слева | Переход в окно слева. Удобно вместо Ctrl-w h. |
+| `<C-j>` | n | Окно снизу | Переход в окно снизу (Ctrl-w j). |
+| `<C-k>` | n | Окно сверху | Переход в окно сверху (Ctrl-w k). |
+| `<C-l>` | n | Окно справа | Переход в окно справа (Ctrl-w l). |
+| `<M-h>` | n | Уже | Уменьшает ширину текущего окна на несколько колонок. |
+| `<M-l>` | n | Шире | Увеличивает ширину текущего окна на несколько колонок. |
+| `<C-Up>` | n | Выше | Увеличивает высоту текущего окна. |
+| `<C-Down>` | n | Ниже | Уменьшает высоту текущего окна. |
+| `<leader>\|` | n | Вертикальный сплит | Делит окно вертикально: новое окно справа. Ничего не сохраняет и не закрывает. |
+| `<leader>-` | n | Горизонтальный сплит | Делит окно горизонтально: новое окно снизу. |
+| `<` | v | Отступ влево | В визуальном режиме сдвигает выделенные строки влево на один уровень. Выделение остаётся, можно нажать ещё раз. |
+| `>` | v | Отступ вправо | В визуальном режиме сдвигает выделенные строки вправо. Выделение остаётся. |
+| `p` | v | Вставить, не затирая регистр | В визуальном режиме вставляет копию, но НЕ кладёт заменённый текст в регистр обмена. Обычный p в визуале затёр бы буфер. |
+| `<leader>w` | n | Сохранить | Сохраняет текущий файл (:w). Аналог Cmd+S. |
+| `<leader>q` | n | Закрыть окно | Закрывает текущее окно (:q). Если в буфере есть несохранённые изменения, Neovim спросит. |
+| `<Esc><Esc>` | t | Выйти в Normal в терминале | В терминале Neovim (toggleterm) переводит в normal-режим, чтобы можно было листать вывод. Обычный Esc в терминале отправляется программе. |
+| `<leader>yr` | n | Кольцо буфера обмена (1–9) | Открывает список девяти последних скопированных фрагментов. Enter вставляет выбранный. Сами регистры: "1p … "9p. |
+| `zR` | n | Развернуть всё | Раскрывает все свёрнутые блоки в файле (складывание кода). |
+| `zM` | n | Свернуть всё | Сворачивает все блоки в файле. |
+| `zr` | n | Развернуть, кроме… | Раскрывает уровень складывания на один шаг глубже. |
+| `zm` | n | Свернуть блоки | Сворачивает ещё один уровень блоков. |
+| `K` | n | Предпросмотр свёрнутого блока | Над свёрнутым блоком показывает его содержимое. Во всех остальных местах K — подсказка LSP (с переводом на русский). |
+| `za` | n | Свернуть/развернуть блок | Переключает складывание блока под курсором. |
+| `<M-j>` | n | Строку вниз | Переносит текущую строку на одну вниз (plugin move.nvim). |
+| `<M-k>` | n | Строку вверх | Переносит текущую строку на одну вверх. |
+| `<M-H>` | n | Слово влево | Переносит слово под курсором влево. |
+| `<M-L>` | n | Слово вправо | Переносит слово под курсором вправо. |
+| `]]` | n | Следующее слово | Переход к следующему упоминанию слова под курсором (snacks.words). |
+| `[[` | n | Предыдущее слово | Переход к предыдущему упоминанию слова под курсором. |
+| `<leader>?` | n | ❓ Справка по клавише | Открывает справку: нажмите <leader>? и затем клавиши, которые хотите понять. Команда НЕ выполняется, только объясняется. Режим справки (вкл. до Esc) — <leader>?m. |
+| `<leader>M` | n | Войти в Super Mode | Включает Hydra-режим: короткие клавиши s/f/g/b (сохранить, файлы, git, буферы) без префикса leader. Выход: q или Esc. |
+| `s` | n | Save (в Super Mode) | Внутри Super Mode: сохранить файл. Работает только пока активен Hydra-режим <leader>M. |
+| `f` | n | Files (в Super Mode) | Внутри Super Mode: открыть поиск файлов. |
+| `g` | n | Git (в Super Mode) | Внутри Super Mode: меню git. |
+| `b` | n | Buffers (в Super Mode) | Внутри Super Mode: список буферов. |
+| `q` | n | Quit (в Super Mode) | Выход из Super Mode. Обычная q в normal-режиме — запись макроса, не путать. |
+| `<Esc>` | n | Quit (в Super Mode) | Выход из Super Mode. |
+| `<leader>Wf` | n | Фокус: дерево файлов | Переводит курсор в панель дерева. <leader>e показывает или прячет дерево. Если дерева нет на экране, открывает его и переходит в него. |
+| `<leader>Wc` | n | Фокус: файл (код) | Возвращает курсор в окно с кодом: сначала в предыдущее окно, иначе в первое обычное окно с файлом. |
+| `<leader>Wt` | n | Фокус: терминал | Переходит в открытый терминал toggleterm (снизу или плавающий). Если терминала нет, открывает его снизу. В терминале сразу включается режим ввода. |
+| `<leader>Wo` | n | Оставить только это окно | Закрывает все остальные окна (:only). Буферы не закрываются. |
+| `<leader>Wx` | n | Закрыть окно | Закрывает текущее окно (:close). Буфер остаётся открытым. |
+| `<leader>kk` | n | Показ нажатий: вкл/выкл | Внизу экрана всплывают последние нажатые клавиши и гаснут примерно через 1.5 с. То же делает :KeyShow. Показ на весь macOS — через Hammerspoon. |
+| `<leader>Gh` | n | GitHub: gh dash | Открывает gh dash (дашборд PR и issues) в плавающем терминале. Нужно один раз: gh auth login и gh extension install dlvhdr/gh-dash. Если расширения нет, покажет команду установки. |
+| `<leader>Gl` | n | GitLab: glab-tui | Открывает GitLab TUI (merge requests и issues) в плавающем терминале. Нужны glab (brew install glab, glab auth login) и установленный glab-tui (https://github.com/rcieri/glab-tui). Имя утилиты меняется в lua/config/webtools.lua (GITLAB_BIN), можно вернуть gitlab-tui. |
+| `<leader>Gb` | n | Хабр: читать статьи | Список свежих статей Хабра из RSS. Выбор статьи открывает её во вкладке Neovim: заголовок, автор, дата и текст. q — закрыть вкладку, o — открыть в браузере. Команда: :Habr. Текст берётся через JSON API Хабра; если установлен pandoc, разметка аккуратнее. |
+| `<leader>Ab` | n | Спросить в Firefox | Спрашивает запрос в Neovim и открывает Firefox с ответом (по умолчанию Perplexity, сервис меняется в lua/config/browser_ask.lua). В визуальном режиме подставляет выделенный текст. Команда: :Ask текст. |
+| `<leader>uT` | n | Выбрать тему | Меню тем: «Новая» (чёрный фон, яркая палитра) или «Старая» (прежние цвета). Выбор сохраняется между запусками. То же: :Theme new / :Theme classic. |
+
+### Плагины и инструменты — 72
+
+| Клавиша | Режим | Что делает | Подробно |
+|---|---|---|---|
+| `<leader>a` | n | Структура кода | Боковая панель символов файла (aerial): функции, типы, методы. Переход по Enter. |
+| `<leader>aj` | n | Дерево JSON/структура | Показывает структуру JSON-документа деревом (aerial). |
+| `<leader>gv` | n | Проверить уязвимости | Go: команда :GoVulnCheck — проверка зависимостей модуля на известные уязвимости (govulncheck). |
+| `<leader>gl` | n | Линтер | Go: команда :GoLint — запуск линтера (golangci-lint) по пакету. |
+| `<leader>gt` | n | Тесты пакета | Go: запускает тесты текущего пакета (go test). |
+| `<leader>gb` | n | Собрать | Go: сборка текущего пакета (go build). Ошибки появятся в списке quickfix. |
+| `<leader>gm` | n | Сгенерировать мок | Go: команда :GoMockGen — генерирует мок для интерфейса (mockgen). |
+| `<leader>HGS` | n | Формочка struct (выбор из списка) | Go: выбираешь struct из списка буфера — вставляется сниппет с её полями (go_extras.fill_struct). |
+| `<leader>HGf` | n | Поля struct'а под курсором | Go: автодополнение полей struct, в которой стоит курсор (go_extras.add_fields). Если struct не найден — как <leader>HGS. |
+| `<leader>jx` | n | Список ключей JSON | Показывает все ключи JSON-файла, переход к ключу по Enter. |
+| `<leader>jq` | n | jq-запрос по JSON | Запрашивает текст jq-выражения и применяет его к JSON-буферу. Нужен установленный jq. |
+| `<leader>gg` | n | LazyGit | Открывает LazyGit в плавающем окне: коммиты, ветки, stage построчно. |
+| `<leader>fL` | n | Код потёк! | Пасхалка: запускает анимацию «матрицы» (plugins/matrix.lua). Ничего не меняет в файле. |
+| `<leader>e` | n | Дерево файлов (nvim-tree) | Открывает или закрывает боковое дерево файлов проекта. |
+| `<leader>up` | n | Призвать питомца | Запускает анимированного питомца в буфере (plugin pets). Чисто косметика. |
+| `<leader>uo` | n | Питомец: сон | Усыпляет питомца. |
+| `<leader>ux` | n | Убрать питомцев | Убирает всех питомцев. |
+| `<leader>pt` | n | Запустить таймер (25м) | Pomodoro: запускает таймер 25 минут на работу. |
+| `<leader>ps` | n | Остановить таймер | Pomodoro: останавливает текущий таймер. |
+| `<leader>pp` | n | Пауза | Pomodoro: ставит таймер на паузу. |
+| `<leader>pr` | n | Снять с паузы | Pomodoro: продолжает таймер после паузы. |
+| `<leader>ns` | n | Черновик | Открывает scratch-буфер для заметок, который не сохраняется на диск. |
+| `<leader>nS` | n | История черновиков | Показывает прошлые черновики (snacks.scratch) и открывает нужный. |
+| `<leader>un` | n | Спрятать уведомления | Скрывает всплывающие уведомления (snacks.notifier) — для режима концентрации. |
+| `<leader>sc` | v | Скриншот Silicon | Из выделения делает красивый PNG-скриншот кода (nvim-silicon). Нужен установленный silicon. |
+| `<leader>uc` | n | Плавный курсор (вкл/выкл) | Переключает анимацию курсора (smoothcursor). |
+| `<leader>S` | n | Поиск и замена во всём проекте | Открывает spectre: поиск и замена по всему проекту с предпросмотром каждого совпадения. |
+| `<leader>so` | n | Spotify поиск | Открывает поиск треков в Spotify (nvim-spotify). Нужен spt и подписка. |
+| `<leader>sd` | n | Spotify устройства | Показывает список устройств Spotify Connect и выбирает, куда выводить звук. |
+| `<leader>sp` | n | Пауза/Плей | Ставит Spotify на паузу или продолжает воспроизведение. |
+| `<leader>sn` | n | Вперёд | Следующий трек Spotify. |
+| `<leader>sb` | n | Назад | Предыдущий трек Spotify. |
+| `<leader>ff` | n | Найти файл | Telescope: быстрый поиск файлов по имени в проекте. |
+| `<leader>fg` | n | Поиск по содержимому | Telescope: live grep — ищет текст во всех файлах проекта. |
+| `<leader>fb` | n | Буферы | Telescope: список открытых буферов. |
+| `<leader>fr` | n | Недавние файлы | Telescope: недавно открытые файлы. |
+| `<leader>fh` | n | Поиск по справке | Telescope: поиск по документации Neovim (:help). |
+| `<leader>fd` | n | Диагностика проекта | Telescope: все ошибки и предупреждения LSP во всём проекте. |
+| `<leader>fk` | n | Все горячие клавиши | Telescope: список всех клавиш Neovim с описаниями (keymaps). |
+| `<leader>fc` | n | Все команды | Telescope: список всех команд Neovim. Enter выполняет выбранную. |
+| `<leader>Tt` | n | Плавающий терминал | Открывает терминал в плавающем окне. Повторное нажатие — закрыть. |
+| `<leader>Th` | n | Терминал снизу | Открывает терминал внизу экрана. |
+| `<leader>Tv` | n | Терминал справа | Открывает терминал справа. |
+| `<leader>Ta` | n | Показать/скрыть все терминалы | Прячет или показывает все открытые терминалы (toggleterm). |
+| `<leader>Tl` | v | Строку в терминал | Отправляет выделенные строки в терминал как команды. |
+| `<leader>dc` | n | Docker: lazydocker (TUI) | Запускает lazydocker в плавающем терминале. Нужен установленный lazydocker. |
+| `<leader>dp` | n | Docker: контейнеры | Выводит `docker ps` в терминал. |
+| `<leader>di` | n | Docker: образы | Выводит список образов (`docker images`). |
+| `<leader>dn` | n | Docker: сети | Выводит список сетей Docker (`docker network ls`). |
+| `<leader>Pb` | n | buf build (валидация proto) | Protobuf: проверяет .proto через buf build. Нужен установленный buf. |
+| `<leader>Pl` | n | buf lint (стиль proto) | Protobuf: проверяет стиль .proto (buf lint). |
+| `<leader>Pg` | n | buf generate (codegen) | Protobuf: генерирует код по buf.gen.yaml. |
+| `<leader>tt` | n | Перевести слово (ru) | Переводит слово под курсором на русский (plugin translate.nvim). |
+| `<leader>te` | n | Перевести на английский | Переводит слово или выделение на английский. |
+| `<leader>mm` | n | tele: маленькое окно (float) | Telegram-мост: показывает окно tele плавающим, маленьким. |
+| `<leader>mf` | n | tele: на весь экран | Telegram-мост: окно на весь экран. |
+| `<leader>mp` | n | tele: боковой панелью | Telegram-мост: окно сбоку, как панель. |
+| `<leader>mh` | n | Спрятать окно tele | Закрывает окно tele. Сам мост продолжает работать в фоне. |
+| `<leader>mo` | n | Открыть чат последнего уведомления | Открывает чат, из которого пришло последнее уведомление. |
+| `<leader>mc` | n | Выбрать чат и сесть на него | Список чатов: выбрать и открыть. |
+| `<leader>mi` | n | История входящих | Показывает последние входящие сообщения. |
+| `<leader>mt` | n | Прочитать чат, не открывая tele | Выводит историю чата в буфер для чтения. |
+| `<leader>mr` | n | Ответить через tele | Открывает ввод ответа в выбранный чат. |
+| `<leader>mq` | n | Ответить в чат последнего уведомления | Быстрый ответ в последний чат. |
+| `<leader>ms` | v | Отправить выделение в tele | Отправляет выделенный текст в текущий чат tele. |
+| `<leader>mS` | n | Отправить текущую строку в tele | Отправляет строку под курсором в чат. |
+| `<leader>mn` | n | Режим тишины (dnd) | Включает режим «не беспокоить» для уведомлений tele. |
+| `<leader>mb` | n | Гудок вкл/выкл | Включает или выключает звуковой сигнал при новом сообщении. |
+| `<leader>md` | n | Диагностика (:TeleCheck) | Проверяет состояние моста tele и выводит отчёт. |
+| `<leader>mk` | n | Убить процесс tele | Аварийно останавливает процесс tele, если он завис. |
+| `<leader>m?` | n | Шпаргалка по telegram-мосту | Показывает краткую шпаргалку всех команд tele. |
+| `<C-\>` | n | Открыть/скрыть терминал | Показывает или прячет плавающий терминал (toggleterm) из любого места. Из терминала тот же выход — <C-\><C-n> в normal-режим. |
+
+### Главное меню <leader>H — 77
+
+| Клавиша | Режим | Что делает | Подробно |
+|---|---|---|---|
+| `<leader>Hff` | n | Найти файл | Telescope: поиск файла по имени (то же, что <leader>ff). |
+| `<leader>Hfg` | n | Live grep | Поиск текста по всему проекту с предпросмотром совпадений. |
+| `<leader>Hfb` | n | Открыть буферы | Список открытых буферов для переключения. |
+| `<leader>Hfh` | n | Поиск по справке | Поиск по :help Neovim. |
+| `<leader>Hfr` | n | Недавние файлы | Файлы, открывавшиеся недавно. |
+| `<leader>Hft` | n | TODO/FIXME | Список всех TODO, FIXME, BUG-комментариев проекта (todo-comments). |
+| `<leader>Hfk` | n | Все горячие клавиши | Список всех клавиш Neovim с описаниями. Здесь же видно, что делает каждая. |
+| `<leader>Hfc` | n | Все команды Neovim | Список всех команд (:команды) с описаниями. |
+| `<leader>Hfw` | n | Найти слово под курсором | Поиск слова под курсором по всему проекту. |
+| `<leader>Hfm` | n | Метки (marks) | Список закладок (marks) текущего файла и проекта. |
+| `<leader>Hgs` | n | Stage hunk | Git: добавляет в индекс (stage) изменённый фрагмент под курсором (gitsigns). |
+| `<leader>Hgu` | n | Undo stage hunk | Git: отменяет stage для фрагмента под курсором. |
+| `<leader>Hgb` | n | Показать автора строки | Git: показывает, кто и когда изменил строку под курсором (blame). |
+| `<leader>Hgh` | n | Предпросмотр изменений | Git: показывает diff изменённого фрагмента в плавающем окне. |
+| `<leader>Hgd` | n | Diff текущего файла | Git: сравнение текущего файла с версией из индекса. |
+| `<leader>Hgl` | n | Blame строки вкл/выкл | Git: показывает автора строки прямо в конце строки. Повторное нажатие выключает. |
+| `<leader>Hgg` | n | LazyGit | Открывает LazyGit в плавающем окне. |
+| `<leader>Hgt` | n | Запуск Go-тестов | Go: команда :GoTest (go.nvim). |
+| `<leader>Hti` | n | Добавить json-теги | Go: добавляет json-теги к полям структуры (`json:"name"`). |
+| `<leader>Hie` | n | Авто if err | Go: вставляет блок `if err != nil { return … }` под текущей строкой. |
+| `<leader>Hfs` | n | Заполнить struct | Go: заполняет поля структуры значениями по умолчанию. |
+| `<leader>Hj2s` | n | JSON → struct | Go: из вставленного JSON генерирует структуру Go. |
+| `<leader>Him` | n | Сгенерировать impl | Go: создаёт заготовку методов, чтобы тип реализовал интерфейс (impl). |
+| `<leader>Hvc` | n | Проверка уязвимостей | Go: govulncheck по модулю. |
+| `<leader>Hdu` | n | Открыть панель БД | Открывает vim-dadbod-ui: дерево подключений и таблиц. |
+| `<leader>Hda` | n | Добавить подключение | Добавляет подключение к базе данных в список DBUI. |
+| `<leader>Hdf` | n | Найти БД буфера | Ищет подключение, которое привязано к текущему буферу. |
+| `<leader>Hdb` | n | Точка останова | Отладка (DAP): ставит или снимает breakpoint на текущей строке. |
+| `<leader>Hdr` | n | Старт/Продолжить | Отладка: запускает программу или продолжает до следующей точки останова. |
+| `<leader>Hdi` | n | Шаг в | Отладка: войти в функцию на текущей строке. |
+| `<leader>Hdo` | n | Шаг через | Отладка: выполнить строку, не заходя в функции. |
+| `<leader>Hdt` | n | Тест в режиме отладки | Отладка: запускает тест под курсором через DAP. |
+| `<leader>Has` | n | Показать структуру файла | Открывает структуру (символы) файла в боковой панели (aerial). |
+| `<leader>Hos` | n | Поиск заметок | Obsidian: поиск заметок в хранилище. |
+| `<leader>Hon` | n | Новая заметка | Obsidian: создаёт новую заметку в хранилище. |
+| `<leader>Hof` | n | Перейти по ссылке | Obsidian: открывает ссылку [[…]] под курсором. |
+| `<leader>Hot` | n | Тоггл чекбокса | Obsidian: переключает чекбокс задачи [ ] / [x]. |
+| `<leader>Htr` | n | Запуск теста под курсором | Neotest: запускает тест, в котором стоит курсор. |
+| `<leader>Htf` | n | Запуск всех тестов в файле | Neotest: запускает все тесты текущего файла. |
+| `<leader>Hts` | n | Окно со статусом тестов | Neotest: панель со списком тестов и их статусом. |
+| `<leader>Hto` | n | Показать вывод ошибки | Neotest: вывод упавшего теста. |
+| `<leader>Htn` | n | Следующий тест | Neotest: переход к следующему тесту. |
+| `<leader>Hsc` | n | Скриншот кода (Silicon) | Скриншот выделенного кода (то же, что <leader>sc). |
+| `<leader>Hrr` | n | HTTP-запрос (Kulala) | Выполняет HTTP-запрос из .http-файла под курсором (kulala). |
+| `<leader>Hz` | n | Дзен-режим | Убирает всё лишнее и оставляет один буфер по центру (zen-mode). |
+| `<leader>Hum` | n | Развернуть/восстановить окно | Разворачивает текущее окно на весь экран; повторно — восстанавливает. |
+| `<leader>Hm` | n | Развернуть/восстановить окно | То же, что <leader>Hum (maximizer). |
+| `<leader>Hup` | n | Питомец (Pets) | Призвать или спрятать питомца (то же, что <leader>up). |
+| `<leader>Hua` | n | Переключить анимации | Включает или выключает анимации mini.animate (переключает vim.g.minianimate_disable). |
+| `<leader>Hpt` | n | Старт Pomodoro | Запускает таймер Pomodoro (то же, что <leader>pt). |
+| `<leader>Hps` | n | Стоп Pomodoro | Останавливает Pomodoro. |
+| `<leader>Huh` | n | HUD: плашка в углу (вкл/выкл) | Прячет или показывает плашку с временем, зарядом и IP. |
+| `<leader>Hud` | n | HUD: что он видит | Выводит диагностику HUD: откуда берутся время, заряд, IP. |
+| `<leader>Hui` | n | HUD: какой IP | Переключает показ IP: lan → public → both → off. |
+| `<leader>Huc` | n | HUD: 12/24-часовой формат | Переключает формат времени в плашке. |
+| `<leader>Huk` | n | Огонёк за коммиты (:Streak) | Показывает серию дней с коммитами. |
+| `<leader>Hha` | n | Добавить файл в Harpoon | Harpoon: запоминает текущий файл в списке быстрых файлов проекта. |
+| `<leader>Hhh` | n | Открыть меню Harpoon | Harpoon: список запомненных файлов, его можно редактировать. |
+| `<leader>Hh1` | n | Перейти к 1-му файлу | Harpoon: открывает первый запомненный файл. |
+| `<leader>Hh2` | n | Перейти к 2-му файлу | Harpoon: открывает второй запомненный файл. |
+| `<leader>Hpl` | n | Открыть Lazy UI | Окно менеджера плагинов Lazy: обновление, установка, ошибки. |
+| `<leader>Hpm` | n | Открыть Mason UI | Окно Mason: установка LSP-серверов, линтеров, форматтеров. |
+| `<leader>Hpy` | n | Lazy sync (поставить новые плагины) | Ставит, обновляет и удаляет плагины по lazy-lock.json. Нужна после добавления плагинов. |
+| `<leader>Hli` | n | LspInfo | Показывает, какие LSP-серверы подключены к буферу и их статус. |
+| `<leader>Hch` | n | Checkhealth | Проверяет здоровье Neovim и плагинов, выводит предупреждения. |
+| `<leader>Hpc` | n | Чем форматируется файл | Показывает, какой форматтер (conform) применяется к текущему типу файла. |
+| `<leader>Hxx` | n | Показать все ошибки (Trouble) | Список ошибок и предупреждений проекта в удобной панели. |
+| `<leader>Hxl` | n | Location list | Список location list (ошибки текущего окна) в панели Trouble. |
+| `<leader>Hxq` | n | Quickfix list | Список quickfix (результаты grep, сборки) в панели Trouble. |
+| `<leader>Hxs` | n | Символы файла (Trouble) | Символы файла (функции, типы) в панели Trouble. |
+| `<leader>Hxt` | n | TODO-комментарии (Trouble) | TODO/FIXME в панели Trouble. |
+| `<leader>Hnh` | n | Убрать подсветку поиска | Снимает подсветку после поиска (:nohlsearch). |
+| `<leader>He` | n | Дерево файлов (nvim-tree) | Открывает или закрывает дерево файлов (то же, что <leader>e). |
+| `<leader>Hc` | n | Создать файл/директорию | Группа: создание файлов и папок (см. подсказки which-key). |
+| `<leader>Hcf` | n | Дерево: создать файл | В дереве файлов (nvim-tree) клавиша a создаёт файл; этот пункт — подсказка. |
+| `<leader>Hcr` | n | Переименовать файл | Переименовывает текущий файл в дереве или буфере. |
+| `<leader>Hkl` | n | Поиск по всем шпаргалкам | cheat.sh: список всех доступных шпаргалок. |
+
+### ИИ, терминальные утилиты (K8s/Docker/Kafka/Discord), Git-конфликты, шпаргалки, код — 41
+
+| Клавиша | Режим | Что делает | Подробно |
+|---|---|---|---|
+| `<leader>Hat` | n | Чат с Kimi | Открывает чат CodeCompanion с моделью Kimi (нужен MOONSHOT_API_KEY в окружении). |
+| `<leader>Hai` | n | Действия AI | Меню действий CodeCompanion: объяснить, исправить, написать тесты. |
+| `<leader>Hae` | v | Отправить выделение ИИ | Отправляет выделенный код в CodeCompanion (визуальный режим). |
+| `<leader>Hac` | n | Команда в CodeCompanion | Команда CodeCompanion: запрос к ИИ, применяется к выделению или строке. |
+| `<leader>HGk` | n | ☸ Kubernetes | Группа: инструменты Kubernetes (k9s, kubectl). |
+| `<leader>HGkk` | n | k9s — TUI кластера | Открывает k9s в плавающем терминале: поды, сервисы, логи. Нужен k9s и kubeconfig. |
+| `<leader>HGkp` | n | kubectl: поды текущего namespace | Выводит `kubectl get pods` в терминал. |
+| `<leader>HGkc` | n | kubectl: контексты | Выводит список контекстов kubeconfig (`kubectl config get-contexts`). |
+| `<leader>HGd` | n | 🐳 Docker | Группа: инструменты Docker. |
+| `<leader>HGdd` | n | lazydocker — TUI Docker | Открывает lazydocker в плавающем терминале. |
+| `<leader>HGdp` | n | docker ps -a | Выводит все контейнеры (включая остановленные). |
+| `<leader>HGdi` | n | docker images | Выводит список образов. |
+| `<leader>HGa` | n | 📨 Kafka | Группа: инструменты Kafka. |
+| `<leader>HGak` | n | ktea — Kafka TUI | Открывает ktea: топики, consumer-группы, сообщения. Нужен установленный ktea. |
+| `<leader>HGat` | n | kafkactl: топики | Выводит список топиков (`kafkactl get topics`). |
+| `<leader>HGag` | n | kafkactl: consumer-группы | Выводит consumer-группы (`kafkactl get consumer-groups`). |
+| `<leader>HGab` | n | kafkactl: брокеры | Выводит список брокеров (`kafkactl get brokers`). |
+| `<leader>Hyd` | n | Discordo — Discord в терминале | Запускает клиент Discordo. ВНИМАНИЕ: клиенты для личного аккаунта нарушают правила Discord (риск блокировки). Токен не хранится в конфиге. |
+| `<leader>Hgv` | n | Diffview: сравнить изменения | Открывает Diffview: все изменённые файлы и их diff. |
+| `<leader>Hgf` | n | История файла (Diffview) | История коммитов текущего файла с diff по каждому. |
+| `<leader>Hgq` | n | Закрыть Diffview | Закрывает панель Diffview. |
+| `<leader>Hgmo` | n | Оставить СВОЁ (ours) | В конфликте слияния оставляет вашу версию (верхний кусок). |
+| `<leader>Hgmt` | n | Оставить ЧУЖОЁ (theirs) | В конфликте слияния оставляет входящую версию (нижний кусок). |
+| `<leader>Hgmb` | n | Оставить оба куска | В конфликте оставляет обе версии одна за другой. |
+| `<leader>Hgm0` | n | Убрать оба куска | В конфликте удаляет оба варианта. |
+| `<leader>Hgmn` | n | Следующий конфликт | Переход к следующему конфликту в файле. |
+| `<leader>Hgmp` | n | Предыдущий конфликт | Переход к предыдущему конфликту. |
+| `<leader>Hgml` | n | Все конфликты в quickfix | Собирает все конфликты проекта в quickfix-список. |
+| `<leader>Hkc` | n | Шпаргалка по запросу (cheat.sh) | Спрашивает запрос и показывает шпаргалку cheat.sh в окне, например `tar extract`. |
+| `<leader>cj` | n | Разбить/собрать конструкцию | Переключает: однострочный список/аргументы разбивает по строкам, многострочный собирает (treesj). |
+| `<leader>cs` | n | Разбить конструкцию на строки | Разбивает список, аргументы или объект по строкам. |
+| `<leader>cJ` | n | Собрать конструкцию в одну строку | Собирает многострочную конструкцию в одну строку. |
+| `<leader>cl` | n | Линтеры для этого файла | Запускает линтеры (shellcheck, ruff, hadolint и др.), которые установлены в PATH. Отсутствующие тихо пропускаются. |
+| `<leader>cf` | n | Форматировать файл | Форматирует буфер через conform (форматтер для типа файла). |
+| `<leader>ca` | n | Действия кода | Меню LSP code actions: быстрые исправления и рефакторинги под курсором. Лампочка 💡 в колонке знаков — когда действия доступны. |
+| `<leader>Hk` | n | Шпаргалки (cheat.sh) | Группа: шпаргалки cheat.sh. |
+| `<leader>Hbr` | n | Кольцо буфера обмена (1–9) | То же, что <leader>yr: выбрать одно из 9 последних копирований. |
+| `<leader>Hbm` | n | macOS: инструкция | Открывает macos/README.md: KeyCastr, Hammerspoon, Maccy, соответствие 9 регистров Neovim и 9 записей Maccy. |
+| `<leader>Hbk` | n | Экранная клавиатура macOS | Напоминание: клавиатура-оверлей на macOS включается в Hammerspoon сочетанием ⌃⌥⌘K (вне Neovim). |
+| `<leader>Hq?` | n | Справка по клавише | То же, что <leader>?: нажмите <leader>?, затем клавиши — покажу, что они делают. Не выполняет команду. |
+| `<leader>Hqm` | n | Режим справки вкл/выкл | То же, что <leader>?m: пока режим включён, клавиши объясняются вместо выполнения. |
+
+### Клавиши LSP, диагностика, справка — 20
+
+| Клавиша | Режим | Что делает | Подробно |
+|---|---|---|---|
+| `gd` | n | К определению | Переход к определению символа под курсором (LSP). |
+| `gD` | n | К декларации | Переход к объявлению символа (может отличаться от определения, например в C). |
+| `gr` | n | Все ссылки | Список всех мест, где используется символ под курсором. |
+| `gi` | n | К реализации | Переход к реализации интерфейса или абстрактного метода. |
+| `<leader>rn` | n | Переименовать | Переименовывает символ во всём проекте (LSP rename). |
+| `<F2>` | n | Переименовать | То же, что <leader>rn: переименование символа. |
+| `<leader>f` | n | Формат (LSP) | Форматирует буфер языковым сервером, если conform не настроен для этого типа файла. |
+| `[d` | n | Пред. ошибка | Переход к предыдущей диагностике (ошибке или предупреждению). |
+| `]d` | n | След. ошибка | Переход к следующей диагностике. |
+| `<leader>d` | n | Диагностика строки | Показывает ошибку под курсором в плавающем окне (с переводом на русский). |
+| `<leader>?m` | n | Режим справки (вкл/выкл) | Включает режим справки: нажатие любой назначенной клавиши ОБЪЯСНЯЕТ её, а не выполняет. Выход — Esc или снова <leader>?m. Нужен для «просмотра» всех команд подряд. |
+| `<leader>Ax` | n | Объяснить код/ошибку (Gemini) | Через avante: объясняет по-русски код или ошибку под курсором. Работает в обычном и визуальном режиме. |
+| `<leader>fn` | n | Поиск в Obsidian | Telescope: поиск файлов в хранилище Obsidian (~/obsidian_base). Если папки нет — предупреждение. |
+| `<leader>Tg` | n | git status в терминале | Выполняет `git status` в отдельном терминале toggleterm (№9). |
+| `<leader>TG` | n | LazyGit в терминале | LazyGit в отдельном терминале toggleterm (№10). Отдельно от <leader>gg. |
+| `<C-n>` | n | Несколько курсоров: слово | visual-multi: выделяет следующее совпадение слова под курсором. Повторное нажатие — следующее. Работает и в визуальном режиме. |
+| `w` | n | Умное w (подсловами) | spider: переход к следующему «слову» с учётом CamelCase и snake_case (обычное w — только по пробелам). |
+| `e` | n | Умное e (подсловами) | spider: конец следующего «слова» с учётом CamelCase и snake_case. |
+| `b` | n | Умное b (подсловами) | spider: начало предыдущего «слова» с учётом CamelCase и snake_case. |
+| `ge` | n | Умное ge (подсловами) | spider: конец предыдущего «слова» с учётом CamelCase и snake_case. |
+
+### Клавиши, найденные аудитом (заданы в плагинах) — 40
+
+| Клавиша | Режим | Что делает | Подробно |
+|---|---|---|---|
+| `<leader>bd` | n | Закрыть буфер | Закрывает текущий буфер, не ломая раскладку окон (Snacks.bufdelete). |
+| `<leader>db` | n | Точка останова | Ставит или снимает точку останова в текущей строке (nvim-dap). |
+| `<leader>dt` | n | Отладка теста (Go) | Запускает ближайший Go-тест под отладчиком (nvim-dap-go). |
+| `<leader>du` | n | Панель БД | Открывает или закрывает боковую панель vim-dadbod-ui. |
+| `<leader>dr` | n | Найти БД буфера | Открывает в панели БД подключение, которое относится к текущему буферу. |
+| `<leader>ft` | n | Найти TODO | Поиск по TODO / FIXME / HACK во всём проекте через Telescope (todo-comments). |
+| `<leader>ha` | n | Добавить файл в Harpoon | Запоминает текущий файл в списке Harpoon. |
+| `<leader>hh` | n | Меню Harpoon | Окно быстрого переключения между файлами, которые вы отметили в Harpoon. |
+| `<leader>h1` | n | Harpoon: файл 1 | Переходит к первому файлу в списке Harpoon. |
+| `<leader>h2` | n | Harpoon: файл 2 | Переходит ко второму файлу в списке Harpoon. |
+| `<leader>ob` | n | Связь с Obsidian | Включает или выключает мост к заметкам Obsidian (obsidian-bridge). |
+| `<leader>qs` | n | Загрузить сессию | Восстанавливает сессию этого проекта: открытые файлы и раскладку окон (persistence). |
+| `<leader>r` | v | Запустить выделенный код | SnipRun: выполняет выделенный кусок кода (plugin sniprun). |
+| `<leader>rr` | n | Запустить HTTP-запрос | kulala: выполняет HTTP-запрос под курсором в файле *.http. |
+| `<leader>tD` | n | Документация в боковом окне | Hover (документация) символа под курсором открывается справа, а не во всплывающем окне. Нужен подключённый LSP. |
+| `<leader>tf` | n | Тесты в файле | Запускает все тесты текущего файла (neotest). |
+| `<leader>tr` | n | Тест под курсором | Запускает тест под курсором (neotest). |
+| `<leader>ts` | n | Панель тестов | Открывает или закрывает панель тестов neotest (IDE-вид). |
+| `<leader>to` | n | Лог ошибки теста | Открывает вывод упавшего теста: текст ошибки и трассировку (neotest output). |
+| `<leader>ua` | n | Анимации вкл/выкл | Включает или выключает плавную анимацию курсора и прокрутки (mini.animate). |
+| `<leader>xx` | n | Список всех ошибок | Открывает панель Trouble со всеми диагностиками проекта. |
+| `<leader>z` | n | Дзен-режим | Включает режим без отвлекающих окон: один буфер по центру (zen-mode). |
+| `<leader>nh` | n | Убрать подсветку поиска | Выполняет :nohlsearch — гасит подсветку найденных совпадений. |
+| `<leader>Aa` | n | ИИ: чат о коде | Avante: спрашивает ИИ о выделенном или текущем коде (агент). |
+| `<leader>An` | n | ИИ: новый чат | Avante: начинает новый чат, старый сохраняется. |
+| `<leader>Ae` | n | ИИ: правка выделения | Avante: переписывает выделенный код по вашей инструкции. |
+| `<leader>Ar` | n | ИИ: обновить окна | Avante: перерисовывает окна чата и подсказок. |
+| `<leader>Af` | n | ИИ: фокус на сайдбар | Avante: переводит курсор в боковую панель с чатом. |
+| `<leader>AS` | n | ИИ: остановить генерацию | Avante: прерывает текущий ответ модели. |
+| `<leader>Az` | n | ИИ: дзен-режим | Avante: включает режим без отвлекающих окон. |
+| `<leader>At` | n | ИИ: сайдбар вкл/выкл | Avante: показывает или скрывает боковую панель с чатом. |
+| `<leader>Ad` | n | ИИ: отладочный режим | Avante: показывает служебные отладочные окна. |
+| `<leader>AC` | n | ИИ: окно выбора | Avante: окно выбора (selection) с контекстом для запроса. |
+| `<leader>As` | n | ИИ: подсказка вручную | Avante: вызывает inline-подсказку в текущем месте, не дожидаясь паузы. |
+| `<leader>AR` | n | ИИ: карта репозитория | Avante: строит карту файлов и символов проекта для контекста ИИ. |
+| `<F5>` | n | Запуск / продолжить (DAP) | Запускает отладку или продолжает выполнение до следующей точки останова. |
+| `<F10>` | n | Шаг через (DAP) | Выполняет текущую строку, не заходя внутрь вызываемых функций. |
+| `<F11>` | n | Шаг в (DAP) | Заходит внутрь функции в текущей строке. |
+| `gcc` | n | Закомментировать строку | Переключает комментарий в текущей строке (comment.nvim). С числом: 5gcc — пять строк. |
+| `gc` | v | Закомментировать выделение | В визуальном режиме переключает комментарий у выделенных строк (comment.nvim). |
+
+### Режимы вставки и терминала — 18
+
+| Клавиша | Режим | Что делает | Подробно |
+|---|---|---|---|
+| `<C-Space>` | i | Автодополнение | Открывает список автодополнения вручную (nvim-cmp). |
+| `<C-b>` | i | Документация вверх | Прокручивает окно документации выбранного пункта вверх (nvim-cmp). |
+| `<C-f>` | i | Документация вниз | Прокручивает окно документации выбранного пункта вниз (nvim-cmp). |
+| `<C-e>` | i | Закрыть автодополнение | Закрывает список автодополнения без вставки (nvim-cmp). |
+| `<C-p>` | i | Предыдущий пункт | Перемещает выбор на предыдущий пункт списка автодополнения (nvim-cmp). |
+| `<Tab>` | i | Принять подсказку | Принимает inline-подсказку ИИ (Avante) или выбранный пункт автодополнения. |
+| `<M-l>` | i | Принять подсказку ИИ | Принимает inline-подсказку Avante напрямую (дубль <Tab>). |
+| `<M-]>` | i | Следующая подсказка ИИ | Показывает следующий вариант подсказки Avante. |
+| `<M-[>` | i | Предыдущая подсказка ИИ | Показывает предыдущий вариант подсказки Avante. |
+| `<C-]>` | i | Скрыть подсказку ИИ | Закрывает inline-подсказку Avante. |
+| `<C-s>` | i | Отправить сообщение ИИ | В поле ввода чата Avante отправляет сообщение модели. |
+| `<C-c>` | n | Остановить ответ ИИ | В окне чата CodeCompanion прерывает генерацию ответа. |
+| `<C-c>` | i | Закрыть чат ИИ | В окне чата CodeCompanion закрывает чат. |
+| `<C-\><C-n>` | t | Выход из терминала | Переводит терминал toggleterm в обычный режим, чтобы листать вывод (альтернатива <Esc><Esc>). |
+| `<leader>Hde` | n | Выполнить запрос | Выполняет текущий SQL-буфер через vim-dadbod (:%DB). Работает только в буфере с filetype sql. |
+| `<leader>Tc` | n | Закрыть все терминалы | Завершает все терминалы toggleterm, включая скрытые. Команды ToggleTermCloseAll в плагине нет, поэтому используется API плагина. |
+| `<CR>` | i | Принять автодополнение | Вставляет выбранный пункт меню автодополнения (nvim-cmp). Если меню не открыто — обычный перевод строки. |
+| `<C-n>` | i | Следующий пункт автодополнения | В режиме вставки двигает выделение по меню автодополнения вниз (nvim-cmp). |
+
+### Утилиты, огонёк, английский по словам — 23
+
+| Клавиша | Режим | Что делает | Подробно |
+|---|---|---|---|
+| `<leader>HWr` | n | Проверить переводчики | Показывает, какой переводчик сейчас отвечает: DeepL, Google или MyMemory (:RuCheck). |
+| `<leader>HWh` | n | Перевод подсказок K вкл/выкл | Переключает перевод окна подсказки по K на русский (:HoverRu toggle). |
+| `<leader>HWd` | n | Русские ошибки LSP вкл/выкл | Переключает перевод сообщений диагностики LSP на русский (:DiagRu toggle). |
+| `<leader>HWn` | n | Русские уведомления вкл/выкл | Переключает перевод системных уведомлений Neovim (:NotifyRu toggle). |
+| `<leader>HWe` | n | Проверка PATH и утилит | Показывает, видит ли Neovim git, curl, tar и какой PATH у него (:EnvCheck). |
+| `<leader>HWm` | n | Дождь из символов | Запускает визуальный эффект «Матрица» из cellular-automaton (:Matrix). |
+| `<leader>HWt` | n | Обновить часы и HUD | Немедленно пересчитывает время, заряд и IP в углу (:HudNow). |
+| `<leader>HWc` | n | Часы 24 часа | Формат времени в HUD — 24 часа (:HudClock 24). |
+| `<leader>HWC` | n | Часы 12 часов | Формат времени в HUD — 12 часов (:HudClock 12). |
+| `<leader>HWz` | n | Пояс UTC+3 (МСК) | Часовой пояс HUD = UTC+3, Москва (:HudTz 3). |
+| `<leader>HWa` | n | Огонёк без уведомлений | Отключает сообщения о зажжённых и сгоревших огоньках (:StreakNotify off). |
+| `<leader>HWA` | n | Огонёк с уведомлениями | Включает сообщения о огоньках (:StreakNotify on). |
+| `<leader>HWg` | n | Огонёк: цель 1 в день | Огонёк зажигается от одного коммита или новой ветки за день (:StreakGoal 1). |
+| `<leader>HWb` | n | Огонёк: сгорание в 03:00 | Во сколько по Москве день считается законченным (:StreakHour 3). |
+| `<leader>Huo` | n | IP в углу: скрыть/показать | Прячет или показывает IP в правом верхнем углу HUD. Время и заряд остаются. Пока IP скрыт, публичный адрес по сети не запрашивается (:HudIp hide / show / toggle). |
+| `<leader>HuM` | n | Принудительно вернуть раскладку | vim-maximizer: `!` принудительно ВОССТАНАВЛИВАЕТ сохранённую раскладку окон (а не разворачивает). Обычный разворот — <leader>Hum. |
+| `<Tab>` | n | Следующий буфер | bufferline: переключает на следующий открытый буфер (вкладка в верхней строке). |
+| `<S-Tab>` | n | Предыдущий буфер | bufferline: переключает на предыдущий открытый буфер. |
+| `iu` | x | Внутренняя единица кода (treesitter-unit) | В визуальном режиме выделяет текущую единицу кода под курсором по дереву разбора (treesitter): функцию, аргумент, элемент. Пример: viu. Только визуальный режим; ciu/diu не назначены. |
+| `au` | x | Внешняя единица кода (treesitter-unit) | В визуальном режиме выделяет следующий (внешний) узел дерева вокруг текущей единицы. Пример: vau. Плагин требует Neovim 0.12+ и parser для языка. |
+| `K` | x | Английский по словам | Выдели фразу или предложение и нажми K. Откроется окно: исходный текст, перевод фразы и разбор по словам в формате «- **слово** [транскрипция] — «перевод» (часть речи, грамматика)». С ключом GEMINI_API_KEY разбор делает ИИ с учётом контекста фразы; без ключа — словарь (без контекста). Выход: q или Esc. |
+| `<leader>HKw` | n | Английский: слово под курсором (то же, что <leader>Kw) | Главное меню → английский по словам. То же окно, что <leader>Kw: транскрипция, часть речи, перевод и значение. |
+| `<leader>Kw` | n | Слово под курсором: транскрипция, часть речи, перевод | То же окно для слова под курсором: как читается, часть речи, перевод и значение. Удобно для незнакомых слов в тексте, комментариях и документации. Команда :Gloss делает то же для выбранных строк. |
+
+### TUI-утилиты (<leader>U и <leader>HU) — 24
+
+| Клавиша | Режим | Что делает | Подробно |
+|---|---|---|---|
+| `<leader>HU` | n | Группа: TUI-утилиты (то же, что <leader>U) | Главное меню → TUI-утилиты. Клавиши те же, что у <leader>U: HUk k9s, HUr iredis, HUc redis-cli, HUp pgcli, HUl lazysql, HUd lazydocker, HUi dive, HUb btop, HUa ktea, HUu меню, HUh проверка. |
+| `<leader>U` | n | Группа: TUI-утилиты | Группа утилит с терминальным интерфейсом. Каждая открывается в плавающем окне внутри Neovim, как Tele. Закрыть окно — клавиша ещё раз или q; процесс продолжает работать. Список — <leader>Uu. |
+| `<leader>Uu` | n | Меню всех TUI-утилит | Выбор утилиты списком. Перед названием: ✓ установлена, ✗ нет (тогда в описании/проверке — как поставить). Та же команда: :Tui. |
+| `<leader>Uh` | n | Проверка TUI-утилит | Показывает, какие утилиты установлены, для недостающих — команду установки, и заданы ли переменные подключений NVIM_REDIS_URL и NVIM_DB_PG. Та же команда: :TuiCheck. |
+| `<leader>Uk` | n | k9s — Kubernetes | TUI кластера Kubernetes: поды, deployments, сервисы, логи, контексты. Нужен kubeconfig. Клавиши внутри k9s: ? — справка, : — команды (например :pods), l — логи, d — описание, Esc — назад. |
+| `<leader>Ur` | n | iredis — Redis с автодополнением | Клиент Redis с подсветкой и автодополнением команд и ключей. Адрес: переменная NVIM_REDIS_URL (например redis://localhost:6379/0), иначе localhost:6379. Выход: exit или Ctrl-D. Поиск по истории — Ctrl-R. |
+| `<leader>Uc` | n | redis-cli — Redis классический | Стандартный клиент Redis (из пакета redis). Адрес — NVIM_REDIS_URL. Пример команды: KEYS *, GET key, HGETALL key. Выход: exit. |
+| `<leader>Up` | n | pgcli — PostgreSQL с автодополнением | psql с автодополнением таблиц и колонок и подсветкой. Адрес — NVIM_DB_PG (та же переменная, что у <leader>Dp). Команды: \dt (таблицы), \d имя (описание), \q (выход). |
+| `<leader>Ul` | n | lazysql — TUI-клиент БД | Клиент баз данных в терминальном окне: PostgreSQL, MySQL, SQLite, MSSQL. Подключения добавляются внутри: a — добавить, e — изменить (в списке подключений). Ctrl+e — SQL-редактор. F10 — проверка обновлений. Хранятся в конфиге lazysql (~/.config/lazysql). |
+| `<leader>Ud` | n | lazydocker — Docker | TUI Docker: контейнеры, логи, образы, тома, сети. Клавиши показаны внизу окна. |
+| `<leader>Ui` | n | dive — слои Docker-образа | Показывает, из каких слоёв состоит образ и сколько места занимает каждый. Спросит имя образа (например myapp:latest). Tab — переключить слои и дерево файлов, Q или Ctrl-C — выход. |
+| `<leader>Ub` | n | btop — монитор ресурсов | Процессы, загрузка CPU, память, диски, сеть в одном окне. Внутри: q — выход, F2 — настройки. |
+| `<leader>Ua` | n | ktea — Kafka TUI | Топики, consumer-группы, сообщения Kafka в терминальном окне. Нужен установленный ktea и адрес брокера в его настройках. |
+| `<leader>HUu` | n | Меню всех TUI-утилит | Выбор утилиты списком. Перед названием: ✓ установлена, ✗ нет (тогда в описании/проверке — как поставить). Та же команда: :Tui. |
+| `<leader>HUh` | n | Проверка TUI-утилит | Показывает, какие утилиты установлены, для недостающих — команду установки, и заданы ли переменные подключений NVIM_REDIS_URL и NVIM_DB_PG. Та же команда: :TuiCheck. |
+| `<leader>HUk` | n | k9s — Kubernetes | TUI кластера Kubernetes: поды, deployments, сервисы, логи, контексты. Нужен kubeconfig. Клавиши внутри k9s: ? — справка, : — команды (например :pods), l — логи, d — описание, Esc — назад. |
+| `<leader>HUr` | n | iredis — Redis с автодополнением | Клиент Redis с подсветкой и автодополнением команд и ключей. Адрес: переменная NVIM_REDIS_URL (например redis://localhost:6379/0), иначе localhost:6379. Выход: exit или Ctrl-D. Поиск по истории — Ctrl-R. |
+| `<leader>HUc` | n | redis-cli — Redis классический | Стандартный клиент Redis (из пакета redis). Адрес — NVIM_REDIS_URL. Пример команды: KEYS *, GET key, HGETALL key. Выход: exit. |
+| `<leader>HUp` | n | pgcli — PostgreSQL с автодополнением | psql с автодополнением таблиц и колонок и подсветкой. Адрес — NVIM_DB_PG (та же переменная, что у <leader>Dp). Команды: \dt (таблицы), \d имя (описание), \q (выход). |
+| `<leader>HUl` | n | lazysql — TUI-клиент БД | Клиент баз данных в терминальном окне: PostgreSQL, MySQL, SQLite, MSSQL. Подключения добавляются внутри: a — добавить, e — изменить (в списке подключений). Ctrl+e — SQL-редактор. F10 — проверка обновлений. Хранятся в конфиге lazysql (~/.config/lazysql). |
+| `<leader>HUd` | n | lazydocker — Docker | TUI Docker: контейнеры, логи, образы, тома, сети. Клавиши показаны внизу окна. |
+| `<leader>HUi` | n | dive — слои Docker-образа | Показывает, из каких слоёв состоит образ и сколько места занимает каждый. Спросит имя образа (например myapp:latest). Tab — переключить слои и дерево файлов, Q или Ctrl-C — выход. |
+| `<leader>HUb` | n | btop — монитор ресурсов | Процессы, загрузка CPU, память, диски, сеть в одном окне. Внутри: q — выход, F2 — настройки. |
+| `<leader>HUa` | n | ktea — Kafka TUI | Топики, consumer-группы, сообщения Kafka в терминальном окне. Нужен установленный ktea и адрес брокера в его настройках. |
+
+### База данных: `<leader>D` + СУБД + действие — 36
+
+| Клавиша | Режим | Что делает |
+|---|---|---|
+| `<leader>Dsc` | n | 🪶 SQLite: 🔌 Подключиться (консоль) |
+| `<leader>Dsr` | n, x | 🪶 SQLite: ▶ Выполнить буфер / выделение (SQL) |
+| `<leader>Dst` | n | 🪶 SQLite: 📋 Список таблиц |
+| `<leader>Dsd` | n | 🪶 SQLite: 🔍 Описание таблицы |
+| `<leader>Dsn` | n | 🪶 SQLite: 📄 Новый SQL-буфер с подключением |
+| `<leader>Dsu` | n | 🪶 SQLite: 🗄 Панель DBUI |
+| `<leader>Dmc` | n | 🐬 MySQL / MariaDB: 🔌 Подключиться (консоль) |
+| `<leader>Dmr` | n, x | 🐬 MySQL / MariaDB: ▶ Выполнить буфер / выделение (SQL) |
+| `<leader>Dmt` | n | 🐬 MySQL / MariaDB: 📋 Список таблиц |
+| `<leader>Dmd` | n | 🐬 MySQL / MariaDB: 🔍 Описание таблицы |
+| `<leader>Dmn` | n | 🐬 MySQL / MariaDB: 📄 Новый SQL-буфер с подключением |
+| `<leader>Dmu` | n | 🐬 MySQL / MariaDB: 🗄 Панель DBUI |
+| `<leader>Dpc` | n | 🐘 PostgreSQL: 🔌 Подключиться (консоль) |
+| `<leader>Dpr` | n, x | 🐘 PostgreSQL: ▶ Выполнить буфер / выделение (SQL) |
+| `<leader>Dpt` | n | 🐘 PostgreSQL: 📋 Список таблиц |
+| `<leader>Dpd` | n | 🐘 PostgreSQL: 🔍 Описание таблицы |
+| `<leader>Dpn` | n | 🐘 PostgreSQL: 📄 Новый SQL-буфер с подключением |
+| `<leader>Dpu` | n | 🐘 PostgreSQL: 🗄 Панель DBUI |
+| `<leader>Doc` | n | 🏛 Oracle: 🔌 Подключиться (консоль) |
+| `<leader>Dor` | n, x | 🏛 Oracle: ▶ Выполнить буфер / выделение (SQL) |
+| `<leader>Dot` | n | 🏛 Oracle: 📋 Список таблиц |
+| `<leader>Dod` | n | 🏛 Oracle: 🔍 Описание таблицы |
+| `<leader>Don` | n | 🏛 Oracle: 📄 Новый SQL-буфер с подключением |
+| `<leader>Dou` | n | 🏛 Oracle: 🗄 Панель DBUI |
+| `<leader>Dxc` | n | 🟦 SQL Server: 🔌 Подключиться (консоль) |
+| `<leader>Dxr` | n, x | 🟦 SQL Server: ▶ Выполнить буфер / выделение (SQL) |
+| `<leader>Dxt` | n | 🟦 SQL Server: 📋 Список таблиц |
+| `<leader>Dxd` | n | 🟦 SQL Server: 🔍 Описание таблицы |
+| `<leader>Dxn` | n | 🟦 SQL Server: 📄 Новый SQL-буфер с подключением |
+| `<leader>Dxu` | n | 🟦 SQL Server: 🗄 Панель DBUI |
+| `<leader>Dcc` | n | 🏠 ClickHouse: 🔌 Подключиться (консоль) |
+| `<leader>Dcr` | n, x | 🏠 ClickHouse: ▶ Выполнить буфер / выделение (SQL) |
+| `<leader>Dct` | n | 🏠 ClickHouse: 📋 Список таблиц |
+| `<leader>Dcd` | n | 🏠 ClickHouse: 🔍 Описание таблицы |
+| `<leader>Dcn` | n | 🏠 ClickHouse: 📄 Новый SQL-буфер с подключением |
+| `<leader>Dcu` | n | 🏠 ClickHouse: 🗄 Панель DBUI |
