@@ -1,6 +1,6 @@
 СПИСОК ГОРЯЧИХ КЛАВИШ — RastBast/nvim-config
 Обновлено: 2026-10-28. Собрано из lua/config/keydocs/ (справка <leader>?), db_menu.lua и зеркал <leader>HU… из tui_tools.lua.
-Тот же список с описаниями — в DOCS.md, §41. <leader> = пробел.
+Тот же список с описаниями — в DOCS.md, §44. <leader> = пробел.
 ==============================================================================
 
 Всего записей: 425 (справка: 389, базы данных <leader>D…: 36)
@@ -76,7 +76,7 @@ q                      n      Quit (в Super Mode)
 <leader>gx             x      Go: извлечь выделение в переменную/функцию
 <leader>fL             n      Код потёк!
 <leader>e              n      Дерево файлов (nvim-tree)
-<leader>up             n      Призвать питомца
+<leader>up             n      Питомец: выбрать и призвать (меню)
 <leader>uo             n      Питомец: сон
 <leader>ux             n      Убрать питомцев
 <leader>pt             n      Запустить таймер (25м)
@@ -181,7 +181,7 @@ q                      n      Quit (в Super Mode)
 <leader>Hz             n      Дзен-режим
 <leader>Hum            n      Развернуть/восстановить окно
 <leader>Hm             n      Развернуть/восстановить окно
-<leader>Hup            n      Питомец (Pets)
+<leader>Hup            n      Питомец: выбрать и призвать (меню)
 <leader>Hua            n      Переключить анимации
 <leader>Hpt            n      Старт Pomodoro
 <leader>Hps            n      Стоп Pomodoro
@@ -436,3 +436,33 @@ N                      n      Предыдущее совпадение (по ц
 ]b                     n      Следующая вкладка (буфер)
 [b                     n      Предыдущая вкладка (буфер)
 <leader><Space>        n      Палитра команд (все :команды)
+
+Новое: игры, картинки, питомцы, история правок, выравнивание, sudo (DOCS §41–§43)
+------------------------------------------------------------------------------
+<leader>ug             n      Гофер Харек
+<leader>uy             n      Нян-кот (мем)
+<leader>ut             n      Тостер (мем)
+<leader>uG             n      Призрак «бу» (мем)
+<leader>Hug            n      Гофер Харек
+<leader>Huy            n      Нян-кот (мем)
+<leader>Hut            n      Тостер (мем)
+<leader>HuG            n      Призрак «бу» (мем)
+<leader>Xc             n      Шахматы
+<leader>Xs             n      Змейка
+<leader>Xt             n      Тетрис
+<leader>Xf             n      2048
+<leader>Xm             n      Меню игр
+<leader>HXc            n      Шахматы
+<leader>HXs            n      Змейка
+<leader>HXt            n      Тетрис
+<leader>HXf            n      2048
+<leader>HXm            n      Меню игр
+<leader>Ii             n      Показать картинку под курсором
+<leader>If             n      Найти картинку в проекте
+<leader>HIi            n      Показать картинку под курсором
+<leader>HIf            n      Найти картинку в проекте
+<leader>v              n      История правок (undotree)
+<leader>HV             n      История правок (undotree)
+<leader>=              n      Выровнять по символу (оператор)
+<leader>=              x      Выровнять выделение по символу
+<leader>qW             n      Записать через sudo

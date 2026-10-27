@@ -47,7 +47,7 @@ return {
   { lhs = "<leader>Hz", name = "Дзен-режим", doc = "Убирает всё лишнее и оставляет один буфер по центру (zen-mode)." },
   { lhs = "<leader>Hum", name = "Развернуть/восстановить окно", doc = "Разворачивает текущее окно на весь экран; повторно — восстанавливает." },
   { lhs = "<leader>Hm", name = "Развернуть/восстановить окно", doc = "То же, что <leader>Hum (maximizer)." },
-  { lhs = "<leader>Hup", name = "Питомец (Pets)", doc = "Призвать или спрятать питомца (то же, что <leader>up)." },
+  { lhs = "<leader>Hup", name = "Питомец: выбрать и призвать", doc = "Меню питомцев (то же, что <leader>up)." },
   { lhs = "<leader>Hua", name = "Переключить анимации", doc = "Включает или выключает анимации mini.animate (переключает vim.g.minianimate_disable)." },
   { lhs = "<leader>Hpt", name = "Старт Pomodoro", doc = "Запускает таймер Pomodoro (то же, что <leader>pt)." },
   { lhs = "<leader>Hps", name = "Стоп Pomodoro", doc = "Останавливает Pomodoro." },

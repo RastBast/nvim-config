@@ -157,7 +157,11 @@ return {
         -- клавишу <leader>Hum ставит lua/plugins/maximizer.lua (там и ленивый триггер)
         { "<leader>Hum", desc = "🪟 Развернуть/восстановить окно" },
         { "<leader>Hm", "<cmd>MaximizerToggle!<cr>", desc = "🪟 Развернуть/восстановить окно" },
-        { "<leader>Hup", "<cmd>PetsNew holli<cr>", desc = "🐾 Питомец (Pets)" },
+        { "<leader>Hup", function() require("config.pets_custom").menu() end, desc = "🐾 Питомец: выбрать и призвать" },
+        { "<leader>Hug", "<cmd>PetsNewCustom gopher blue Харек<cr>", desc = "🐹 Гофер Харек (синий, Go)" },
+        { "<leader>Huy", "<cmd>PetsNewCustom nyan classic Нян<cr>", desc = "🐱 Нян-кот (мем)" },
+        { "<leader>Hut", "<cmd>PetsNewCustom toaster silver Тостер<cr>", desc = "🍞 Тостер (мем)" },
+        { "<leader>HuG", "<cmd>PetsNewCustom ghost white Бу<cr>", desc = "👻 Призрак «бу» (мем)" },
         {
           "<leader>Hua",
           function()
@@ -229,6 +233,19 @@ return {
         -- 🧰 Утилиты: команды, которые раньше были без клавиш. Строчные буквы под
         -- <leader>H заняты, поэтому префикс — заглавная <leader>HW.
         { "<leader>HW", group = "🧰 Утилиты и диагностика" },
+        -- 🎮 Игры: клавиши основные — <leader>X*; здесь зеркала для главного меню
+        { "<leader>HX", group = "🎮 Игры: шахматы · змейка · тетрис · 2048" },
+        { "<leader>HXc", function() require("games.chess.ui").open() end, desc = "♟ Шахматы (2 игрока / против ПК)" },
+        { "<leader>HXs", function() require("games.snake").open() end, desc = "🐍 Змейка" },
+        { "<leader>HXt", function() require("games.tetris").open() end, desc = "🧱 Тетрис" },
+        { "<leader>HXf", function() require("games.game2048").open() end, desc = "🔢 2048" },
+        { "<leader>HXm", function() require("config.games").menu() end, desc = "🎮 Меню игр" },
+        -- 🖼 Картинки (нужна Ghostty/Kitty): <leader>I* и зеркала
+        { "<leader>HI", group = "🖼 Картинки (Ghostty / Kitty)" },
+        { "<leader>HIi", function() Snacks.image.hover() end, desc = "🖼 Показать картинку под курсором" },
+        { "<leader>HIf", function() Snacks.picker.files({ title = "🖼 Картинки в проекте", ft = { "png", "jpg", "jpeg", "gif", "webp" } }) end, desc = "🖼 Найти картинку в проекте" },
+        -- ⏪ История правок (undotree) и выравнивание: зеркала
+        { "<leader>HV", "<cmd>UndotreeToggle<cr>", desc = "⏪ История правок (undotree)" },
         { "<leader>HU", group = "🧰 TUI-утилиты (k9s, iredis, pgcli…)" },
         { "<leader>HK", group = "📖 Английский: перевод слов" },
         { "<leader>HWr", "<cmd>RuCheck<cr>", desc = "🌐 Проверить переводчики" },
@@ -259,7 +276,9 @@ return {
         { "<leader>n", group = "📓 Черновики и подсветка" },
         { "<leader>o", group = "💎 Obsidian" },
         { "<leader>p", group = "⏱ Pomodoro (таймер)" },
-        { "<leader>q", group = "🚪 Закрыть окно · сессии" },
+        { "<leader>q", group = "🚪 Закрыть окно · сессии · sudo" },
+        { "<leader>X", group = "🎮 Игры: шахматы · змейка · тетрис · 2048" },
+        { "<leader>I", group = "🖼 Картинки (Ghostty / Kitty)" },
         { "<leader>r", group = "🚀 HTTP и переименование" },
         { "<leader>s", group = "🎵 Spotify · 📸 скриншот" },
         { "<leader>t", group = "🌐 Перевод · 🧪 Тесты · 📖 Док" },

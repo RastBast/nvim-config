@@ -23,6 +23,9 @@ return {
       quickfile = { enabled = true },
       statuscolumn = { enabled = false }, -- колонку рисуем сами (signcolumn = yes)
       words = { enabled = true },        -- подсветка слова под курсором (L<->n)
+      -- картинки в nvim (Kitty graphics): Ghostty их понимает, Alacritty — нет.
+      -- PNG работает без зависимостей; jpg/gif/webp — нужен ImageMagick (magick).
+      image = { enabled = true },
     },
     keys = {
       { "<leader>ns", function() Snacks.scratch() end, desc = "📓 Черновик" },
@@ -33,6 +36,18 @@ return {
       { "]]", function() Snacks.words.jump(1, true) end, desc = "Следующее слово", mode = { "n", "t" } },
       { "[[", function() Snacks.words.jump(-1, true) end, desc = "Предыдущее слово", mode = { "n", "t" } },
       { "<leader>un", function() Snacks.notifier.hide() end, desc = "🔕 Спрятать уведомления" },
+      -- 🖼 Картинки: <leader>I* (группа в which-key)
+      { "<leader>Ii", function() Snacks.image.hover() end, desc = "🖼 Показать картинку под курсором" },
+      {
+        "<leader>If",
+        function()
+          Snacks.picker.files({
+            title = "🖼 Картинки в проекте",
+            ft = { "png", "jpg", "jpeg", "gif", "webp" },
+          })
+        end,
+        desc = "🖼 Найти картинку в проекте",
+      },
       -- Git-клавиши здесь намеренно не объявляем: <leader>g* занят
       -- lazygit/gitsigns/go.nvim. Blame строки — <leader>Hgb (gitsigns).
     },

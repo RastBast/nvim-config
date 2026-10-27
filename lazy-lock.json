@@ -147,6 +147,10 @@
     "branch": "main",
     "commit": "16ba83bfc8a25f52bb545134f5bee082b195c460"
   },
+  "mini.align": {
+    "branch": "main",
+    "commit": "a7f24f57e68a72fd6c19e442288ab835a9c40cdd"
+  },
   "mini.animate": {
     "branch": "main",
     "commit": "0365de8b69331c25d0d0d7573407a7dc7719e578"
@@ -346,6 +350,10 @@
   "trouble.nvim": {
     "branch": "main",
     "commit": "bd67efe408d4816e25e8491cc5ad4088e708a69a"
+  },
+  "undotree": {
+    "branch": "master",
+    "commit": "6fa6b57cda8459e1e4b2ca34df702f55242f4e4d"
   },
   "vim-dadbod": {
     "branch": "master",

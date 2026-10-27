@@ -24,6 +24,7 @@ local GROUPS = {
   "config.keydocs.g9_tui",
   "config.keydocs.g10_ai_go",
   "config.keydocs.g11_moves",
+  "config.keydocs.g12_games_tools",
 }
 
 local ESC = "\27"

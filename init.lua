@@ -220,6 +220,8 @@ require("config.keyshow").setup() -- показ нажатий: <leader>kk
 require("config.browser_ask").setup() -- <leader>Ab / :Ask: запрос в Firefox
 require("config.webtools").setup() -- <leader>Gh/Gl/Gb: GitHub, GitLab, Хабр; :Habr
 require("config.keydoc").setup() -- справка по клавишам: <leader>? и режим <leader>?m
+require("config.sudo_write").setup() -- :SudoWrite и <leader>qW: запись файла через sudo
+require("config.games").setup() -- игры: <leader>Xc шахматы, Xs змейка, Xt тетрис, Xf 2048, Xm меню
 
 -- Русский перевод LSP-подсказок (hover): переводится только проза,
 -- код в ```-блоках и inline `code` не трогается. Выкл: :HoverRu off
