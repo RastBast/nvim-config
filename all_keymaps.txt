@@ -1,9 +1,9 @@
 СПИСОК ГОРЯЧИХ КЛАВИШ — RastBast/nvim-config
-Обновлено: 2026-10-25. Собрано из lua/config/keydocs/ (справка <leader>?), db_menu.lua и зеркал <leader>HU… из tui_tools.lua.
+Обновлено: 2026-10-28. Собрано из lua/config/keydocs/ (справка <leader>?), db_menu.lua и зеркал <leader>HU… из tui_tools.lua.
 Тот же список с описаниями — в DOCS.md, §41. <leader> = пробел.
 ==============================================================================
 
-Всего записей: 399 (справка: 363, базы данных <leader>D…: 36)
+Всего записей: 410 (справка: 374, базы данных <leader>D…: 36)
 
 <C-h>                  n      Окно слева
 <C-j>                  n      Окно снизу
@@ -65,6 +65,15 @@ q                      n      Quit (в Super Mode)
 <leader>jx             n      Список ключей JSON
 <leader>jq             n      jq-запрос по JSON
 <leader>gg             n      LazyGit
+<leader>gi             n      Go IDE: меню (как Alt+Enter в GoLand)
+<leader>HGi            n      Go IDE: меню (зеркало в группе HG)
+<leader>gT             n      Go: тест для функции под курсором
+<leader>gC             n      Go: конструктор New… для struct
+<leader>gD             n      Go: документация (godoc) к функции
+<leader>ga             n      Go: файл ↔ _test.go
+<leader>go             n      Go: оптимизировать импорты
+<leader>gr             n      Go: запуск пакета (go run .)
+<leader>gx             x      Go: извлечь выделение в переменную/функцию
 <leader>fL             n      Код потёк!
 <leader>e              n      Дерево файлов (nvim-tree)
 <leader>up             n      Призвать питомца
@@ -202,8 +211,10 @@ q                      n      Quit (в Super Mode)
 <leader>Hcf            n      Дерево: создать файл
 <leader>Hcr            n      Переименовать файл
 <leader>Hkl            n      Поиск по всем шпаргалкам
-<leader>Hat            n      Чат с Kimi
+<leader>Hat            n      Чат CodeCompanion с выбранным ИИ
 <leader>Hai            n      Действия AI
+<leader>Ap             n      ИИ: выбрать провайдера (Groq, Gemini, OpenAI…)
+<leader>Aq             n      ИИ: быстрый вопрос (ответ в окне)
 <leader>Hae            v      Отправить выделение ИИ
 <leader>Hac            n      Команда в CodeCompanion
 <leader>HGk            n      ☸ Kubernetes

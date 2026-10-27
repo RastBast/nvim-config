@@ -8,9 +8,9 @@
 --        - **слово** [транскрипция по-русски] — «перевод в этом контексте» (часть речи, грамматика)
 --
 -- Два источника разбора:
---   * ИИ (основной): Gemini, тот же ключ, что у avante — GEMINI_API_KEY (или
---     AVANTE_GEMINI_API_KEY), модель — GEMINI_MODEL. Даёт перевод и грамматику
---     с учётом контекста фразы («are — форма to be для you»).
+--   * ИИ (основной): любой провайдер из config/ai_api.lua — Groq, Gemini,
+--     OpenAI, OpenRouter… Выбор: <leader>Ap или AI_PROVIDER. Даёт перевод и
+--     грамматику с учётом контекста фразы («are — форма to be для you»).
 --   * Словарь (запасной, без ключа): dictionaryapi.dev даёт IPA-транскрипцию,
 --     часть речи и первое значение. IPA переводится в русскую транскрипцию
 --     таблицей, перевод слова — через ru_util (DeepL / Google / MyMemory).
@@ -25,7 +25,6 @@ local RU = require("config.ru_util")
 
 local MAX_WORDS = 40
 local ENTRY_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/"
-local GEMINI_TIMEOUT = 40 -- секунд
 local NOTE_MAX = 140      -- длина значения в запасном варианте
 
 -- Части речи по-русски (ключи — то, что отдаёт словарь)
@@ -46,7 +45,7 @@ local POS_RU = {
 }
 
 M.entry_cache = {}  -- слово (нижний регистр) -> запись словаря или false
-M.gemini_cache = {} -- фраза -> результат ИИ
+M.ai_cache = {}   -- провайдер+модель+фраза -> результат ИИ
 
 -- ---------------------------------------------------------------------------
 -- Токенизация
@@ -205,65 +204,31 @@ function M.fetch_entry(word, cb)
 end
 
 -- ---------------------------------------------------------------------------
--- Gemini: разбор фразы целиком (перевод + транскрипция + грамматика по контексту)
+-- ИИ: разбор фразы целиком (перевод + транскрипция + грамматика по контексту).
+-- Идёт через единый API (config/ai_api.lua): какой провайдер выбран — такой и работает.
 -- ---------------------------------------------------------------------------
 
-function M.gemini_key()
-  local k = vim.env.AVANTE_GEMINI_API_KEY
-  if k == nil or k == "" then
-    k = vim.env.GEMINI_API_KEY
-  end
-  if k == nil or k == "" then
-    return nil
-  end
-  return k
-end
-
-function M.gemini_model()
-  return vim.env.GEMINI_MODEL or "gemini-3.6-flash"
-end
-
-function M.gemini_endpoint()
-  return vim.env.GEMINI_ENDPOINT or "https://generativelanguage.googleapis.com/v1beta/models"
-end
-
-local GEMINI_PROMPT = [[
-Ты — репетитор английского для русскоязычного ученика. Разбери фразу ниже и верни JSON.
+local AI_PROMPT = [[
+Ты — репетитор английского для русскоязычного ученика. Разбери фразу ниже и верни ТОЛЬКО JSON такого вида:
+{"sentence_ru": "...", "words": [{"word": "...", "tr": "...", "ru": "...", "pos": "...", "note": "..."}]}
 Поля:
 - sentence_ru: перевод всей фразы на естественный русский язык.
-- words: по одному объекту на каждое английское слово в порядке следования в тексте
-  (повторы тоже). Сокращение вроде don't — одно слово.
+- words: по одному объекту на каждое английское слово в порядке следования в тексте (повторы тоже). Сокращение вроде don't — одно слово.
   - word: слово, как оно написано в тексте.
   - tr: русская транскрипция, как читается слово, без квадратных скобок. Пример: if → иф, you → ю, like → лайк.
   - ru: перевод этого слова именно в этом контексте, одно-два слова по-русски.
   - pos: часть речи по-русски (существительное, глагол, местоимение, союз…).
-  - note: короткая грамматическая заметка по-русски, что значит форма или роль слова в предложении.
-    Пример: «сокращение от do not», «форма глагола to be для you». Без повтора части речи. Пустая строка, если заметки не нужно.
+  - note: короткая грамматическая заметка по-русски: что значит форма или роль слова в предложении. Пример: «сокращение от do not», «форма глагола to be для you». Без повтора части речи. Пустая строка, если заметки не нужно.
 Фраза:
 ]]
 
---- Разбор ответа Gemini. Возвращает {sentence_ru, words} или nil, причина.
-function M.parse_gemini(stdout)
-  local ok, data = pcall(vim.json.decode, stdout)
-  if not ok or type(data) ~= "table" then
-    return nil, "ответ не JSON"
-  end
-  if type(data.error) == "table" then
-    local msg = data.error.message
-    return nil, "Gemini: " .. (type(msg) == "string" and msg or "ошибка")
-  end
-  local cand = type(data.candidates) == "table" and data.candidates[1] or nil
-  local parts = type(cand) == "table" and type(cand.content) == "table" and cand.content.parts or nil
-  local text = type(parts) == "table" and type(parts[1]) == "table" and parts[1].text or nil
-  if type(text) ~= "string" then
-    return nil, "пустой ответ Gemini"
-  end
-  local ok2, res = pcall(vim.json.decode, text)
-  if not ok2 or type(res) ~= "table" or type(res.words) ~= "table" then
-    return nil, "Gemini вернул не тот формат"
+--- Разбор ответа ИИ (уже декодированный JSON). Возвращает {sentence_ru, words} или nil, причина.
+function M.parse_analysis(data)
+  if type(data) ~= "table" or type(data.words) ~= "table" then
+    return nil, "ИИ вернул не тот формат"
   end
   local words = {}
-  for _, w in ipairs(res.words) do
+  for _, w in ipairs(data.words) do
     if type(w) == "table" and type(w.word) == "string" then
       words[#words + 1] = {
         word = w.word,
@@ -275,75 +240,36 @@ function M.parse_gemini(stdout)
     end
   end
   if #words == 0 then
-    return nil, "Gemini не вернул слов"
+    return nil, "ИИ не вернул слов"
   end
   return {
-    sentence_ru = type(res.sentence_ru) == "string" and res.sentence_ru or nil,
+    sentence_ru = type(data.sentence_ru) == "string" and data.sentence_ru or nil,
     words = words,
   }
 end
 
---- Разбор фразы через Gemini. cb(result|nil, причина|nil), асинхронно.
-function M.gemini_analyze(text, cb)
-  local key = M.gemini_key()
-  if not key then
-    return cb(nil, "нет GEMINI_API_KEY")
+--- Разбор фразы через выбранный ИИ. cb(result|nil, причина|nil), асинхронно.
+function M.analyze(text, cb)
+  local ai = require("config.ai_api")
+  local r, why = ai.resolve()
+  if not r then
+    return cb(nil, why)
   end
-  local hit = M.gemini_cache[text]
+  local cache_key = r.id .. "\n" .. r.model .. "\n" .. text
+  local hit = M.ai_cache[cache_key]
   if hit then
     return cb(hit)
   end
-
-  local body = vim.json.encode({
-    contents = { { role = "user", parts = { { text = GEMINI_PROMPT .. text } } } },
-    generationConfig = {
-      temperature = 0.2,
-      responseMimeType = "application/json",
-      responseSchema = {
-        type = "OBJECT",
-        properties = {
-          sentence_ru = { type = "STRING" },
-          words = {
-            type = "ARRAY",
-            items = {
-              type = "OBJECT",
-              properties = {
-                word = { type = "STRING" },
-                tr = { type = "STRING" },
-                ru = { type = "STRING" },
-                pos = { type = "STRING" },
-                note = { type = "STRING" },
-              },
-              required = { "word", "tr", "ru", "pos", "note" },
-            },
-          },
-        },
-        required = { "sentence_ru", "words" },
-      },
-    },
-  })
-  local url = ("%s/%s:generateContent"):format(M.gemini_endpoint(), M.gemini_model())
-  local ok = pcall(vim.system, {
-    "curl", "-sS", "--max-time", tostring(GEMINI_TIMEOUT),
-    "-H", "Content-Type: application/json",
-    "-H", "x-goog-api-key: " .. key,
-    "-d", "@-", url,
-  }, { text = true, stdin = body }, function(res)
-    vim.schedule(function()
-      if res.code ~= 0 or not res.stdout or res.stdout == "" then
-        local err = vim.trim(res.stderr or "")
-        return cb(nil, "сеть: " .. (err ~= "" and err or "curl код " .. tostring(res.code)))
-      end
-      local parsed, why = M.parse_gemini(res.stdout)
-      if parsed then
-        M.gemini_cache[text] = parsed
-      end
-      cb(parsed, why)
-    end)
+  ai.chat_json({ { role = "user", content = AI_PROMPT .. text } }, { provider = r.id }, function(data, err)
+    if not data then
+      return cb(nil, err)
+    end
+    local parsed, why2 = M.parse_analysis(data)
+    if parsed then
+      M.ai_cache[cache_key] = parsed
+    end
+    cb(parsed, why2)
   end)
-  if not ok then
-    cb(nil, "нет curl")
-  end
 end
 
 -- ---------------------------------------------------------------------------
@@ -552,6 +478,9 @@ function M.show(text)
     local new = M.render(st)
     set_buf_lines(buf, new)
     place(win, new)
+    -- Ответ ИИ/словаря приходит, пока Neovim ждёт ввода: без явной перерисовки
+    -- окно обновлялось только после следующей нажатой клавиши (грамматика «появлялась» с задержкой).
+    pcall(vim.cmd, "redraw")
   end
 
   if #words == 0 then
@@ -583,8 +512,8 @@ function M.show(text)
     refresh()
   end
 
-  if not M.gemini_key() then
-    st.note = "Для разбора с учётом контекста задай ключ Gemini: set -Ux GEMINI_API_KEY \"…\" (fish). Пока — словарь."
+  if not require("config.ai_api").resolve() then
+    st.note = "Для разбора с учётом контекста задай ключ ИИ: set -Ux GROQ_API_KEY \"…\" (fish) и выбери <leader>Ap. Пока — словарь."
     use_dictionary(nil)
     return
   end
@@ -592,7 +521,7 @@ function M.show(text)
   -- ИИ: одна фраза — один запрос; пока ждём, показываем «…»
   st.note = "…разбираю фразу"
   refresh()
-  M.gemini_analyze(src, function(res, why)
+  M.analyze(src, function(res, why)
     if not res then
       return use_dictionary(why)
     end

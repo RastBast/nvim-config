@@ -22,6 +22,7 @@ local GROUPS = {
   "config.keydocs.g7_insert",
   "config.keydocs.g8_utils",
   "config.keydocs.g9_tui",
+  "config.keydocs.g10_ai_go",
 }
 
 local ESC = "\27"

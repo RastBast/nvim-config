@@ -1,5 +1,49 @@
 # Что исправлено в конфиге (2026-08-30)
 
+## 2026-10-28 · Универсальный ИИ (Groq), Ghostty, Go как в GoLand, перевод K
+
+**Единая точка входа для ИИ — `lua/config/ai_api.lua`.** Один реестр провайдеров
+(Groq, Gemini, OpenAI, OpenRouter, Mistral, DeepSeek, Kimi, Ollama, свой сервис через
+`AI_BASE_URL`), один вызов (OpenAI-совместимый `/chat/completions`), ключи только из
+переменных окружения. Groq — обязательный провайдер конфига.
+- Новые команды: `:AiProvider [id]` (меню без аргумента), `:AiStatus` (только имена переменных),
+  `:AiAsk [вопрос]`. Клавиши: `<leader>Ap` (выбор провайдера), `<leader>Aq` (быстрый вопрос).
+- Перевод `K` (`lua/config/gloss.lua`) переведён на эту точку входа; формат строк, кеш и
+  словарный запасной путь не менялись.
+- avante получает провайдеров из реестра (через `__inherited_from = "openai"`), по умолчанию —
+  `AI_PROVIDER`, иначе Gemini. CodeCompanion — адаптеры Groq и «свой сервис».
+- Сохранено: `GEMINI_ENDPOINT`, `GEMINI_PROXY`, `GEMINI_INSECURE` (PROXY.md) — Gemini в реестре
+  читает их, как раньше.
+- Модель Groq по умолчанию — `openai/gpt-oss-120b`. `llama-3.3-70b-versatile` и `qwen3-32b`
+  выведены Groq (см. console.groq.com/docs/deprecations), поэтому старая модель по умолчанию убрана.
+- Инструкция для fish (`set -Ux GROQ_API_KEY "…"`) — INSTALL.md §4.6, DOCS.md §39. Ключ в репозиторий не пишется.
+
+**Перевод `K`: грамматика появляется сразу.** Окно перерисовывается (`redraw`) сразу после
+ответа ИИ или словаря. Раньше обновление применялось только после следующего нажатия клавиши.
+
+**Ghostty — основной терминал.** Конфиг `macos/ghostty/config`: фон `#000000`, палитра
+пользователя, выделение и свечение `#0d00ff`, `macos-option-as-alt = true`.
+Навигация по панелям: `ctrl+shift+h/j/k/l` (как hjkl в nvim), размер — `ctrl+shift+alt+hjkl`,
+`cmd+d` / `cmd+shift+d` — делить, `cmd+shift+enter` — зум панели, `ctrl+shift+e` — выровнять.
+Почему не `cmd+h`: это системное «Скрыть». Установка — INSTALL.md §1.1.
+
+**Go как в GoLand — `lua/config/go_ide.lua`.** Меню `<leader>gi` (зеркало `<leader>HGi`, `:GoIde`)
+и клавиши: `gT` тест для функции (gotests или каркас), `gC` конструктор `New<Тип>`, `gD` godoc,
+`ga` файл ↔ `_test.go`, `go` импорты, `gr` запуск пакета, `gx` извлечь выделение (визуал).
+Меню объединяет уже существующие функции (`:GoIfErr`, `:GoImpl`, `:GoAddTag`, формочка struct,
+тест под курсором, references, rename, code action) — без дублирования. Проверено на дубли:
+`go_extras.lua`, `go-tools.lua`, `go_snips.lua`, `go_infra_snips.lua` — конфликтов клавиш нет.
+
+**Справка и документация.** Новая группа `lua/config/keydocs/g10_ai_go.lua` (11 клавиш);
+подпись `<leader>Hat` исправлена (была «Чат с Kimi»). В `DOCS.md`: §6, §12 (Ghostty), §17, §22,
+§25 (команды, 55), §28 (Go IDE), §38 (исправление K), §39 (ИИ), §41. `all_keymaps.txt`: 410 записей
+(справка 374 = 363 keydocs + 11 зеркал `<leader>HU…`, БД 36) — счётчик пересчитан по `keydocs` и `tui_tools`.
+
+**Проверка.** Синтаксис всех изменённых Lua — загрузка через lupa. Логика — 78 тестов
+с заглушками `vim.*` (выбор провайдера, ключ не попадает в argv curl, ошибки HTTP,
+Gemini-прокси, перерисовка `K`, генерация Go-кода по фиктивным узлам treesitter).
+В sandbox нет nvim, go, gotests и ghostty — живой запуск на Mac не выполнялся.
+
 ## 2026-10-15 · Языки (≈45), каталог БД, K8s/Docker/Kafka под Go
 
 **Языки — `lua/config/languages.lua`** — один список на LSP, Treesitter и форматтеры

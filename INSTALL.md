@@ -34,6 +34,40 @@ normal = { family = "JetBrainsMono Nerd Font" }
 size = 13
 ```
 
+## 1.1. Ghostty: терминал, сочетающийся с nvim (вместо Alacritty)
+
+Конфиг лежит в репозитории: `macos/ghostty/config` (чёрный фон `#000000`,
+палитра, синее свечение `#0d00ff` — как тема «new» в nvim).
+
+```bash
+# из папки репозитория
+mkdir -p ~/.config/ghostty
+cp macos/ghostty/config ~/.config/ghostty/config
+```
+
+Установка самого Ghostty: `brew install --cask ghostty` (или сайт ghostty.org).
+Проверка конфига без запуска: `ghostty +validate-config`
+(если `ghostty` не в PATH — `/Applications/Ghostty.app/Contents/MacOS/ghostty +validate-config`).
+
+**Панели и навигация (как hjkl в nvim):**
+
+| Клавиши | Что делает |
+|---|---|
+| `ctrl+shift+h` / `j` / `k` / `l` | перейти в панель влево / вниз / вверх / вправо |
+| `ctrl+shift+alt+h/j/k/l` | изменить размер панели (шаг 20 px) |
+| `cmd+d` | делить справа |
+| `cmd+shift+d` | делить снизу |
+| `cmd+shift+enter` | развернуть панель на весь экран и вернуть |
+| `ctrl+shift+e` | выровнять все панели |
+
+Почему `ctrl+shift`, а не `cmd+h`: `cmd+h` в macOS — «Скрыть окно». В nvim
+`ctrl+h` — backspace, поэтому ctrl+shift безопаснее всего.
+
+**Alt в nvim:** в конфиге стоит `macos-option-as-alt = true`, чтобы
+Option работал как Alt (иначе `<A-…>` в nvim не сработает).
+
+Проверить, что клавиши действительно назначены: `ghostty +list-keybinds`.
+
 ## 2. Скачать репозиторий и ветку
 
 ```bash
@@ -118,6 +152,48 @@ bash /tmp/APPLY_UPDATE.sh
    | `set -Ux GEMINI_PROXY "socks5h://127.0.0.1:1080"` | слать запросы Gemini через прокси (`curl -x`) |
    | `set -Ux GEMINI_INSECURE 1` | не проверять сертификат ретранслятора |
    | `set -e GEMINI_ENDPOINT GEMINI_PROXY GEMINI_INSECURE` | вернуть прямой доступ |
+
+## 4.6. Groq (console.groq.com): универсальный ИИ
+
+Groq — **обязательный** провайдер в этом конфиге: быстрый, есть бесплатный тариф.
+Все остальные (Gemini, OpenAI, OpenRouter, Mistral, DeepSeek, Kimi, Ollama,
+свой сервис) подключаются через ту же точку входа — `lua/config/ai_api.lua`.
+
+1. Зайди на https://console.groq.com, создай ключ в разделе **API Keys**.
+   Ключ показывается один раз — скопируй сразу.
+2. В **fish** сохрани его в переменную окружения (один раз, навсегда):
+
+   ```fish
+   set -Ux GROQ_API_KEY "gsk_…"
+   ```
+
+   Затем открой новый терминал. Ключ не попадает в репозиторий и не
+   хранится в конфиге Neovim — только в переменной окружения fish
+   (fish сохраняет её в `~/.config/fish/fish_variables`).
+3. Проверь в Neovim: `:AiStatus` — Groq должен быть отмечен как активный.
+4. Модель по умолчанию — `openai/gpt-oss-120b`. Llama 3.3 70B Groq уже
+   отключил (16.08.2026), поэтому старые примеры с ней не работают.
+   Быстрее и легче — `openai/gpt-oss-20b`:
+   `set -Ux GROQ_MODEL "openai/gpt-oss-20b"`.
+5. Выбрать провайдера: `<leader>Ap` (меню) или
+   `set -Ux AI_PROVIDER groq` (постоянно). Сменить на время сессии —
+   `:AiProvider gemini`.
+
+**Как пользоваться:**
+
+| Что | Как |
+|---|---|
+| Перевод по словам с грамматикой | выдели английский текст → `K` (или `<leader>Kw` для слова) |
+| Быстрый вопрос любому ИИ | `<leader>Aq` (ответ откроется в окне) |
+| Чат-агент, объяснить код, inline | `<leader>Aa`, `<leader>Ax` (avante); `<leader>Hat` (CodeCompanion) |
+
+Перевод `K` и `:AiAsk` переключаются сразу. Чат CodeCompanion и avante
+читают провайдера при запуске Neovim — после смены `AI_PROVIDER`
+перезапусти Neovim.
+
+**Свой OpenAI-совместимый сервис:** `set -Ux AI_BASE_URL "https://…/v1"`,
+`set -Ux AI_API_KEY "…"`, `set -Ux AI_MODEL "имя"`, затем
+`set -Ux AI_PROVIDER custom`.
 
 ## 5. Что проверить после запуска
 

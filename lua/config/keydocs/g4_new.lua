@@ -1,6 +1,6 @@
 -- Группа 4: ИИ, терминальные утилиты (K8s/Docker/Kafka/Discord), Git-конфликты, шпаргалки, код.
 return {
-  { lhs = "<leader>Hat", name = "Чат с Kimi", mode = "n", doc = "Открывает чат CodeCompanion с моделью Kimi (нужен MOONSHOT_API_KEY в окружении)." },
+  { lhs = "<leader>Hat", name = "Чат с ИИ", mode = "n", doc = "Открывает чат CodeCompanion с выбранным провайдером (по умолчанию Kimi, нужен MOONSHOT_API_KEY; при AI_PROVIDER=groq — Groq, нужен GROQ_API_KEY)." },
   { lhs = "<leader>Hai", name = "Действия AI", doc = "Меню действий CodeCompanion: объяснить, исправить, написать тесты." },
   { lhs = "<leader>Hae", name = "Отправить выделение ИИ", mode = "v", doc = "Отправляет выделенный код в CodeCompanion (визуальный режим)." },
   { lhs = "<leader>Hac", name = "Команда в CodeCompanion", doc = "Команда CodeCompanion: запрос к ИИ, применяется к выделению или строке." },

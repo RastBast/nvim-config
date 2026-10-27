@@ -71,10 +71,13 @@ return {
       --   set -Ux AVANTE_PROVIDER "openrouter-free"
       --   set -Ux OPENROUTER_API_KEY "sk-or-..."
       --   set -Ux AVANTE_SUGGEST_PROVIDER "openrouter-free"
-      provider = vim.env.AVANTE_PROVIDER or "gemini",
+      -- По умолчанию gemini; если задан AI_PROVIDER (groq, openai, mistral…) — он.
+      provider = vim.env.AVANTE_PROVIDER or require("config.ai_api").avante_default(),
       -- inline-подсказки — тем же провайдером (дешёвая flash-модель)
       auto_suggestions_provider = vim.env.AVANTE_SUGGEST_PROVIDER or "gemini-flash",
-      providers = {
+      -- Универсальные провайдеры (Groq, OpenRouter, Mistral, DeepSeek, Kimi, свой сервис)
+      -- берутся из lua/config/ai_api.lua. Переключение в чате: :AvanteSwitchProvider
+      providers = vim.tbl_extend("force", require("config.ai_api").avante_providers(), {
         gemini = {
           -- ТОЧКА ВХОДА. По умолчанию — напрямую в Google.
           -- Если Google из твоей сети недоступен/палится, сюда можно
@@ -145,7 +148,7 @@ return {
           timeout = 30000,
           context_window = 128000,
         },
-      },
+      }),
 
       -- ========================= ПОВЕДЕНИЕ ================================ --
       behaviour = {

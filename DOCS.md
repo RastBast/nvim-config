@@ -1,6 +1,6 @@
 # RastBast/nvim-config — ПОЛНАЯ ДОКУМЕНТАЦИЯ
 
-> Ветка: `arena/a58e587f-nvim-config`. Обновлено: **2026-10-25**.
+> Ветка: `arena/a58e587f-nvim-config`. Обновлено: **2026-10-28**.
 > Целевой Neovim: **0.11+** (конфиг использует `vim.lsp.config` / `vim.lsp.enable`). Для treesitter-unit (`iu`/`au`) нужен Neovim **0.12+**.
 > Что проверено и как — §22. Живой запуск nvim в sandbox не выполнялся: поведение проверяется на Mac.
 > Навигация: по технологиям — §27 (Go §28, БД §29, Redis §30, Docker §31, Kubernetes §32, Kafka §33, Protobuf §34, HTTP §35, Git §36, терминал и TUI §37, переводы §38, ИИ §39, мессенджеры §40). Все клавиши — §41 и §6, все команды — §25, плагины — §26.
@@ -198,6 +198,8 @@ lua/
 | Клавиша | Что делает | Где задано |
 |---|---|---|
 | `<leader>A` | **Группа:** 🤖 AI (avante) · 🦊 Firefox | which-key |
+| `<leader>Ap` | 🤖 Выбрать ИИ-провайдера (Groq, Gemini, OpenAI…) | `ai_api` |
+| `<leader>Aq` | 🤖 Быстрый вопрос выбранному ИИ (ответ в окне) | `ai_api` |
 | `<leader>a` | **Группа:** 🌳 Структура (aerial) | which-key |
 | `<leader>b` | **Группа:** 📑 Буферы | which-key |
 | `<leader>c` | **Группа:** 🛠 Код | which-key |
@@ -210,6 +212,15 @@ lua/
 | `<leader>Dx` | **Группа:** 🟦 SQL Server | which-key |
 | `<leader>G` | **Группа:** 🐙 GitHub · 🦊 GitLab · 📰 Хабр | which-key |
 | `<leader>g` | **Группа:** 🐹 Go и LazyGit | which-key |
+| `<leader>gi` | 🧠 Go IDE-меню (как Alt+Enter в GoLand) | `go_ide` |
+| `<leader>HGi` | 🧠 То же меню — зеркало в группе Go | `go_ide` |
+| `<leader>gT` | 🧪 Тест для функции под курсором (gotests или каркас) | `go_ide` |
+| `<leader>gC` | 🏗 Конструктор `New<Тип>` для struct | `go_ide` |
+| `<leader>gD` | 📝 Комментарий-документация к функции | `go_ide` |
+| `<leader>ga` | ↔ Файл ↔ `_test.go` | `go_ide` |
+| `<leader>go` | 🧹 Оптимизировать импорты | `go_ide` |
+| `<leader>gr` | ▶ Запустить пакет (`go run .`) | `go_ide` |
+| `<leader>gx` (визуал) | ✂ Извлечь выделение в переменную/функцию | `go_ide` |
 | `<leader>H` | **Группа:** 🎛 Главное меню | which-key |
 | `<leader>h` | **Группа:** 📌 Harpoon (закладки) | which-key |
 | `<leader>Ha` | **Группа:** 🤖 AI и Структура | which-key |
@@ -497,11 +508,11 @@ lua/
 |---|---|---|---|
 | `K` | x | 📖 Английский: исходный текст, перевод фразы и разбор по словам (транскрипция, часть речи, перевод, значение) | `gloss` |
 | `<leader>Ab` | x | 🦊 Спросить в Firefox (выделение) | `browser_ask` |
-| `<leader>Ax` | n, v | 🤖 Объяснить код/ошибку (Gemini) | `avante` |
+| `<leader>Ax` | n, v | 🤖 Объяснить код/ошибку (ИИ; по умолчанию Gemini, см. `AI_PROVIDER`) | `avante` |
 | `<leader>Hac` | n, v | ✨ Команда в CodeCompanion | `ai` |
 | `<leader>Hae` | n, v | 📤 Отправить выделение ИИ | `ai` |
 | `<leader>Hai` | n, v | 🛠 Действия AI | `ai` |
-| `<leader>Hat` | n, v | 💬 Чат с Kimi | `ai` |
+| `<leader>Hat` | n, v | 💬 Чат CodeCompanion с выбранным ИИ (по умолчанию Kimi; при `AI_PROVIDER=groq` — Groq) | `ai` |
 | `<leader>ms` | v | ✈ отправить выделение в tele | `telegram` |
 | `<leader>r` | v | Запустить кусок кода | `sniprun` |
 | `<leader>sc` | v | 📸 Скриншот Silicon | `silicon` |
@@ -849,6 +860,27 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 
 Оболочка — твой `fish`; тонирование фона выключено (терминал выглядит как в alacritty).
 
+### Ghostty — основной терминал (конфиг `macos/ghostty/config`)
+
+С 2026-10-28 основной терминал — **Ghostty**. Конфиг подобран под тему «new» в nvim:
+фон `#000000`, палитра пользователя, выделение и синее свечение `#0d00ff`.
+Установка и копирование конфига — INSTALL.md, раздел «1.1. Ghostty».
+
+| Клавиша | Что делает |
+|---|---|
+| `ctrl+shift+h` / `j` / `k` / `l` | фокус на панель влево / вниз / вверх / вправо (как hjkl в nvim) |
+| `ctrl+shift+alt+h/j/k/l` | изменить размер панели (шаг 20 px) |
+| `cmd+d` | делить панель справа |
+| `cmd+shift+d` | делить панель снизу |
+| `cmd+shift+enter` | развернуть панель на весь экран / вернуть |
+| `ctrl+shift+e` | выровнять все панели |
+
+- `macos-option-as-alt = true`: Option работает как Alt, поэтому `<A-…>` в nvim работает.
+- Почему `ctrl+shift`, а не `cmd+h`: `cmd+h` в macOS — «Скрыть окно».
+  `ctrl+h` в nvim — backspace, поэтому `ctrl+shift` ничему не мешает.
+- Проверка: `ghostty +validate-config` (ошибки конфига), `ghostty +list-keybinds` (назначенные клавиши).
+
+
 Отдельно `tele` (Telegram-TUI) живёт не здесь, а в `lua/config/telegram.lua` —
 три способа открытия и уведомления внутри редактора, см. §23.
 
@@ -900,7 +932,7 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 
 ## 17. AI, Obsidian и прочее
 
-* **AI** — `codecompanion.nvim`: `<leader>Hat` чат, `Hac` команда, `Hae` отправить
+* **AI** — единая точка входа `lua/config/ai_api.lua` (Groq обязателен, выбор `<leader>Ap`; подробно — §39). `codecompanion.nvim`: `<leader>Hat` чат, `Hac` команда, `Hae` отправить
   выделение, `Hai` действия.
 * **ИИ-агент как в Cursor** — `avante.nvim` + бесплатный Google Gemini
   (`gemini-3.6-flash`): чат-сайдбар справа с контекстом проекта и
@@ -1047,6 +1079,16 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 * **Раньше:** на предыдущих ревизиях харнес (lupa) с заглушками API прогонял 78 спеков: 0 ошибок загрузки, 0 конфликтов клавиш. Это было до позднейших правок и не перепроверено.
 * **Отдельные модули** проверялись своими тестами с заглушками: мост telegram (121 проверка, §23), HUD и огонёк (154 проверки, §24). Хабр (§GitHub/GitLab/Хабр): разбор RSS и HTML проверен на примерах, живой habr.com из sandbox недоступен.
 * **Mason-аудит:** каждое имя LSP из `languages.lua` сверено с реестром Mason.
+
+Проверка 2026-10-28 (ИИ, Ghostty, Go IDE, перевод `K`): синтаксис всех изменённых
+Lua-файлов — загрузкой через lupa; логика — тестами с заглушками `vim.*` (выбор
+провайдера, запрос без утечки ключа в аргументах curl, разбор ошибок HTTP,
+Gemini через ретранслятор и прокси, перерисовка окна после ответа ИИ, генерация
+Go-тестов, конструктора и документации по фиктивным узлам treesitter, уникальность
+клавиш справки). Итог: 78 проверок, все прошли. Ghostty-конфиг проверен
+по официальной справке действий (`goto_split`, `resize_split`, `new_split`).
+Не проверено в sandbox: живой Neovim, `gotests`, `go` и `ghostty` — их нужно
+проверить на Mac (`:checkhealth`, `:AiStatus`, `K`, `<leader>gi`).
 
 ## 23. Telegram в редакторе (консольный tele)
 
@@ -1398,6 +1440,10 @@ require("config.streak").setup({
 | Команда | Что делает | Файл |
 |---|---|---|
 | `:Ask` | Открыть запрос в Firefox | `browser_ask.lua` |
+| `:AiProvider [id]` | Выбрать ИИ-провайдера (без аргумента — меню). Действует на `K`, `:AiAsk`; чат — после перезапуска | `ai_api.lua` |
+| `:AiStatus` | Какие ИИ настроены: только имена переменных, значения ключей не показываются | `ai_api.lua` |
+| `:AiAsk [вопрос]` | Вопрос выбранному ИИ, ответ в окне (без аргумента — ввод строки) | `ai_api.lua` |
+| `:GoIde` | Меню Go IDE (то же, что `<leader>gi`) | `go_ide.lua` |
 | `:DiagRu` | Русские подписи ошибок LSP на лету (on \| off \| toggle) | `diag_ru.lua` |
 | `:EnvCheck` | — | `init.lua` |
 | `:Flex` | Анимация «дождь» из символов (плагин cellular-automaton); то же, что Matrix | `matrix.lua` |
@@ -1449,7 +1495,7 @@ require("config.streak").setup({
 | `:TeleTheme` | ✈ тема tele в палитре nvim (mocha \| black) | `telegram.lua` |
 | `:TeleToggle` | ✈ слежение вкл/выкл | `telegram.lua` |
 
-Всего команд: **51** (из них `:Tele*` — 27).
+Всего команд: **55** (из них `:Tele*` — 27).
 
 ---
 
@@ -1655,6 +1701,30 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 - Клавиши `<leader>HGb`, `<leader>HGo`, `<leader>HGl` из старых версий DOCS не существуют. Актуальные — в таблице выше.
 
 ---
+
+### GoLand-функции: `<leader>gi` (`lua/config/go_ide.lua`)
+
+Меню `<leader>gi` (зеркало `<leader>HGi`, команда `:GoIde`) — аналог Alt+Enter в GoLand.
+Работает только в Go-файлах.
+
+| Клавиша | Что делает | Как работает |
+|---|---|---|
+| `<leader>gT` | Тест для функции или метода под курсором | через `gotests`, если установлен (`go install github.com/cweill/gotests/gotests@latest`); иначе каркас table-driven теста в `*_test.go` с TODO для значений |
+| `<leader>gC` | Конструктор `New<Тип>` для struct | пишет функцию после объявления типа по полям; поля-ключевые слова Go получают `_` (`type` → `type_`) |
+| `<leader>gD` | Комментарий-документация | заготовка `// Имя … TODO` над функцией в формате godoc |
+| `<leader>ga` | Файл ↔ тест | переходит между исходником и `_test.go`; если теста нет — создаёт с `import "testing"` |
+| `<leader>go` | Оптимизировать импорты | gopls: добавить нужные, убрать лишние |
+| `<leader>gx` (визуал) | Извлечь выделение | gopls code action: в переменную или функцию |
+| `<leader>gr` | Запустить пакет | `go run .` в плавающем терминале |
+
+В меню также собраны уже существующие функции (их не дублируем):
+`:GoIfErr` (if err != nil), `:GoImpl` (реализация интерфейса), `:GoAddTag` (теги json/yaml),
+формочка struct (`<leader>HGS`), тест под курсором (`<leader>tr`), references (`gr`),
+реализации, rename и все действия gopls.
+
+Ограничения: в sandbox нет `go` и `gotests`, поэтому генерацию проверили тестами
+на фиктивных узлах treesitter, а не на настоящем Go-файле. Перед использованием
+сгенерируй тест и проверь `go test ./...` на Mac.
 
 ## 29. PostgreSQL и другие базы (SQL)
 
@@ -1934,6 +2004,9 @@ glab auth login
 
 ## 38. Переводы и английский
 
+> Исправлено 2026-10-28: после ответа ИИ окно `K` перерисовывается сразу. Раньше
+> разбор грамматики появлялся только после следующего нажатия клавиши.
+
 **Перевод интерфейса и подсказок.** Ошибки LSP, подсказка `K`, уведомления переводятся на русский автоматически: `diag_ru.lua`, `hover_ru.lua`, `notify_ru.lua`. Выключить: `:DiagRu off`, `:HoverRu off`, `:NotifyRu off` или клавиши `<leader>HWd`, `<leader>HWh`, `<leader>HWn`.
 
 **Переводчики.** Цепочка: DeepL (если задан `DEEPL_API_KEY`), затем Google, затем MyMemory. Проверка: `<leader>HWr` или `:RuCheck`.
@@ -1967,17 +2040,53 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 
 **Инструменты.** `avante.nvim` — чат о коде, правка выделения, карта репозитория (группа `<leader>A`). `CodeCompanion` — чат и действия (группа `<leader>Ha`). Подсказки при наборе — inline-подсказки ИИ в режиме вставки.
 
-**Ключи.** Переменные окружения, в конфиг не пишутся.
+**Единая точка входа — `lua/config/ai_api.lua`.** Все ИИ подключены через один модуль:
+реестр провайдеров, один способ вызова (OpenAI-совместимый `/chat/completions`),
+ключи только из переменных окружения, ничего не пишется в репозиторий.
+**Groq** (console.groq.com) — обязательный провайдер этого конфига: быстрый, есть бесплатный тариф.
+Перевод `K`, `:AiAsk` и `<leader>Aq` используют выбранного провайдера; avante и CodeCompanion
+получают тот же список (в avante — провайдеры из реестра, в CodeCompanion — Groq и «свой сервис»).
+
+**Выбор провайдера.** Порядок: выбор на сессии (`<leader>Ap` или `:AiProvider id`) → переменная
+`AI_PROVIDER` → первый провайдер, у которого задан ключ. `:AiStatus` покажет, что настроено.
+
+| id | Переменная с ключом | Модель по умолчанию (переменная модели) |
+|---|---|---|
+| `groq` | `GROQ_API_KEY` | `openai/gpt-oss-120b` (`GROQ_MODEL`) |
+| `gemini` | `AVANTE_GEMINI_API_KEY` или `GEMINI_API_KEY` | `gemini-3.6-flash` (`GEMINI_MODEL`) |
+| `openai` | `OPENAI_API_KEY` | `gpt-4o-mini` (`OPENAI_MODEL`) |
+| `openrouter` | `OPENROUTER_API_KEY` | `openrouter/free` (`OPENROUTER_MODEL`) |
+| `mistral` | `MISTRAL_API_KEY` | `mistral-small-latest` (`MISTRAL_MODEL`) |
+| `deepseek` | `DEEPSEEK_API_KEY` | `deepseek-chat` (`DEEPSEEK_MODEL`) |
+| `moonshot` (Kimi) | `MOONSHOT_API_KEY` | `moonshot-v1-8k` (`MOONSHOT_MODEL`) |
+| `ollama` | не нужен (локально, `localhost:11434`) | `llama3.2` (`OLLAMA_MODEL`) |
+| `custom` | `AI_API_KEY` + адрес `AI_BASE_URL` | `AI_MODEL` |
+
+Модель Groq `llama-3.3-70b-versatile` выведена из бесплатного тарифа 16.08.2026, поэтому по умолчанию
+стоит `openai/gpt-oss-120b` (рекомендация Groq; `openai/gpt-oss-20b` — быстрее). Модели других
+провайдеров по умолчанию в этой версии не сверены с актуальными списками — при ошибке «модель не найдена»
+задай свою через переменную модели.
+
+**Переменные окружения (fish: `set -Ux ИМЯ "значение"`).**
 
 | Переменная | Для чего |
 |---|---|
-| `GEMINI_API_KEY` или `AVANTE_GEMINI_API_KEY` | Gemini в avante и разбор в окне `K` (`AVANTE_…` важнее) |
-| `GEMINI_MODEL` | модель Gemini (по умолчанию как у avante) |
-| `GEMINI_ENDPOINT` | адрес API, если нужен прокси |
-| `MOONSHOT_API_KEY` | Kimi в CodeCompanion (`<leader>Hat`); нужен `export` в оболочке |
-| `OPENROUTER_API_KEY` | запасной провайдер для avante |
+| `GROQ_API_KEY` | ключ Groq (обязателен для Groq) |
+| `GROQ_MODEL` | модель Groq |
+| `AI_PROVIDER` | провайдер по умолчанию (`groq`, `gemini`, `openai`, `custom`…) |
+| `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` | свой OpenAI-совместимый сервис (`AI_BASE_URL` — с `/v1` на конце) |
+| `GEMINI_API_KEY` или `AVANTE_GEMINI_API_KEY` | Gemini (`AVANTE_…` важнее) |
+| `GEMINI_MODEL` | модель Gemini |
+| `GEMINI_ENDPOINT` | свой ретранслятор Gemini (PROXY.md); путь `…/v1beta/models` преобразуется в `…/v1beta/openai` |
+| `GEMINI_PROXY` | прокси для запросов к Gemini (`curl -x`), например `socks5h://127.0.0.1:1080` |
+| `GEMINI_INSECURE` | `1` — не проверять сертификат ретранслятора (`curl -k`) |
+| `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `MOONSHOT_API_KEY` | ключи соответствующих провайдеров |
 
-В fish: `set -Ux GEMINI_API_KEY "..."`.
+Ключ не попадает в командную строку curl: он передаётся через stdin (`curl -K -`), поэтому не виден в `ps`.
+Ответы об ошибках объясняют причину по-русски (401 — ключ не принят, 429 — лимит, 404 — модель, сеть).
+
+**Перевод по словам `K`** (выдели английский текст → `K`) использует выбранного провайдера и формат
+«разбор по словам»; без ключа — словарь + ru_util (§38).
 
 **Клавиши.**
 
@@ -1995,8 +2104,10 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 | `<leader>AC` | n | ИИ: окно выбора |
 | `<leader>As` | n | ИИ: подсказка вручную |
 | `<leader>AR` | n | ИИ: карта репозитория |
-| `<leader>Ax` | n | Объяснить код/ошибку (Gemini) |
-| `<leader>Hat` | n | Чат с Kimi |
+| `<leader>Ap` | n | 🤖 Выбрать ИИ-провайдера (меню) |
+| `<leader>Aq` | n | 🤖 Быстрый вопрос выбранному ИИ (ответ в окне) |
+| `<leader>Ax` | n | Объяснить код/ошибку (ИИ, по умолчанию Gemini) |
+| `<leader>Hat` | n | Чат CodeCompanion с выбранным ИИ |
 | `<leader>Hai` | n | Действия AI |
 | `<leader>Hae` | v | Отправить выделение ИИ |
 | `<leader>Hac` | n | Команда в CodeCompanion |
@@ -2045,7 +2156,7 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 
 Все клавиши из справки `<leader>?` и клавиши баз данных. Таблица — по группам, с описаниями. Клавиша с `<leader>` — пробел. Режим: `n` обычный, `v` / `x` визуальный, `i` вставка, `t` терминал.
 
-Всего записей справки: **399** (из них клавиши баз данных — 36).
+Всего записей справки: **410** (из них клавиши баз данных — 36; 374 остальные: 363 из `lua/config/keydocs/g1…g10` и 11 зеркал `<leader>HU…` из `tui_tools.lua`).
 
 ### Окна, редактор, складывание, движение, ИИ-hydra, служебные — 48
 
@@ -2263,8 +2374,19 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 
 | Клавиша | Режим | Что делает | Подробно |
 |---|---|---|---|
-| `<leader>Hat` | n | Чат с Kimi | Открывает чат CodeCompanion с моделью Kimi (нужен MOONSHOT_API_KEY в окружении). |
+| `<leader>Hat` | n | Чат с ИИ | Открывает чат CodeCompanion с выбранным провайдером (по умолчанию Kimi, нужен MOONSHOT_API_KEY; при AI_PROVIDER=groq — Groq, нужен GROQ_API_KEY). |
 | `<leader>Hai` | n | Действия AI | Меню действий CodeCompanion: объяснить, исправить, написать тесты. |
+| `<leader>Ap` | n | ИИ: выбрать провайдера | Меню провайдеров (Groq, Gemini, OpenAI, OpenRouter, Mistral, DeepSeek, Kimi, Ollama, свой сервис). Ключи — только из окружения. |
+| `<leader>Aq` | n | ИИ: быстрый вопрос | Спрашивает выбранный ИИ (как :AiAsk); ответ в окне, q или Esc — закрыть. |
+| `<leader>gi` | n | Go IDE: меню | Меню функций в духе GoLand (тесты, конструкторы, файл↔тест, импорты, if err, интерфейсы, теги, запуск, references, rename, code action). Только в Go-файлах. |
+| `<leader>HGi` | n | Go IDE: меню (зеркало) | То же меню в группе <leader>HG. |
+| `<leader>gT` | n | Go: тест для функции | Тест под курсором в *_test.go: gotests, если установлен, иначе каркас table-driven теста. |
+| `<leader>gC` | n | Go: конструктор New… | Для struct под курсором пишет New<Тип>(поля…) после объявления типа. |
+| `<leader>gD` | n | Go: документация | Вставляет заготовку комментария godoc над функцией или методом. |
+| `<leader>ga` | n | Go: файл ↔ тест | Переход между исходником и _test.go; создаёт тест, если его нет. |
+| `<leader>go` | n | Go: импорты | Оптимизирует импорты через gopls. |
+| `<leader>gr` | n | Go: запуск пакета | go run . в плавающем терминале. |
+| `<leader>gx` | x | Go: извлечь выделение | Извлекает выделенный код в переменную или функцию (gopls code action). |
 | `<leader>Hae` | v | Отправить выделение ИИ | Отправляет выделенный код в CodeCompanion (визуальный режим). |
 | `<leader>Hac` | n | Команда в CodeCompanion | Команда CodeCompanion: запрос к ИИ, применяется к выделению или строке. |
 | `<leader>HGk` | n | ☸ Kubernetes | Группа: инструменты Kubernetes (k9s, kubectl). |
@@ -2320,7 +2442,7 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 | `]d` | n | След. ошибка | Переход к следующей диагностике. |
 | `<leader>d` | n | Диагностика строки | Показывает ошибку под курсором в плавающем окне (с переводом на русский). |
 | `<leader>?m` | n | Режим справки (вкл/выкл) | Включает режим справки: нажатие любой назначенной клавиши ОБЪЯСНЯЕТ её, а не выполняет. Выход — Esc или снова <leader>?m. Нужен для «просмотра» всех команд подряд. |
-| `<leader>Ax` | n | Объяснить код/ошибку (Gemini) | Через avante: объясняет по-русски код или ошибку под курсором. Работает в обычном и визуальном режиме. |
+| `<leader>Ax` | n | Объяснить код/ошибку (ИИ, по умолчанию Gemini) | Через avante: объясняет по-русски код или ошибку под курсором. Работает в обычном и визуальном режиме. |
 | `<leader>fn` | n | Поиск в Obsidian | Telescope: поиск файлов в хранилище Obsidian (~/obsidian_base). Если папки нет — предупреждение. |
 | `<leader>Tg` | n | git status в терминале | Выполняет `git status` в отдельном терминале toggleterm (№9). |
 | `<leader>TG` | n | LazyGit в терминале | LazyGit в отдельном терминале toggleterm (№10). Отдельно от <leader>gg. |

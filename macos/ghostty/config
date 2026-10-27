@@ -1,0 +1,100 @@
+# ========================================================================== #
+#  Ghostty — терминал под nvim-config                                        #
+#  Куда положить:  ~/.config/ghostty/config                                  #
+#  Перечитать:     cmd+shift+,  (или перезапусти Ghostty)                     #
+#  Подробно:       INSTALL.md (раздел «Ghostty»)                             #
+# ========================================================================== #
+
+# ---------------------------------------------------------------- Цвета ---- #
+# Совпадают с темой «new» в lua/config/themes.lua (чёрный фон, палитра
+# пользователя, синее свечение #0d00ff). ANSI-цвета, которые пользователь
+# не называл, взяты из той же палитры — при желании поправь здесь.
+background = #000000
+foreground = #e6e6e6
+cursor-color = #00eeff
+cursor-text = #000000
+selection-background = #0d00ff
+selection-foreground = #ffffff
+
+# 0–7 обычные, 8–15 яркие.
+palette = 0=#000000
+palette = 1=#ff0000
+palette = 2=#2bff00
+palette = 3=#fffb00
+palette = 4=#6902de
+palette = 5=#ff9500
+palette = 6=#00eeff
+palette = 7=#e6e6e6
+palette = 8=#6902de
+palette = 9=#ff5c5c
+palette = 10=#7dff5c
+palette = 11=#fff870
+palette = 12=#9d5cff
+palette = 13=#ffb84d
+palette = 14=#8ff7ff
+palette = 15=#ffffff
+
+# ---------------------------------------------------------------- Шрифт --- #
+# Иконки и эмодзи в which-key/Telescope лучше Nerd Font. Если установлен —
+# раскомментируй строку и поставь своё имя шрифта.
+# font-family = "JetBrainsMono Nerd Font"
+font-size = 14
+adjust-cell-height = 2
+
+# ----------------------------------------------------------------- Окно --- #
+window-padding-x = 8
+window-padding-y = 6
+window-save-state = always
+confirm-close-surface = false
+macos-titlebar-style = tabs
+
+# ------------------------------------------------------------ Клавиатура --- #
+# Option = Alt: иначе alt-комбинации из nvim (например <A-...>) не работают.
+macos-option-as-alt = true
+
+# Курсор как в nvim (блок в normal, вертикальная черта в insert задаёт сам nvim)
+cursor-style = block
+cursor-style-blink = false
+
+# --------------------------------------------------------------- Shell ---- #
+shell-integration = detect
+shell-integration-features = cursor,sudo,title
+
+# ============================================================================ #
+#  ПАНЕЛИ (splits) — навигация hjkl, как в nvim                                #
+#                                                                              #
+#  Почему ctrl+shift, а не cmd+h: cmd+h в macOS — «Скрыть окно», cmd+alt+h —   #
+#  «Скрыть остальные». Ctrl+shift+буквы не перехватываются системой и не      #
+#  конфликтуют с nvim (в nvim ctrl+h — backspace, ctrl+j — перевод строки).    #
+# ============================================================================ #
+
+# Перемещение фокуса между панелями: h ← j ↓ k ↑ l →
+keybind = ctrl+shift+h=goto_split:left
+keybind = ctrl+shift+j=goto_split:down
+keybind = ctrl+shift+k=goto_split:up
+keybind = ctrl+shift+l=goto_split:right
+
+# Изменение размера панели: ctrl+shift+alt+hjkl (шаг 20 px)
+keybind = ctrl+shift+alt+h=resize_split:left,20
+keybind = ctrl+shift+alt+j=resize_split:down,20
+keybind = ctrl+shift+alt+k=resize_split:up,20
+keybind = ctrl+shift+alt+l=resize_split:right,20
+
+# Создание панелей: cmd+d — справа, cmd+shift+d — снизу (как в iTerm2)
+keybind = cmd+d=new_split:right
+keybind = cmd+shift+d=new_split:down
+
+# Выровнять панели; развернуть текущую на весь экран и вернуть
+keybind = ctrl+shift+e=equalize_splits
+keybind = cmd+shift+enter=toggle_split_zoom
+
+# ============================================================================ #
+#  Прочее                                                                      #
+# ============================================================================ #
+# Копирование выделения сразу в буфер (как регистры nvim с системным буфером)
+copy-on-select = clipboard
+
+# Колёсико мыши — построчно, без «ускорения»
+mouse-scroll-multiplier = precision:1,discrete:3
+
+scrollback-limit = 20000

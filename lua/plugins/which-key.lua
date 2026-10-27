@@ -292,6 +292,7 @@ return {
         --  (если утилиты нет в PATH — подсказка со ссылкой, без обходных путей)
         -------------------------------------------------------------
         { "<leader>HG", group = "🐹 Go: K8s · Docker · Kafka" },
+        { "<leader>HGi", desc = "🧠 Go IDE-меню (как в GoLand)" },
         { "<leader>HGk", group = "☸ Kubernetes" },
         { "<leader>HGkk", require("config.termcmd").make("k9s", 120, "k9s"), desc = "☸ k9s — TUI кластера" },
         { "<leader>HGkp", require("config.termcmd").make("kubectl get pods", 121, "kubectl pods"), desc = "📦 kubectl: поды текущего namespace" },
