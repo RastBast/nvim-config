@@ -46,4 +46,15 @@ return {
       vim.cmd.colorscheme("catppuccin-mocha")
     end,
   },
+
+  -- ----------------------------------------------------------------------
+  -- Полные схемы для <leader>uT / :Theme. lazy = true: грузятся только при
+  -- выборе темы (themes.lua → require("lazy").load). Имена plugin в themes.lua
+  -- совпадают с name ниже.
+  -- ----------------------------------------------------------------------
+  { "folke/tokyonight.nvim", name = "tokyonight.nvim", lazy = true },
+  { "ellisonleao/gruvbox.nvim", name = "gruvbox.nvim", lazy = true },
+  { "rebelot/kanagawa.nvim", name = "kanagawa.nvim", lazy = true },
+  { "rose-pine/neovim", name = "rose-pine", lazy = true },
+  { "EdenEast/nightfox.nvim", name = "nightfox.nvim", lazy = true },
 }

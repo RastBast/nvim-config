@@ -58,6 +58,7 @@ cp macos/ghostty/config ~/.config/ghostty/config
 | `cmd+d` | делить справа |
 | `cmd+shift+d` | делить снизу |
 | `cmd+shift+enter` | развернуть панель на весь экран и вернуть |
+| `cmd+enter` / `cmd+ctrl+f` | полный экран вкл/выкл |
 | `ctrl+shift+e` | выровнять все панели |
 
 Почему `ctrl+shift`, а не `cmd+h`: `cmd+h` в macOS — «Скрыть окно». В nvim
@@ -65,6 +66,12 @@ cp macos/ghostty/config ~/.config/ghostty/config
 
 **Alt в nvim:** в конфиге стоит `macos-option-as-alt = true`, чтобы
 Option работал как Alt (иначе `<A-…>` в nvim не сработает).
+
+**Полный экран без рамок.** В конфиге: `window-decoration = none` (без заголовка и рамок), `fullscreen = non-native`
+(окно стартует сразу в полном экране, без строки меню). Переключение: `cmd+ctrl+f` или `cmd+enter`.
+Вкладок Ghostty в этом режиме нет — панели делаются через `cmd+d` и `cmd+shift+d`. Значения сверены с
+исходниками Ghostty. Если хочешь обычное окно с рамкой — удали строки `window-decoration`, `fullscreen`
+и `macos-non-native-fullscreen`.
 
 Проверить, что клавиши действительно назначены: `ghostty +list-keybinds`.
 
@@ -210,6 +217,15 @@ Groq — **обязательный** провайдер в этом конфи�
 | `<leader>tt` на слове | перевод (translate.nvim) |
 
 Выключить переводы, если надоели: `:HoverRu off`, `:DiagRu off`, `:NotifyRu off`.
+
+## 5.1. Темы, быстрое перемещение и палитра команд
+
+* **Темы:** `<leader>uT` — меню из 7 тем, или `:Theme tokyonight` (варианты: `new`, `classic`, `tokyonight`,
+  `gruvbox`, `kanagawa`, `rosepine`, `carbonfox`). Пять полных схем подтягиваются плагинами при первом выборе.
+  Если тема не загрузилась — `:Lazy sync`.
+* **Перемещение:** `H`/`L` — начало и конец строки, `n`/`N` — поиск по центру экрана, `<M-1>`…`<M-4>` — файлы
+  из Harpoon, `[b`/`]b` — вкладки. Подробно: DOCS.md, раздел «Быстрое перемещение».
+* **Палитра команд:** `<leader><Space>` (пробел-пробел) — список всех `:команд` с описанием.
 
 ## 6. Частые грабли
 

@@ -1,27 +1,37 @@
 -- ========================================================================== --
---                 ТЕМЫ: выбор прямо в Neovim (две темы)                      --
+--                 ТЕМЫ: 7 штук, выбор прямо в Neovim                         --
 -- ========================================================================== --
--- Выбрать тему:   <leader>uT   или   :Theme   или   :Theme new | :Theme classic
+-- Выбрать тему:   <leader>uT   или   :Theme   или   :Theme tokyonight
 -- Выбор запоминается в stdpath("state")/theme.txt и применяется при старте.
 --
---   new     — «Новая»: чёрный фон, палитра пользователя, синее свечение #0d00ff,
---             жёлтые строки, зелёные переменные, красные ключевые слова.
---   classic — «Старая»: тот же catppuccin-mocha с прежними цветами (фон #000000,
---             неоново-зелёный номер строки, фиолетовые функции). Это состояние
---             до правок цветов (коммит 338f31f).
+--   new        — «Новая»: чёрный фон, палитра пользователя, синее свечение #0d00ff
+--                (оверлей поверх catppuccin-mocha, см. apply_new).
+--   classic    — «Старая»: прежние цвета до правок (оверлей поверх catppuccin-mocha).
+--   tokyonight — Tokyo Night (night), folke/tokyonight.nvim      — полная схема.
+--   gruvbox    — Gruvbox, ellisonleao/gruvbox.nvim               — полная схема.
+--   kanagawa   — Kanagawa (wave), rebelot/kanagawa.nvim          — полная схема.
+--   rosepine   — Rosé Pine (moon), rose-pine/neovim              — полная схема.
+--   carbonfox  — Carbonfox, EdenEast/nightfox.nvim               — полная схема.
 --
--- Обе темы строятся на catppuccin-mocha. Отличаются только подсветка
--- (apply-функции ниже), поэтому переключение мгновенное.
+-- Полные схемы — отдельные плагины (lazy = true): грузятся при первом выборе
+-- через require("lazy").load. Фон у всех тем принудительно чёрный #000000
+-- (требование пользователя) — см. black_bg().
 local M = {}
 
 local BASE = "catppuccin-mocha"
+local BLACK = "#000000"
+
+local BG_GROUPS = {
+  "Normal", "NormalFloat", "SignColumn", "MsgArea",
+  "StatusLine", "StatusLineNC", "Pmenu", "NormalNC", "FloatBorder",
+}
 
 -- ---------------------------------------------------------------------------
 -- Тема «new»
 -- ---------------------------------------------------------------------------
 local function apply_new()
   local P = {
-    black = "#000000",  -- фон (обязательно)
+    black = BLACK,      -- фон (обязательно)
     violet = "#6902de", -- комментарии, номера строк, константы
     orange = "#ff9500", -- типы, параметры, активный номер строки
     green = "#2bff00",  -- переменные и поля
@@ -78,11 +88,8 @@ end
 -- Тема «classic» — прежние цвета (состояние до правок, коммит 338f31f)
 -- ---------------------------------------------------------------------------
 local function apply_classic()
-  for _, group in ipairs({
-    "Normal", "NormalFloat", "SignColumn", "MsgArea",
-    "StatusLine", "StatusLineNC", "Pmenu", "NormalNC", "FloatBorder",
-  }) do
-    vim.api.nvim_set_hl(0, group, { bg = "#000000" })
+  for _, group in ipairs(BG_GROUPS) do
+    vim.api.nvim_set_hl(0, group, { bg = BLACK })
   end
 
   -- catppuccin custom_highlights (как были)
@@ -108,11 +115,47 @@ local function apply_classic()
   vim.api.nvim_set_hl(0, "@parameter", { fg = "#c3e88d", italic = true })
 end
 
+-- ---------------------------------------------------------------------------
+-- Чёрный фон для полных схем: держим требование «фон строго #000000».
+-- Остальные цвета берутся из самой схемы.
+-- ---------------------------------------------------------------------------
+local function black_bg()
+  for _, group in ipairs(BG_GROUPS) do
+    vim.api.nvim_set_hl(0, group, { bg = BLACK })
+  end
+end
+
 M.themes = {
-  new = { label = "🆕 Новая: чёрный фон, яркая палитра", apply = apply_new },
-  classic = { label = "🕰 Старая: прежние цвета", apply = apply_classic },
+  new = {
+    label = "🆕 Новая: чёрный фон, яркая палитра",
+    base = BASE, plugin = "catppuccin", apply = apply_new,
+  },
+  classic = {
+    label = "🕰 Старая: прежние цвета",
+    base = BASE, plugin = "catppuccin", apply = apply_classic,
+  },
+  tokyonight = {
+    label = "🌃 Tokyo Night (night): тёмно-синяя",
+    base = "tokyonight-night", plugin = "tokyonight.nvim", apply = black_bg,
+  },
+  gruvbox = {
+    label = "🟤 Gruvbox: тёплая, ретро",
+    base = "gruvbox", plugin = "gruvbox.nvim", apply = black_bg,
+  },
+  kanagawa = {
+    label = "🌊 Kanagawa (wave): японская тушь",
+    base = "kanagawa-wave", plugin = "kanagawa.nvim", apply = black_bg,
+  },
+  rosepine = {
+    label = "🌙 Rosé Pine (moon): мягкая роза",
+    base = "rose-pine-moon", plugin = "rose-pine", apply = black_bg,
+  },
+  carbonfox = {
+    label = "🟦 Carbonfox: графит и неон",
+    base = "carbonfox", plugin = "nightfox.nvim", apply = black_bg,
+  },
 }
-M.order = { "new", "classic" }
+M.order = { "new", "classic", "tokyonight", "gruvbox", "kanagawa", "rosepine", "carbonfox" }
 M.default = "new"
 M.current = M.default
 
@@ -143,22 +186,45 @@ end
 --- Применить подсветку текущей темы (вызывается на событие ColorScheme).
 function M.apply(name)
   local t = M.themes[name or M.current]
-  if t then
+  if t and t.apply then
     t.apply()
   end
 end
 
---- Выбрать тему по имени: сохраняет выбор и включает базовую схему.
-function M.set(name)
+--- Загрузить плагин темы (если это полная схема) и включить базовую схему.
+local function activate(name)
+  local t = M.themes[name]
+  if t.plugin then
+    local ok_lazy, lazy = pcall(require, "lazy")
+    if ok_lazy then
+      local ok, err = pcall(lazy.load, { plugins = { t.plugin } })
+      if not ok then
+        return false, err
+      end
+    end
+  end
+  return pcall(vim.cmd.colorscheme, t.base)
+end
+
+--- Выбрать тему по имени: сохраняет выбор и включает схему.
+--- opts.silent — без уведомления (используется на старте).
+function M.set(name, opts)
+  opts = opts or {}
   if not M.themes[name] then
     vim.notify("Нет темы «" .. tostring(name) .. "». Есть: " .. table.concat(M.order, ", "), vim.log.levels.WARN)
     return
   end
   M.current = name
   save(name)
-  pcall(vim.cmd.colorscheme, BASE)
+  local ok, err = activate(name)
+  if not ok then
+    vim.notify("Тема «" .. name .. "» не загрузилась: " .. tostring(err) .. "\nЗапусти :Lazy sync", vim.log.levels.ERROR)
+    return
+  end
   M.apply(name) -- на случай, если ColorScheme уже не сработал
-  vim.notify("Тема: " .. M.themes[name].label, vim.log.levels.INFO)
+  if not opts.silent then
+    vim.notify("Тема: " .. M.themes[name].label, vim.log.levels.INFO)
+  end
 end
 
 --- Меню выбора (vim.ui.select — у нас это snacks.picker).
@@ -190,6 +256,19 @@ function M.setup()
     end,
   })
 
+  -- На старте (после init.lua, когда lazy уже настроен) включаем сохранённую тему.
+  -- Раньше setup() вызывался до lazy, поэтому загрузить плагин здесь было нельзя.
+  vim.api.nvim_create_autocmd("VimEnter", {
+    once = true,
+    callback = function()
+      if M.current ~= M.default then
+        M.set(M.current, { silent = true })
+      else
+        M.apply(M.current)
+      end
+    end,
+  })
+
   vim.api.nvim_create_user_command("Theme", function(opts)
     if opts.args == "" then
       M.pick()
@@ -201,10 +280,10 @@ function M.setup()
     complete = function()
       return M.order
     end,
-    desc = "Выбрать тему: new | classic (без аргумента — меню)",
+    desc = "Выбрать тему: " .. table.concat(M.order, " | ") .. " (без аргумента — меню)",
   })
 
-  vim.keymap.set("n", "<leader>uT", M.pick, { desc = "🎨 Выбрать тему (новая / старая)" })
+  vim.keymap.set("n", "<leader>uT", M.pick, { desc = "🎨 Выбрать тему (7 штук)" })
 end
 
 return M

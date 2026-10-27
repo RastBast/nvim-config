@@ -23,6 +23,7 @@ local GROUPS = {
   "config.keydocs.g8_utils",
   "config.keydocs.g9_tui",
   "config.keydocs.g10_ai_go",
+  "config.keydocs.g11_moves",
 }
 
 local ESC = "\27"

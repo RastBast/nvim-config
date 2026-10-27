@@ -46,7 +46,22 @@ window-padding-x = 8
 window-padding-y = 6
 window-save-state = always
 confirm-close-surface = false
-macos-titlebar-style = tabs
+
+# Полный экран БЕЗ рамок (проверено по исходникам Ghostty, Config.zig):
+#   window-decoration = none   — без заголовка и рамок окна (macOS)
+#   macos-titlebar-style = hidden — даже если заголовок всё же остался, скрыть его
+#   macos-window-buttons = hidden — убрать кружки закрыть/свернуть
+#   fullscreen = non-native    — при старте сразу полный экран, без анимации
+#                                и без строки меню (значения: false | true |
+#                                non-native | non-native-visible-menu | ...)
+#   macos-non-native-fullscreen = true — cmd+ctrl+f (и cmd+enter) переключают так же
+# Вкладки в этом режиме не работают (titlebar скрыт) — у нас их и нет:
+# панели делаются через cmd+d / cmd+shift+d.
+window-decoration = none
+macos-titlebar-style = hidden
+macos-window-buttons = hidden
+fullscreen = non-native
+macos-non-native-fullscreen = true
 
 # ------------------------------------------------------------ Клавиатура --- #
 # Option = Alt: иначе alt-комбинации из nvim (например <A-...>) не работают.
@@ -97,4 +112,6 @@ copy-on-select = clipboard
 # Колёсико мыши — построчно, без «ускорения»
 mouse-scroll-multiplier = precision:1,discrete:3
 
-scrollback-limit = 20000
+# Строки истории. Раньше было `scrollback-limit = 20000`: в Ghostty 1.4 этот ключ
+# переименован и понимается как БАЙТЫ (20 КБ — почти нет истории). Теперь — строки.
+scrollback-limit-lines = 20000
