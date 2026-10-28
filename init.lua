@@ -111,6 +111,10 @@ require("lazy").setup("plugins", {
   -- Автопроверка обновлений при старте = `git fetch` для КАЖДОГО плагина.
   -- Выключена: без git это давало ~120 ошибок «Failed to spawn process git».
   -- Обновлять вручную: :Lazy update / :Lazy sync. Диагностика: :EnvCheck.
+  -- Не больше 8 git-процессов одновременно. На macOS по умолчанию лимита нет:
+  -- ~120 процессов сразу исчерпывают открытые файлы, и часть падает с
+  -- «Failed to spawn process git» (uv.spawn возвращает nil).
+  concurrency = 8,
   checker = { enabled = false, notify = false },
   change_detection = { notify = false },
   install = { colorscheme = { "catppuccin-mocha", "habamax" } },
