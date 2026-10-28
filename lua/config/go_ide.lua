@@ -486,6 +486,8 @@ function M.menu()
         vim.lsp.buf.code_action()
       end },
   }
+  -- пункты «как в VS Code / GoLand» из go_pro.lua (тесты -race, bench, покрытие…)
+  vim.list_extend(items, require("config.go_pro").menu_items)
   vim.ui.select(items, {
     prompt = "Go IDE",
     format_item = function(it)

@@ -54,9 +54,27 @@ return {
             gopls = {
               completeUnimported = true,
               usePlaceholders = true,
-              analyses = { unusedparams = true, unusedvariable = true, nilness = true },
+              analyses = {
+                unusedparams = true, unusedvariable = true, nilness = true,
+                shadow = true, unusedwrite = true,
+              },
               staticcheck = true,
               gofumpt = true,
+              hoverKind = "FullDocumentation",
+              semanticTokens = true,
+              -- «▶ run test | debug test» и генерация над функциями, как в VS Code
+              codelenses = {
+                generate = true, gc_details = false, regenerate_cgo = true,
+                run_govulncheck = true, test = true, tidy = true,
+                upgrade_dependency = true, vendor = true,
+              },
+              -- inlay hints: включаются клавишей <leader>gh (по умолчанию выключены)
+              hints = {
+                assignVariableTypes = true, compositeLiteralFields = true,
+                compositeLiteralTypes = true, constantValues = true,
+                functionTypeParameters = true, parameterNames = true,
+                rangeVariableTypes = true,
+              },
             },
           },
         },

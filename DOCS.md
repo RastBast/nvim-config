@@ -1874,6 +1874,66 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 на фиктивных узлах treesitter, а не на настоящем Go-файле. Перед использованием
 сгенерируй тест и проверь `go test ./...` на Mac.
 
+### Go PRO: как в VS Code и GoLand (`lua/config/go_pro.lua`)
+
+Что уже было до этого раздела: меню `<leader>gi` (Alt+Enter), тесты и покрытие через go.nvim,
+формочка struct и автодополнение полей, `if err`, интерфейсы, теги struct, русские сниппеты,
+отладка тестов (`<leader>dt`), `gopls` с gofumpt и staticcheck, переименование, references,
+реализации, извлечение в функцию. Ниже добавлено то, чего не хватало.
+
+| Клавиша | Что делает | Как работает |
+|---|---|---|
+| `<leader>gh` | Подсказки типов и параметров (inlay hints) вкл/выкл | `gopls` показывает типы переменных, имена параметров, поля struct-литералов. По умолчанию выключены, как в VS Code |
+| `<leader>gL` | Codelens под курсором | «run test», «debug test», generate, tidy: то, что VS Code показывает над функциями. Строки-подсказки gopls выводит сам |
+| `<leader>gR` | Тест с `-race` | Внутри `TestXxx` — только этот тест. В другом месте — весь пакет. Вывод в плавающем терминале |
+| `<leader>gB` | Бенчмарк функции | Курсор внутри `BenchmarkXxx`: `-bench` с `-benchmem`, обычные тесты отключены |
+| `<leader>gc` | Покрытие тестов в буфере | go.nvim `:GoCoverage`: покрытые и непокрытые строки |
+| `<leader>gG` | Escape analysis | `-gcflags=-m`: какие переменные уходят в кучу. Помогает найти лишние аллокации |
+| `<leader>gp` | Структура пакета (outline) | go.nvim `:GoPkgOutline`: функции, типы, методы с переходом |
+| `<leader>gS` | Заполнить case'ы switch | Курсор на switch: добавляет case для констант или типов (`:GoFillSwitch`) |
+| `<leader>gE` | Заполнить return | Курсор в функции: return с нулевыми значениями под сигнатуру (`:GoGenReturn`) |
+| `<leader>gM` | `go mod tidy` | `:GoModTidy` |
+| `<leader>gn` | `go generate` | `:GoGenerate` для пакета |
+| `<leader>gA` | Тесты для всех функций файла | `:GoAddAllTest` через gotests |
+| `<leader>gV` | `go vet ./...` | Из папки файла, плавающий терминал |
+| `<leader>gH` | Кто вызывает функцию | Call hierarchy gopls: список мест вызова с переходом |
+| `<leader>gO` | Что вызывает функция | Call hierarchy gopls: вызываемые функции |
+| `<leader>gJ` (визуал) | JSON → struct | Выдели JSON, введи имя типа: struct с json-тегами (`:GoJson2Struct`) |
+
+В меню `<leader>gi` добавлены те же действия и ещё: inline переменной (`refactor.inline`),
+полный список рефакторингов gopls. Все клавиши видны в `<leader>?` (группа Go).
+
+**Сниппеты** (`lua/config/go_snips.lua`, в автодополнении с русским описанием):
+
+| Триггер | Что вставляет |
+|---|---|
+| `gtt` | Table-driven тест: срез кейсов и `t.Run` |
+| `gbench` | `BenchmarkX(b *testing.B)` с `for range b.N` |
+| `gexample` | `ExampleX` с блоком `// Output:` |
+| `gerrs` | `errors.As`: достать конкретный тип ошибки |
+| `ggo` | Горутина на каждый элемент и `sync.WaitGroup` |
+| `gmu` | Struct с `sync.Mutex` и методом под блокировкой |
+| `gctx` | Функция с `context.Context` и проверкой отмены |
+| `gselect` | `select` с таймаутом и отменой контекста |
+| `gfor` | `for range` с индексом и значением |
+| `gswitch` | Type switch с `case` и `default` |
+| `gdefer` | `defer` с закрытием ресурса без потери ошибки Close (нужен именованный `err`) |
+| `glog` | Структурированный лог `log/slog` в JSON |
+| `gjson` | Struct с json-тегами (`omitempty` у поля name) |
+| `ghttp` | HTTP-обработчик `(w http.ResponseWriter, r *http.Request)` |
+
+**Настройки gopls** (`lua/plugins/lsp-config.lua`): подсказки (`hints`), codelens (`test`, `generate`,
+`tidy`, `vendor`, `run_govulncheck`), анализаторы `shadow` и `unusedwrite`, `hoverKind = "FullDocumentation"`.
+Старые настройки (gofumpt, staticcheck, автодополнение импортов) сохранены.
+
+**Ленивая загрузка.** go.nvim грузится при первом вызове `:Go…`. Все команды, которые вызывают новые
+клавиши, перечислены в `cmd = {…}` в `lua/plugins/go-tools.lua`. Тест `tests/go_pro_test.py` проверяет,
+что каждая такая команда там есть (иначе будет `E492`).
+
+**Ограничения.** В sandbox нет `go`, `gopls` и `gotests`, поэтому проверены логика сборки команд,
+регистрация клавиш, сниппеты и соответствие именам команд закреплённой версии go.nvim (5c741a2).
+Реальный запуск проверьте на Mac: `go version`, открыть `.go`, нажать `<leader>gh`, `<leader>gR` в тесте.
+
 ## 29. PostgreSQL и другие базы (SQL)
 
 Есть три способа работать с базой, они дополняют друг друга.

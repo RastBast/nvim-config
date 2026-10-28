@@ -231,6 +231,7 @@ require("config.hover_ru").setup()
 require("config.gloss").setup() -- K (визуал) и <leader>Kw: английский по словам с частью речи; :Gloss
 require("config.ai_api").setup() -- ИИ любой: <leader>Ap (выбор: Groq, Gemini, OpenAI…), <leader>Aq; :AiProvider, :AiStatus, :AiAsk
 require("config.go_ide").setup() -- Go как в GoLand: <leader>gi (меню), gT/gC/gD/ga/go/gr/gx; :GoIde
+require("config.go_pro").setup() -- Go как в VS Code/GoLand: gh gL gR gB gc gM gn gS gE gG gp gA gV gH gO gJ
 require("config.tui_tools").setup() -- <leader>U: TUI-утилиты (k9s, iredis, pgcli, lazysql, dive…); :Tui
 
 -- Русские ошибки LSP на лету (Go/Docker/SQL/proto/...): выкл: :DiagRu off

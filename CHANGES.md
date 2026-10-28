@@ -1,5 +1,15 @@
 # Что исправлено в конфиге (2026-08-30)
 
+## 2026-10-28 · Go PRO: как в VS Code и GoLand
+
+- **Новые клавиши** (`lua/config/go_pro.lua`): `<leader>gh` подсказки типов и параметров (inlay hints, по умолчанию выкл.), `<leader>gL` codelens над функцией, `<leader>gR` тест с `-race` (в тесте — только он), `<leader>gB` бенчмарк функции, `<leader>gc` покрытие, `<leader>gG` escape analysis, `<leader>gp` outline пакета, `<leader>gS` заполнить case'ы switch, `<leader>gE` заполнить return, `<leader>gM` go mod tidy, `<leader>gn` go generate, `<leader>gA` тесты для всех функций файла, `<leader>gV` go vet, `<leader>gH` / `<leader>gO` кто вызывает / что вызывает (call hierarchy), `<leader>gJ` JSON → struct (визуал).
+- **Меню `<leader>gi`** дополнено этими действиями и inline переменной (`refactor.inline`).
+- **gopls:** подсказки (`hints`), codelens (test, generate, tidy, vendor, run_govulncheck), анализаторы shadow и unusedwrite, `hoverKind = "FullDocumentation"`. Прежние настройки сохранены.
+- **Сниппеты (14):** `gtt`, `gbench`, `gexample`, `gerrs`, `ggo`, `gmu`, `gctx`, `gselect`, `gfor`, `gswitch`, `gdefer`, `glog`, `gjson`, `ghttp`.
+- **Ленивая загрузка:** новые команды go.nvim добавлены в `cmd = {…}` в `go-tools.lua`, иначе E492.
+- **Проверено:** `tests/go_pro_test.py` (102 проверки). Логика сборки `go test` (ошибка найдена тестом и исправлена: `vim.list_extend` из заглушки не работал, заменён на явный цикл), регистрация клавиш, конфликты (каждая клавиша ровно в одном месте), соответствие именам команд закреплённой версии go.nvim. Реальный `go` в sandbox не запускался.
+- **Документация:** раздел 28 в DOCS.md (клавиши, сниппеты, gopls, ограничения), `<leader>?` (g10).
+
 ## 2026-10-28 · Перенос недостающего из веток: s, мерцание, Halloween-оверлей, markdown, тыква
 
 Аудит всех веток и `main` показал, что недостающие функции есть только в `bb057c3c` (остальные ветки либо уже покрыты, либо новее у нас). Перенесено:
