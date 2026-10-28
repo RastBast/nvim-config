@@ -2,6 +2,10 @@
 
 ## 2026-10-28 · Хэллоуин, markdown, avante, b → q, темы-оригиналы
 
+- **Ошибка Halloween (E5113):** `themes.lua:332` → `halloween.lua:53: unexpected symbol near '/'`. В LuaJIT нет оператора `//` (он есть только в Lua 5.3+). Заменён на `math.floor(a / b)`. Проверка только под LuaJIT 2.1.
+- **Ошибка markdown-preview (E117):** `Unknown function: mkdp#util#install`. `build` теперь строка `cd app && npx --yes yarn install` (как в README плагина). Нужен Node.js/npm.
+- **Ghostty:** `scrollback-limit-lines: unknown field` — ключа нет, верно `scrollback-limit`. Полноэкранный режим: `fullscreen = non-native`, `macos-non-native-fullscreen = true`, `window-save-state = never` (сохранённое обычное окно больше не перекрывает полноэкранный старт). Последнее — по исходникам Ghostty, на Mac не проверено.
+- **Тесты:** `tests/run_all.py` — 8 наборов: синтаксис всех 136 `.lua` под LuaJIT, логика игр, шахматы (perft и интерфейс), Хэллоуин (кадры, `:Boo`), темы и порядок запуска, спецификации плагинов и Ghostty, спрайты питомцев.
 - **avante:** `missing avante_templates` — нативные библиотеки не собирались. `build` теперь функция: сначала `build.sh` (готовые библиотеки из релиза), затем запасной `make` (нужен cargo). Вручную: `:Lazy build avante.nvim`.
 - **Темы:** `VimEnter` убран, тема применяется сразу после `lazy.setup`. Пять полных схем — в оригинальном стиле и фоне. Добавлена 🎃 Halloween (чёрный фон, палитра).
 - **Halloween в терминале:** `<leader>uH` / `:Halloween` — анимация с летучими мышами и призраком; `:Boo`; при выборе темы — уведомление с тыквой.

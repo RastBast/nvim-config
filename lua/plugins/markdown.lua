@@ -36,10 +36,10 @@ return {
     "iamcco/markdown-preview.nvim",
     ft = { "markdown" },
     cmd = { "MarkdownPreview", "MarkdownPreviewToggle", "MarkdownPreviewStop" },
-    -- при первом установлении ставит npm-зависимости в app/ (нужен Node.js)
-    build = function()
-      vim.fn["mkdp#util#install"]()
-    end,
+    -- Сборка: как в README плагина. Строкой, а не функцией с vim.fn[...]:
+    -- на момент сборки autoload-функции mkdp#util#install ещё не в runtimepath (E117).
+    -- npx --yes ставит yarn сам, нужен только Node.js/npm.
+    build = "cd app && npx --yes yarn install",
     init = function()
       vim.g.mkdp_filetypes = { "markdown" }
       vim.g.mkdp_auto_start = 0 -- не открывать браузер сразу при входе в .md

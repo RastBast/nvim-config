@@ -50,11 +50,11 @@ local function frame(t)
   for k = 0, 3 do
     local x = W - ((t * 2 + k * 15) % (W + 10))
     local y = 3 + k * 2 + math.floor(math.sin((t + k * 5) / 3) + 0.5)
-    put(y, x, BAT[(t // 3) % 2 + 1])
+    put(y, x, BAT[math.floor(t / 3) % 2 + 1])
   end
   -- призрак плывёт слева направо внизу сцены
   local gx = 2 + (t * 2) % (W - 8)
-  put(H - 2, gx, GHOST[(t // 4) % 2 + 1])
+  put(H - 2, gx, GHOST[math.floor(t / 4) % 2 + 1])
 
   local lines = {}
   for y = 1, H do
@@ -167,13 +167,17 @@ function M.boo()
       end
       return
     end
-    local g = GHOST[(steps // 3) % 2 + 1]
+    local g = GHOST[math.floor(steps / 3) % 2 + 1]
     vim.bo[buf].modifiable = true
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "boo " .. g })
     vim.bo[buf].modifiable = false
     vim.api.nvim_win_set_config(ghost, { relative = "win", win = win, row = 1, col = math.max(cfg.col - steps, 0), width = 7, height = 1 })
   end))
 end
+
+-- Для тестов (tests/halloween_test.py): чистая функция кадра.
+M._frame = frame
+M._W, M._H, M._TICKS = W, H, TICKS
 
 function M.setup()
   vim.api.nvim_set_hl(0, "HalloweenFx", { fg = "#ff9500", bg = "#000000" })

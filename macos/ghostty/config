@@ -44,7 +44,10 @@ adjust-cell-height = 2
 # ----------------------------------------------------------------- Окно --- #
 window-padding-x = 8
 window-padding-y = 6
-window-save-state = always
+# Не восстанавливать состояние окна с прошлого выхода. Вероятная причина, что
+# терминал открывался не на весь экран: сохранённое обычное окно перекрывало
+# fullscreen = non-native при старте (по исходникам Ghostty; на Mac не проверено).
+window-save-state = never
 confirm-close-surface = false
 
 # Полный экран БЕЗ рамок (проверено по исходникам Ghostty, Config.zig):
