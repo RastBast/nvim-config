@@ -105,7 +105,7 @@ def main():
     check("avante: build — функция", re.search(r"build\s*=\s*function\(plugin\)", av) is not None)
     check("avante: сборка через config.avante_build", 'require("config.avante_build")' in av)
     bm = read("lua/config/avante_build.lua")
-    check("avante_build: запасной make есть", 'vim.system({ "make" }' in bm)
+    check("avante_build: запасной make есть", 'sys({ "make" }' in bm)
     check("avante_build: готовые библиотеки через curl+tar", '"curl", "-fsSL"' in bm and '"tar", "-xzf"' in bm)
     check("avante: нет старого build = \"make\" по умолчанию", 'or "make",' not in av)
 
