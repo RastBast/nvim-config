@@ -9,6 +9,8 @@
 --    Нужен Node.js/npm (установка app — при первом :Lazy build).
 -- 3) vim-markdown (preservim) — фолдинг заголовков: za / zc / zo, zR / zM,
 --    переход по разделам ]] и [[, автоотступы для списков.
+--    <leader>mT — оглавление (:Toc), <leader>mE — выровнять таблицу (:TableFormat).
+-- 4) <leader>mL — live-превью на чистом python3 (lua/config/md_preview.lua).
 return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
@@ -25,8 +27,12 @@ return {
           highlight = "RenderMarkdownCode",
         },
         checkbox = {
-          unchecked = { icon = "   " },
-          checked = { icon = "   " },
+          -- раньше были пустые пробелы: чекбоксы были невидимы (исправлено)
+          unchecked = { icon = "☐ " },
+          checked = { icon = "☑ " },
+        },
+        bullet = {
+          icons = { "•", "◦", "" },
         },
       })
     end,
@@ -58,6 +64,11 @@ return {
   {
     "preservim/vim-markdown",
     ft = { "markdown" },
+    dependencies = { "godlygeek/tabular" }, -- нужен для :TableFormat
+    keys = {
+      { "<leader>mT", "<cmd>Toc<cr>", ft = "markdown", desc = "📑 Markdown: оглавление (:Toc)" },
+      { "<leader>mE", "<cmd>TableFormat<cr>", ft = "markdown", desc = "📐 Markdown: выровнять таблицу (:TableFormat)" },
+    },
     init = function()
       vim.g.vim_markdown_folding_style_pythonic = 1 -- сворачивание по заголовкам (#, ##, …)
       vim.g.vim_markdown_folding_level = 2 -- по умолчанию раскрыты разделы до уровня 2

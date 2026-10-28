@@ -19,6 +19,7 @@ return {
       { "<leader>uy", "<cmd>PetsNewCustom nyan classic Нян<cr>", desc = "🐱 Нян-кот (мем)" },
       { "<leader>ut", "<cmd>PetsNewCustom toaster silver Тостер<cr>", desc = "🍞 Тостер (мем)" },
       { "<leader>uG", "<cmd>PetsNewCustom ghost white Бу<cr>", desc = "👻 Призрак «бу» (мем)" },
+      { "<leader>uP", "<cmd>PetsNewCustom pumpkin orange Тыква<cr>", desc = "🎃 Тыква (хэллоуин-питомец)" },
       { "<leader>uo", "<cmd>PetsSleepToggle<cr>", desc = "😴 Питомец: сон" },
       { "<leader>ux", "<cmd>PetsKillAll<cr>", desc = "💀 Убрать питомцев" },
     },

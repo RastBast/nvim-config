@@ -128,10 +128,68 @@ def main():
     dups = [k for k, v in kv.items() if len(v) > 1 and k not in REPEATABLE]
     check("Ghostty: повторов ключей нет", not dups, str(dups))
 
+    # ------------------------------------------- прыжок flash и окружения ---
+    # Баг пункта 5: flash на s + mini.surround на sa/sd/sr… → nvim ждал 2-й символ.
+    # Решение: прыжок на gs, окружения остаются на s-префиксе.
+    load_spec(rt, "lua/plugins/flash.lua")
+    fkeys = rt.eval("(function() local r = {} for _, k in ipairs(SPEC.keys) do r[#r+1] = k[1] end return table.concat(r, ',') end)()")
+    check("flash: прыжок на gs", "gs" in str(fkeys), str(fkeys))
+    check("flash: клавиши s больше нет (префикс s отдан окружениям)", "s" not in str(fkeys).split(","))
+    sur = read("lua/plugins/mini.lua")
+    for k in ("sa", "sd", "sf", "sF", "sh", "sr", "sn"):
+        check(f"mini.surround: окружение на {k}", f'= "{k}"' in sur)
+    check("mini.surround: нет gz-префикса (решение: окружения на s)", "gz" not in sur)
+
+    # ------------------------------------------------------------ markdown ---
+    mdsrc = read("lua/plugins/markdown.lua")
+    check("markdown: зависимость godlygeek/tabular (для :TableFormat)", "godlygeek/tabular" in mdsrc)
+    check("markdown: <leader>mT → :Toc", '"<leader>mT", "<cmd>Toc<cr>"' in mdsrc)
+    check("markdown: <leader>mE → :TableFormat", '"<leader>mE", "<cmd>TableFormat<cr>"' in mdsrc)
+    check("markdown: чекбоксы видимые (☐/☑), не пустые пробелы",
+          "☐" in mdsrc and "☑" in mdsrc and 'icon = "   "' not in mdsrc)
+
+    # -------------------------------------------- live-превью (python3) ---
+    init_src = read("init.lua")
+    check("init.lua: md_preview.setup() вызывается", 'require("config.md_preview").setup()' in init_src)
+    mdp = read("lua/config/md_preview.lua")
+    check("md_preview: клавиша <leader>mL", '"<leader>mL"' in mdp)
+    check("md_preview: команды :MdPreview / :MdPreviewStop / :MdPreviewStatus",
+          all(f'"{c}"' in mdp for c in ("MdPreview", "MdPreviewStop", "MdPreviewStatus")))
+    check("md_preview: порт 45771 и только localhost", "PORT = 45771" in mdp and "127.0.0.1" in mdp)
+    check("md_preview: клавиша <leader>Im больше не используется", "<leader>Im" not in mdp)
+
+    # ---------------------------------------------------- Halloween / pets ---
+    hw = read("lua/config/halloween.lua")
+    check("halloween: <leader>uH — оверлей (toggle)", 'vim.keymap.set("n", "<leader>uH", M.toggle' in hw)
+    check("halloween: <leader>uHw — окно-анимация", 'vim.keymap.set("n", "<leader>uHw", M.show' in hw)
+    check("halloween: палитра терминала не чужая (нет #ff7a00)", "#ff7a00" not in hw)
+    lu = read("lua/plugins/lualine.lua")
+    check("lualine: индикатор тыквы при halloween_on", "vim.g.halloween_on == 1" in lu)
+    pets = read("lua/plugins/pets.lua")
+    check("pets: <leader>uP — тыква-питомец", '"<leader>uP", "<cmd>PetsNewCustom pumpkin orange' in pets)
+    pc = read("lua/config/pets_custom.lua")
+    check("pets_custom: тыква в списке питомцев", "pumpkin = {" in pc)
+
+    # --------------------------------------------------------------- avante ---
+    av = read("lua/plugins/avante.lua")
+    check("avante: команда :AvanteRebuild", 'nvim_create_user_command("AvanteRebuild"' in av)
+    check("avante: авто-сборка при отсутствии шаблонов (vim.schedule(rebuild))", "vim.schedule(rebuild)" in av)
+
+    # ------------------------------------------------------- lazy-lock / справка ---
+    lock = read("lazy-lock.json")
+    check("lazy-lock: vim-markdown и tabular зафиксированы",
+          '"vim-markdown"' in lock and '"tabular"' in lock)
+    kd = read("lua/config/keydocs/g1_editor.lua") + read("lua/config/keydocs/g11_moves.lua") + read("lua/config/keydocs/g12_games_tools.lua")
+    for item in ['lhs = "gs"', 'lhs = "sa"', 'lhs = "<leader>uHw"', 'lhs = "<leader>uP"',
+                 'lhs = "<leader>mL"', 'lhs = "<leader>mT"', 'lhs = "<leader>mE"']:
+        check(f"справка <leader>? содержит {item}", item in kd)
+
     # ------------------------------------------------------------- DOCS ---
     docs = read("DOCS.md")
     keydocs = read("lua/config/keydocs/g1_editor.lua") + read("lua/config/keydocs/g2_tools.lua")
-    for item in ["<leader>uH", "<leader>mv", "<leader>mV", ":Halloween", ":Boo", "`q`", "`b`"]:
+    for item in ["<leader>uH", "<leader>mv", "<leader>mV", ":Halloween", ":Boo", "`q`", "`b`",
+                 "<leader>uHw", "<leader>uP", "<leader>mL", "<leader>mT", "<leader>mE",
+                 ":MdPreview", ":AvanteRebuild", "`gs`", "`sa`"]:
         check(f"DOCS.md описывает {item}", item in docs)
     for item in ["<leader>uH", "<leader>mv", "<leader>mV"]:
         check(f"справка <leader>? содержит {item}", item in keydocs)

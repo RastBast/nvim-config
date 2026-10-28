@@ -323,6 +323,10 @@
     "branch": "master",
     "commit": "6416f98924018385f7f5ebfe8dc773a4482426e4"
   },
+  "tabular": {
+    "branch": "master",
+    "commit": "12437cd1b53488e24936ec4b091c9324cafee311"
+  },
   "telescope.nvim": {
     "branch": "master",
     "commit": "a0bbec21143c7bc5f8bb02e0005fa0b982edc026"
@@ -374,6 +378,10 @@
   "vim-illuminate": {
     "branch": "master",
     "commit": "0d1e93684da00ab7c057410fecfc24f434698898"
+  },
+  "vim-markdown": {
+    "branch": "master",
+    "commit": "1bc9d0cd8e1cc3e901b0a49c2b50a843f1c89397"
   },
   "vim-maximizer": {
     "branch": "master",

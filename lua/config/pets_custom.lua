@@ -1,4 +1,4 @@
--- Кастомные питомцы для giusgad/pets.nvim: гофер, нян-кот, тостер, призрак.
+-- Кастомные питомцы для giusgad/pets.nvim: гофер, нян-кот, тостер, призрак, тыква.
 --
 -- Что делает модуль:
 --   1. install_media(): симлинки assets/pets/<вид> → <lazy>/pets.nvim/media/<вид>,
@@ -24,6 +24,7 @@ M.custom = {
   nyan = { label = "Нян-кот (мем)", default_name = "Нян", style = "classic" },
   toaster = { label = "Тостер (мем)", default_name = "Тостер", style = "silver" },
   ghost = { label = "Призрак «бу» (мем)", default_name = "Бу", style = "white" },
+  pumpkin = { label = "Тыква (хэллоуин)", default_name = "Тыква", style = "orange" },
 }
 
 local function plugin_media_dir()

@@ -30,6 +30,12 @@ vim.g = {}
 vim.env = {}
 vim.fn = setmetatable({}, { __index = function() return function() return "" end end })
 vim.log = { levels = { TRACE = 0, DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4 } }
+-- Каталоги состояния — во временной папке, а не в корне ФС.
+TEST_STATE = "/tmp/nvim_tests_state"
+vim.fn.stdpath = function() return TEST_STATE end
+vim.fn.nr2char = function(n) return "<" .. tostring(n) .. ">" end
+vim.trim = function(s) return (tostring(s):gsub("^%s+", ""):gsub("%s+$", "")) end
+AUTOCMDS = {}
 
 vim.api = {
   nvim_create_namespace = function() return 1 end,
@@ -53,6 +59,9 @@ vim.api = {
   nvim_win_get_width = function() return 120 end,
   nvim_create_user_command = function(name, fn) CMDS[name] = fn end,
   nvim_replace_termcodes = function(s) return s end,
+  nvim_create_augroup = function(name) return name end,
+  nvim_create_autocmd = function(ev, opts) AUTOCMDS[#AUTOCMDS + 1] = { ev = ev, opts = opts } end,
+  nvim_win_set_width = function() end,
 }
 
 vim.keymap = {

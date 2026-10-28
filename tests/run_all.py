@@ -20,6 +20,7 @@ SUITES = [
     ("шахматы: ходы и perft (LuaJIT)", "chess_perft.py"),
     ("шахматы: интерфейс (LuaJIT)", "chess_ui_smoke.py"),
     ("Хэллоуин: кадры, анимация, :Boo", "halloween_test.py"),
+    ("markdown live-превью: команды, буфер, python3-сервер", "md_preview_test.py"),
     ("темы и порядок запуска", "themes_test.py"),
     ("спецификации плагинов, b/q, Ghostty, доки", "config_specs_test.py"),
     ("спрайты питомцев", "pets_sprites_test.py"),

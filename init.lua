@@ -122,16 +122,16 @@ require("lazy").setup("plugins", {
 --                         ПРИМЕНЕНИЕ ТЕМЫ И ФИЛЬТРЫ                          --
 -- ========================================================================== --
 
--- Тема ставится плагином lua/plugins/colorscheme.lua (catppuccin).
--- Здесь только страховка: если плагин ещё не скачан — падаем на habamax.
-if not pcall(vim.cmd.colorscheme, "catppuccin-mocha") then
-  pcall(vim.cmd.colorscheme, "habamax")
-end
-
 -- Темы: выбор в nvim — <leader>uT или :Theme (см. lua/config/themes.lua).
--- Вызывается ПОСЛЕ lazy.setup и страховки выше, поэтому сохранённую тему
--- можно применить сразу (без VimEnter) и не перетереть её страховкой.
+-- ВАЖНО: переключение ровно ОДНО. Раньше здесь стояла страховка colorscheme
+-- catppuccin, а themes.setup() потом переключал на сохранённую тему — на старте
+-- мелькала дефолтная тема. Теперь themes.setup() сам ставит сохранённую тему
+-- (плагины тем зарегистрированы lazy.setup, priority = 1000), а страховка
+-- catppuccin/habamax срабатывает только если схема не загрузилась.
 require("config.themes").setup()
+
+-- Markdown: live-превью в браузере (<leader>mL, :MdPreview)
+require("config.md_preview").setup()
 
 -- Фильтр всплывающих уведомлений (пропускаем только КРАСНЫЕ ОШИБКИ)
 do

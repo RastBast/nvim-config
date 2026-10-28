@@ -29,6 +29,26 @@ local BG_GROUPS = {
   "NvimTreeStatusLine", "NvimTreeStatuslineNc",
 }
 
+-- «Серые» группы: у схем они серо-стальные и выглядят чужими пятнами
+-- (скриншот: серое пятно в дереве файлов на чёрном фоне). У оверлейных тем
+-- фон этих групп = чёрный; видимость (fg) сохраняется.
+local EXTRA_BG_GROUPS = {
+  "NvimTreeCursorLine", "NvimTreeCursorLineNC",
+  "NvimTreeWinSeparator", "NvimTreeVertSplit",
+  "WinSeparator", "VertSplit", "WinBar", "WinBarNC",
+  "Folded", "FoldColumn", "ColorColumn",
+  "TabLine", "TabLineFill",
+  "PmenuSel", "PmenuSbar", "PmenuThumb",
+  "QuickFixLine", "CursorLineNr",
+  "WhichKeyFloat", "WhichKeyBorder",
+}
+
+local function black_extra()
+  for _, group in ipairs(EXTRA_BG_GROUPS) do
+    vim.api.nvim_set_hl(0, group, { bg = "#000000" })
+  end
+end
+
 -- ---------------------------------------------------------------------------
 -- Тема «new»
 -- ---------------------------------------------------------------------------
@@ -48,6 +68,7 @@ local function apply_new()
   for _, group in ipairs(BG_GROUPS) do
     vim.api.nvim_set_hl(0, group, { bg = P.black })
   end
+  black_extra()
 
   vim.api.nvim_set_hl(0, "CursorLine", { bg = "#0a0a1a" })
   vim.api.nvim_set_hl(0, "FloatBorder", { fg = P.glow, bg = P.black })
@@ -91,6 +112,7 @@ local function apply_classic()
   for _, group in ipairs(BG_GROUPS) do
     vim.api.nvim_set_hl(0, group, { bg = BLACK })
   end
+  black_extra()
 
   -- catppuccin custom_highlights (как были)
   vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#00ff00", bold = true })
@@ -134,6 +156,7 @@ local function apply_halloween()
   for _, group in ipairs(BG_GROUPS) do
     vim.api.nvim_set_hl(0, group, { bg = P.black })
   end
+  black_extra()
   vim.api.nvim_set_hl(0, "CursorLine", { bg = "#140a00" })
   vim.api.nvim_set_hl(0, "FloatBorder", { fg = P.orange, bg = P.black })
   vim.api.nvim_set_hl(0, "WinSeparator", { fg = P.orange })
@@ -304,12 +327,16 @@ function M.setup()
     end,
   })
 
-  -- Вызывается из init.lua ПОСЛЕ lazy.setup: плагины тем уже зарегистрированы,
-  -- поэтому сохранённая тема применяется сразу, без VimEnter.
-  if M.current ~= M.default then
-    M.set(M.current, { silent = true })
-  else
-    M.apply(M.current)
+  -- СТАРТ ОДНИМ ПЕРЕКЛЮЧЕНИЕМ (без мерцания). Вызывается из init.lua ПОСЛЕ
+  -- lazy.setup: плагины тем уже зарегистрированы (priority = 1000), поэтому
+  -- сохранённая тема встаёт до первой отрисовки UI. Раньше init.lua сначала
+  -- ставил страховочный catppuccin, а потом здесь переключал — тема мигала.
+  -- Страховка catppuccin/habamax теперь срабатывает только если схема не встала.
+  local ok = pcall(M.set, M.current, { silent = true })
+  if not ok or not vim.g.colors_name then
+    if not pcall(vim.cmd.colorscheme, "catppuccin-mocha") then
+      pcall(vim.cmd.colorscheme, "habamax")
+    end
   end
 
   vim.api.nvim_create_user_command("Theme", function(opts)

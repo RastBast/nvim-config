@@ -1,5 +1,21 @@
 # Что исправлено в конфиге (2026-08-30)
 
+## 2026-10-28 · Перенос недостающего из веток: s, мерцание, Halloween-оверлей, markdown, тыква
+
+Аудит всех веток и `main` показал, что недостающие функции есть только в `bb057c3c` (остальные ветки либо уже покрыты, либо новее у нас). Перенесено:
+
+- **Баг после `s`:** `s` ждала второй символ (flash и окружения `sa`/`sd`/`sr` делили один префикс). Прыжок flash переехал на `gs`; `s` теперь только префикс окружений mini.surround (`sa`, `sd`, `sr`, `sf`, `sF`, `sh`, `sn`).
+- **Мерцание темы на старте:** `init.lua` больше не ставит `colorscheme` до `themes.setup()`. Сохранённая тема применяется в `setup()`; catppuccin-mocha/habamax — только если она не сработала.
+- **Фон `#000000`:** `EXTRA_BG_GROUPS` и `black_extra()` в `new`, `classic`, `halloween`: дерево файлов (NvimTree), разделители окон, WinBar, Folded, ColorColumn, TabLine, Pmenu, QuickFix, CursorLineNr, WhichKey.
+- **Halloween (вариант A):** `<leader>uH` и `:Halloween [on|off]` — оверлей летучих мышей и призраков поверх экрана (окно без фокуса, `winblend=100`, `zindex=60`), тема Halloween, тыква `🎃👻🦇` в строке состояния. Состояние сохраняется в `stdpath("state")/halloween.txt`. Окно-анимация переехала на `<leader>uHw` и `:HalloweenWin` (закрыть: `q`/`Esc`). Палитра терминала — цвета Ghostty этого проекта. `<leader>uH` срабатывает после `timeoutlen`, потому что у `<leader>uHw` тот же префикс.
+- **Markdown:** live-превью в браузере на чистом python3 без Node — `<leader>mL`, `:MdPreview`, `:MdPreviewStop`, `:MdPreviewStatus` (`lua/config/md_preview.lua`, `127.0.0.1:45771`). Несохранённый буфер попадает в превью. Плюс `<leader>mT` (`:Toc`), `<leader>mE` (`:TableFormat`, `tabular`), чекбоксы ☐/☑. `lazy-lock.json`: добавлены `vim-markdown` и `tabular`.
+- **Avante:** `build` — функция с проверкой готовых библиотек; `:AvanteRebuild` пересобирает вручную.
+- **Питомец-тыква:** `<leader>uP` (спрайты `assets/pets/pumpkin/`, 18 PNG).
+- **Справка и доки:** `keydocs` (`gs`, `sa`…`sn`, `<leader>uHw`, `<leader>uP`, `<leader>mL/mT/mE`), DOCS.md (раздел 45 переписан: клавиши, markdown, Halloween, avante, питомцы).
+- **Тесты:** `halloween_test.py` (31 проверка: кадры, оверлей вкл/выкл, состояние, клавиши), `md_preview_test.py` (30 проверок, включая живой python3-сервер: HTTP `/view`, `/`, рендер заголовков, жирного, кода, таблиц, чекбоксов, обновление по изменению файла), `themes_test.py` (порядок запуска без мерцания, страховка внутри `setup()`), `config_specs_test.py` (83 проверки: `gs`, окружения, markdown, avante, тыква, lazy-lock, справка и доки).
+
+Не перенесено: `buf_ls` из `01a05448` (уже есть: `protols` и format в `languages.lua`/`format.lua`); `DEEPL_AUTH_KEY` (только `DEEPL_API_KEY`); `font-size` Ghostty 16 (у нас 14, без подтверждения).
+
 ## 2026-10-28 · Хэллоуин, markdown, avante, b → q, темы-оригиналы
 
 - **Ошибка Halloween (E5113):** `themes.lua:332` → `halloween.lua:53: unexpected symbol near '/'`. В LuaJIT нет оператора `//` (он есть только в Lua 5.3+). Заменён на `math.floor(a / b)`. Проверка только под LuaJIT 2.1.

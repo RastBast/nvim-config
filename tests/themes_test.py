@@ -6,7 +6,8 @@
   * «Новая», «Старая» и Halloween применяют фон #000000 и дерево файлов (nvim-tree);
   * пять оригинальных схем НЕ переопределяют фон (у них нет apply);
   * в themes.lua и init.lua нет VimEnter-костыля;
-  * themes.setup() вызывается в init.lua ПОСЛЕ lazy.setup и страховочного colorscheme.
+  * themes.setup() вызывается в init.lua ПОСЛЕ lazy.setup; страховка catppuccin/habamax
+    живёт ВНУТРИ setup() после применения сохранённой темы (без мерцания на старте).
 
 Запуск:  python3 tests/themes_test.py
 """
@@ -81,12 +82,26 @@ def main():
 
     # Порядок в init.lua: lazy.setup → страховка colorscheme → themes.setup
     i_lazy = init.find('require("lazy").setup(')
-    i_fallback = init.find('pcall(vim.cmd.colorscheme, "catppuccin-mocha")')
     i_themes = init.find('require("config.themes").setup()')
     check("init.lua: lazy.setup найден", i_lazy > 0)
     check("init.lua: themes.setup вызывается после lazy.setup", i_themes > i_lazy > 0,
           f"lazy={i_lazy} themes={i_themes}")
-    check("init.lua: themes.setup после страховочного colorscheme", i_themes > i_fallback > 0)
+    # Мерцание: до themes.setup в init.lua НЕЛЬЗЯ ставить другую схему
+    code_init = code_only(init)
+    pre = code_init[:code_init.find('require("config.themes").setup()')]
+    # Ищем именно ВЫЗОВ смены схемы (а не опцию install.colorscheme у lazy)
+    calls = ("vim.cmd.colorscheme", 'vim.cmd("colorscheme', "vim.cmd('colorscheme")
+    check("init.lua: до themes.setup нет вызова colorscheme (нет мерцания)",
+          not any(c in pre for c in calls))
+
+    # Страховка внутри themes.setup: сначала сохранённая тема, потом catppuccin/habamax
+    th = code_only(read("lua/config/themes.lua"))
+    i_set = th.find("pcall(M.set, M.current")
+    i_fb = th.find('pcall(vim.cmd.colorscheme, "catppuccin-mocha")')
+    i_fn = th.find("function M.setup()")
+    check("themes.lua: сохранённая тема ставится в setup()", i_fn > 0 and i_set > i_fn)
+    check("themes.lua: страховка catppuccin/habamax идёт ПОСЛЕ попытки темы",
+          i_fb > i_set > 0, f"set={i_set} fallback={i_fb}")
 
     # Полные схемы: priority = 1000 (как просил пользователь)
     cs = read("lua/plugins/colorscheme.lua")

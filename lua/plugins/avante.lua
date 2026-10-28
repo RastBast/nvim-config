@@ -59,7 +59,7 @@ return {
     cmd = {
       "AvanteAsk", "AvanteChat", "AvanteChatNew", "AvanteEdit",
       "AvanteFocus", "AvanteRefresh", "AvanteStop", "AvanteHistory",
-      "AvanteBuild", "AvanteSwitchProvider",
+      "AvanteBuild", "AvanteRebuild", "AvanteSwitchProvider",
     },
     dependencies = {
       "nvim-lua/plenary.nvim",
@@ -232,6 +232,59 @@ return {
       vim.keymap.set({ "n", "v" }, "<leader>Ax", function()
         vim.cmd("AvanteAsk Объясни по-русски этот код или ошибку под курсором: что происходит, почему и как исправить")
       end, { desc = "🤖 Объяснить код/ошибку (Gemini)" })
+
+      -- ================================================================== --
+      -- ЛЕЧЕНИЕ «missing avante_templates» (2026-10-28)
+      -- ------------------------------------------------------------------ --
+      -- Ошибка из трейсбека пользователя: avante/llm.lua:290 → path.lua:312
+      -- «Make sure to build avante (missing avante_templates)». Возникает,
+      -- когда плагин уже лежал в lazy/ ДО того, как в спеке появился
+      -- build = "make": lazy собирает только при установке/обновлении, и
+      -- собранный .so просто отсутствовал. Теперь:
+      --   * на старте проверяем avante.path.get_templates_dir() — он сам
+      --     бросает ошибку, если сборки нет;
+      --   * нет сборки → тихо запускаем `make` в каталоге плагина (тот же
+      --     рецепт, что и у build: пребуилты через curl+tar, cargo не нужен);
+      --   * :AvanteRebuild — пересобрать вручную в любой момент.
+      -- ================================================================== --
+      local function built_ok()
+        return pcall(function()
+          require("avante.path").get_templates_dir()
+        end)
+      end
+
+      local function rebuild()
+        local dir = vim.fn.stdpath("data") .. "/lazy/avante.nvim"
+        if vim.fn.isdirectory(dir) == 0 then
+          vim.notify("avante не установлен — открой любой файл и дождись :Lazy sync", vim.log.levels.WARN)
+          return
+        end
+        if vim.fn.executable("make") ~= 1 then
+          vim.notify("❌ avante: нужен make (Xcode Command Line Tools): xcode-select --install", vim.log.levels.ERROR)
+          return
+        end
+        vim.notify("🔧 avante: собираю avante_templates (make)…", vim.log.levels.INFO)
+        vim.fn.jobstart({ "make" }, {
+          cwd = dir,
+          on_exit = function(_, code)
+            vim.schedule(function()
+              if code == 0 and built_ok() then
+                vim.notify("✅ avante собран: чат и inline-подсказки работают", vim.log.levels.INFO)
+              else
+                vim.notify("❌ avante не собрался (make: " .. code .. "). Открой :Lazy build avante.nvim или :AvanteRebuild", vim.log.levels.ERROR)
+              end
+            end)
+          end,
+        })
+      end
+
+      vim.api.nvim_create_user_command("AvanteRebuild", rebuild, {
+        desc = "🔧 Пересобрать avante (make в каталоге плагина)",
+      })
+
+      if not built_ok() then
+        vim.schedule(rebuild)
+      end
     end,
   },
 }
