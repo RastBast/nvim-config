@@ -117,11 +117,8 @@ return {
           map("]d", function() vim.diagnostic.jump({ count = 1 }) end, "⬇ След. ошибка", "n")
           map("<leader>d", vim.diagnostic.open_float, "🩺 Диагностика строки", "n")
 
-          -- Инлайновые подсказки типов (если сервер умеет)
-          local client = vim.lsp.get_client_by_id(ev.data.client_id)
-          if client and client.supports_method and client:supports_method("textDocument/inlayHint") then
-            vim.lsp.inlay_hint.enable(true, { bufnr = ev.buf })
-          end
+          -- Инлайновые подсказки (серые «a...:», «int», «[]int») НЕ включаем здесь:
+          -- они выключены по умолчанию. Включить для Go: <leader>gh (переключатель).
         end,
       })
     end,

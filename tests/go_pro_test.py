@@ -151,6 +151,10 @@ def main():
     check("gopls: подсказки (hints) с параметрами и типами", "hints = {" in gopls_block and "parameterNames = true" in gopls_block)
     check("gopls: codelens — test/generate/tidy", "codelenses = {" in gopls_block and "test = true" in gopls_block and "tidy = true" in gopls_block)
     check("gopls: анализаторы shadow и unusedwrite", "shadow = true" in gopls_block and "unusedwrite = true" in gopls_block)
+    check("inlay-подсказки НЕ включаются при подключении LSP (выключены по умолчанию)",
+          "inlay_hint.enable(true" not in lsp)
+    check("inlay-подсказки включаются только переключателем <leader>gh",
+          'map("n", "<leader>gh", M.toggle_inlay' in read("lua/config/go_pro.lua"))
     check("gopls: исходные настройки сохранены (gofumpt, staticcheck, completeUnimported)",
           all(x in gopls_block for x in ("gofumpt = true", "staticcheck = true", "completeUnimported = true")))
 
