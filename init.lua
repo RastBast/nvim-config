@@ -84,9 +84,6 @@ vim.diagnostic.config({
 --                         КАСТОМНАЯ РАСКРАСКА И ФОН                          --
 -- ========================================================================== --
 
--- Темы: две штуки, выбор в nvim — <leader>uT или :Theme (см. lua/config/themes.lua)
-require("config.themes").setup()
-
 -- ========================================================================== --
 --                           УСТАНОВКА ПЛАГИНОВ (LAZY)                        --
 -- ========================================================================== --
@@ -130,6 +127,11 @@ require("lazy").setup("plugins", {
 if not pcall(vim.cmd.colorscheme, "catppuccin-mocha") then
   pcall(vim.cmd.colorscheme, "habamax")
 end
+
+-- Темы: выбор в nvim — <leader>uT или :Theme (см. lua/config/themes.lua).
+-- Вызывается ПОСЛЕ lazy.setup и страховки выше, поэтому сохранённую тему
+-- можно применить сразу (без VimEnter) и не перетереть её страховкой.
+require("config.themes").setup()
 
 -- Фильтр всплывающих уведомлений (пропускаем только КРАСНЫЕ ОШИБКИ)
 do

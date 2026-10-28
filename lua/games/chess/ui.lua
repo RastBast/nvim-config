@@ -69,17 +69,19 @@ local function render()
     target_set[m.t] = true
   end
 
+  -- Крупная доска: клетка CELL_W символов в ширину и CELL_H строк в высоту,
+  -- фигура — в средней строке. Глифы юникода (♔♕♖♗♘♙ — белые, ♚♛♜♝♞♟ — чёрные).
+  local CELL_W, CELL_H = 6, 3
+  local GLYPH_W = { K = "♔", Q = "♕", R = "♖", B = "♗", N = "♘", P = "♙" }
+  local GLYPH_B = { K = "♚", Q = "♛", R = "♜", B = "♝", N = "♞", P = "♟" }
+  local BLANK = string.rep(" ", CELL_W)
+
   for _, r in ipairs(ranks) do
-    local parts = { " " .. r .. " " }
-    local row = #lines
-    local col = 3
+    local rows = { {}, {}, {} } -- сегменты {текст, группа} по строкам клетки
     for fi = 1, 8 do
       local f = S.flip and (9 - fi) or fi
       local sq = B.sq_of(f, r)
       local p = g and g.st.b[sq] or "."
-      -- ASCII-буквы фигур (белые — заглавные), точка — пусто; клетка 3 символа
-      local cell = " " .. p .. " "
-      table.insert(parts, cell)
       -- подсветка клетки
       local group
       if sq == S.sel then
@@ -99,18 +101,42 @@ local function render()
           group = B.color(p) == "w" and "GamesWhitePiece" or "GamesBlackPiece"
         end
       end
-      table.insert(hls, { row, col, col + 3, group, 150 })
-      col = col + 3
+      local glyph = nil
+      if p ~= "." then
+        local tbl = B.color(p) == "w" and GLYPH_W or GLYPH_B
+        glyph = tbl[p:upper()]
+      end
+      for k = 1, CELL_H do
+        local text = BLANK
+        if k == 2 and glyph then
+          text = "  " .. glyph .. "   " -- 2 + 1 + 3 = 6 символов
+        end
+        table.insert(rows[k], { text, group })
+      end
     end
-    local line = table.concat(parts) .. " " .. r
-    add(line)
+    for k = 1, CELL_H do
+      local label = (k == 2) and (" " .. r .. " ") or "   "
+      local row = #lines
+      local line = label
+      local bcol = #label -- highlight-колонки в байтах
+      for _, seg in ipairs(rows[k]) do
+        table.insert(hls, { row, bcol, bcol + #seg[1], seg[2], 150 })
+        line = line .. seg[1]
+        bcol = bcol + #seg[1]
+      end
+      if k == 2 then
+        line = line .. " " .. r
+      end
+      add(line)
+    end
   end
   local files = "   "
   for fi = 1, 8 do
     local f = S.flip and (9 - fi) or fi
-    files = files .. " " .. FILES:sub(f, f) .. " "
+    files = files .. "  " .. FILES:sub(f, f) .. "   "
   end
   add(files)
+
   add("")
 
   -- статус
@@ -464,8 +490,8 @@ function M.open()
     return
   end
   S.h = F.open({
-    width = 46,
-    height = 22,
+    width = 56,
+    height = 34,
     title = "♟ Шахматы",
     footer = "n новая · u отмена · q выход",
     on_close = function()

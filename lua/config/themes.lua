@@ -24,6 +24,9 @@ local BLACK = "#000000"
 local BG_GROUPS = {
   "Normal", "NormalFloat", "SignColumn", "MsgArea",
   "StatusLine", "StatusLineNC", "Pmenu", "NormalNC", "FloatBorder",
+  -- дерево файлов (nvim-tree): без этого фон остаётся цветом схемы
+  "NvimTreeNormal", "NvimTreeNormalNC", "NvimTreeEndOfBuffer",
+  "NvimTreeStatusLine", "NvimTreeStatuslineNc",
 }
 
 -- ---------------------------------------------------------------------------
@@ -42,10 +45,7 @@ local function apply_new()
     text = "#e6e6e6",   -- описания в подсказках
   }
 
-  for _, group in ipairs({
-    "Normal", "NormalFloat", "SignColumn", "MsgArea",
-    "StatusLine", "StatusLineNC", "Pmenu", "NormalNC",
-  }) do
+  for _, group in ipairs(BG_GROUPS) do
     vim.api.nvim_set_hl(0, group, { bg = P.black })
   end
 
@@ -256,18 +256,13 @@ function M.setup()
     end,
   })
 
-  -- На старте (после init.lua, когда lazy уже настроен) включаем сохранённую тему.
-  -- Раньше setup() вызывался до lazy, поэтому загрузить плагин здесь было нельзя.
-  vim.api.nvim_create_autocmd("VimEnter", {
-    once = true,
-    callback = function()
-      if M.current ~= M.default then
-        M.set(M.current, { silent = true })
-      else
-        M.apply(M.current)
-      end
-    end,
-  })
+  -- Вызывается из init.lua ПОСЛЕ lazy.setup: плагины тем уже зарегистрированы,
+  -- поэтому сохранённая тема применяется сразу, без VimEnter.
+  if M.current ~= M.default then
+    M.set(M.current, { silent = true })
+  else
+    M.apply(M.current)
+  end
 
   vim.api.nvim_create_user_command("Theme", function(opts)
     if opts.args == "" then

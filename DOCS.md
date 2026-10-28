@@ -920,8 +920,8 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 пространства macOS. Вкладок в этом режиме нет, и они нам не нужны: панели делаются через `cmd+d` и `cmd+shift+d`.
 Значения сверены с исходниками Ghostty (`src/config/Config.zig`).
 
-**Исправлено:** `scrollback-limit = 20000` понималось как 20 КБ (ключ переименован в Ghostty 1.4,
-значение трактуется в байтах) — теперь `scrollback-limit-lines = 20000`. Убран `macos-titlebar-style = tabs`,
+**Исправлено:** ключ `scrollback-limit-lines` не существует в старых версиях Ghostty (ошибка
+`unknown field`). Теперь `scrollback-limit = 50000000` — значение в байтах (~50 МБ), работает во всех версиях. Убран `macos-titlebar-style = tabs`,
 который оставлял заголовок окна.
 
 - `macos-option-as-alt = true`: Option работает как Alt, поэтому `<A-…>` в nvim работает.

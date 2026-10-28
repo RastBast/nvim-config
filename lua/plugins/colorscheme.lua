@@ -52,9 +52,9 @@ return {
   -- выборе темы (themes.lua → require("lazy").load). Имена plugin в themes.lua
   -- совпадают с name ниже.
   -- ----------------------------------------------------------------------
-  { "folke/tokyonight.nvim", name = "tokyonight.nvim", lazy = true },
-  { "ellisonleao/gruvbox.nvim", name = "gruvbox.nvim", lazy = true },
-  { "rebelot/kanagawa.nvim", name = "kanagawa.nvim", lazy = true },
-  { "rose-pine/neovim", name = "rose-pine", lazy = true },
-  { "EdenEast/nightfox.nvim", name = "nightfox.nvim", lazy = true },
+  { "folke/tokyonight.nvim", name = "tokyonight.nvim", lazy = true, priority = 1000 },
+  { "ellisonleao/gruvbox.nvim", name = "gruvbox.nvim", lazy = true, priority = 1000 },
+  { "rebelot/kanagawa.nvim", name = "kanagawa.nvim", lazy = true, priority = 1000 },
+  { "rose-pine/neovim", name = "rose-pine", lazy = true, priority = 1000 },
+  { "EdenEast/nightfox.nvim", name = "nightfox.nvim", lazy = true, priority = 1000 },
 }
