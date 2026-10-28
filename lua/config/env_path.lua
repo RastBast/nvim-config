@@ -97,6 +97,20 @@ function M.check()
   if M.added and #M.added > 0 then
     lines[#lines + 1] = "добавлено конфигом: " .. table.concat(M.added, ", ")
   end
+
+  -- avante: нативная библиотека для чата и подсказок (см. config/avante_build.lua)
+  local okB, B = pcall(require, "config.avante_build")
+  if okB then
+    local dir = vim.fn.stdpath("data") .. "/lazy/avante.nvim"
+    lines[#lines + 1] = " "
+    if vim.fn.isdirectory(dir) == 0 then
+      lines[#lines + 1] = "avante: плагин не установлен (:Lazy sync)"
+    else
+      lines[#lines + 1] = "avante " .. B.TAG .. ": " .. (B.is_built(dir) and "библиотека ЕСТЬ" or "библиотеки НЕТ, выполни :AvanteRebuild")
+      lines[#lines + 1] = "  файл: " .. B.lib_file(dir)
+    end
+  end
+
   vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "Проверка окружения" })
 end
 

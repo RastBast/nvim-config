@@ -38,6 +38,8 @@ vim.fn.stdpath = function() return "/tmp/nvim_tests_state" end
 vim.fn.isdirectory = function(d) return EXISTING[d] and 1 or 0 end
 vim.fn.executable = function(x) return EXEC[x] and 1 or 0 end
 vim.fn.exepath = function(x) return EXEC[x] and ("/x/" .. x) or "" end
+vim.uv.fs_stat = function() return nil end
+vim.uv.os_uname = function() return { sysname = "Darwin", machine = "arm64" } end
 '''
 
 
@@ -95,6 +97,28 @@ def main():
     check("сообщение содержит команду установки",
           "xcode-select --install" in rt.eval("NOTES[1].msg") and "brew install git" in rt.eval("NOTES[1].msg"))
     check("сообщение направляет на :EnvCheck", ":EnvCheck" in rt.eval("NOTES[1].msg"))
+
+    # ------------------------------------------------ :EnvCheck: блок avante ---
+    AVDIR = "/tmp/nvim_tests_state/lazy/avante.nvim"
+    AVLIB = AVDIR + "/lua/avante_templates.so"
+    rt.execute("EXEC = { git = true }")
+    rt.execute("NOTES = {}")
+    rt.execute(f"EXISTING = {{}}")
+    rt.execute("ep.check()")
+    check(":EnvCheck: плагин avante не установлен — так и пишет",
+          "плагин не установлен" in rt.eval("NOTES[#NOTES].msg"), rt.eval("NOTES[#NOTES].msg"))
+    rt.execute(f"EXISTING = {{ ['{AVDIR}'] = true }}")
+    rt.execute("NOTES = {}")
+    rt.execute("ep.check()")
+    msg = rt.eval("NOTES[#NOTES].msg")
+    check(":EnvCheck: библиотеки нет — подсказка :AvanteRebuild и путь файла",
+          "библиотеки НЕТ, выполни :AvanteRebuild" in msg and "avante_templates.so" in msg, msg)
+    check(":EnvCheck: показывает закреплённый тег", "avante v0.4.8" in msg, msg)
+    rt.execute(f"vim.uv.fs_stat = function(p) if p == '{AVLIB}' then return {{}} end return nil end")
+    rt.execute("NOTES = {}")
+    rt.execute("ep.check()")
+    check(":EnvCheck: библиотека есть — так и пишет",
+          "библиотека ЕСТЬ" in rt.eval("NOTES[#NOTES].msg"), rt.eval("NOTES[#NOTES].msg"))
 
     # ----------------------------------------------- автопроверка lazy.nvim ---
     init = open(os.path.join(_lua.ROOT, "init.lua"), encoding="utf-8").read()
