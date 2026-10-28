@@ -10,7 +10,7 @@
   * pets: ширина полосы 100%, клавиша <leader>up;
   * spider: умный back на q, b больше не движение;
   * keymaps: b — запись макроса (remap = false);
-  * avante: build — функция с build.sh и откатом на make;
+  * avante: build — функция, готовые библиотеки по тегу и откат на make;
   * Ghostty: нет scrollback-limit-lines, window-save-state = never, fullscreen = non-native;
   * DOCS.md и keydocs содержат новые клавиши и команды.
 
@@ -103,8 +103,10 @@ def main():
     # ------------------------------------------------------------- avante ---
     av = read("lua/plugins/avante.lua")
     check("avante: build — функция", re.search(r"build\s*=\s*function\(plugin\)", av) is not None)
-    check("avante: сначала build.sh", 'vim.system({ "bash", "./build.sh" }' in av)
-    check("avante: запасной make", 'vim.system({ "make" }' in av)
+    check("avante: сборка через config.avante_build", 'require("config.avante_build")' in av)
+    bm = read("lua/config/avante_build.lua")
+    check("avante_build: запасной make есть", 'vim.system({ "make" }' in bm)
+    check("avante_build: готовые библиотеки через curl+tar", '"curl", "-fsSL"' in bm and '"tar", "-xzf"' in bm)
     check("avante: нет старого build = \"make\" по умолчанию", 'or "make",' not in av)
 
     # ------------------------------------------------------------ Ghostty ---
@@ -173,7 +175,7 @@ def main():
     # --------------------------------------------------------------- avante ---
     av = read("lua/plugins/avante.lua")
     check("avante: команда :AvanteRebuild", 'nvim_create_user_command("AvanteRebuild"' in av)
-    check("avante: авто-сборка при отсутствии шаблонов (vim.schedule(rebuild))", "vim.schedule(rebuild)" in av)
+    check("avante: авто-сборка при отсутствии библиотек (B.is_built)", "B.is_built(plugin_dir())" in av and "rebuild({ silent = true })" in av)
 
     # ------------------------------------------------------- lazy-lock / справка ---
     lock = read("lazy-lock.json")

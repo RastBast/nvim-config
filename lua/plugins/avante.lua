@@ -29,10 +29,13 @@
 -- и весь setup() упадёт (avante init.lua:288).
 --
 -- Сборка (ИСПРАВЛЕНО: «missing avante_templates» = native-библиотеки не собраны):
---   build.sh скачивает ПРЕДСОБРАННЫЕ библиотеки из релиза GitHub (curl + tar,
---   cargo не нужен). Если не вышло — запасной вариант make (тогда нужен cargo).
---   Вручную: :Lazy build avante.nvim  или  :AvanteBuild
--- (cargo не нужен; нужен только curl и tar — есть в macOS/Linux).
+--   Логика в lua/config/avante_build.lua: готовые библиотеки ЗАКРЕПЛЁННОГО тега
+--   скачиваются из релиза GitHub (curl + tar, cargo не нужен). Если не вышло —
+--   запасной вариант make (нужен cargo: brew install rust).
+--   Успех = файл lua/avante_templates.so появился на диске.
+--   Вручную: :AvanteRebuild (рекомендуется). Не :AvanteBuild: это встроенная
+--   команда avante, она использует свой build.sh, который тихо падает без git.
+--   Переустановка с нуля: :Lazy build avante.nvim, затем перезапуск nvim.
 --
 -- Все схемы опций сверены с исходниками avante-corp/avante.nvim (бывш. yetone) (2026-09):
 --   providers.gemini            lua/avante/config.lua:499
@@ -44,16 +47,19 @@ return {
     "avante-corp/avante.nvim",
     event = "VeryLazy",
     version = false, -- НИКОГДА не "*" — плагин ломается на тегах
-    -- пребуилт-бинари через curl+tar; cargo не требуется
+    -- ЗАКРЕПЛЕНО на теге v0.4.8: готовые бинарники релиза собраны под этот код.
+    -- Lua с main (новее на 34 коммита) с бинарниками v0.4.8 не совместим.
+    -- Обновление: поменять tag здесь И M.TAG в lua/config/avante_build.lua,
+    -- затем :Lazy sync и :AvanteRebuild.
+    tag = "v0.4.8",
+    -- Сборка: готовые библиотеки для тега (curl+tar, без git и cargo), запасной
+    -- вариант — make (нужен cargo). Логика и сообщения — в config/avante_build.lua
     build = function(plugin)
-      if vim.fn.has("win32") ~= 0 then
-        vim.system({ "cmd", "/c", "make", "BUILD_FROM_SOURCE=true" }, { cwd = plugin.dir }):wait()
-        return
-      end
-      local r = vim.system({ "bash", "./build.sh" }, { cwd = plugin.dir, text = true }):wait()
-      if r.code ~= 0 then
-        vim.notify("avante: готовые библиотеки не скачались, пробую make (нужен cargo)\n" .. (r.stderr or ""), vim.log.levels.WARN)
-        vim.system({ "make" }, { cwd = plugin.dir, text = true }):wait()
+      local ok, msg = require("config.avante_build").build_blocking(plugin.dir)
+      if ok then
+        vim.notify("avante: " .. msg, vim.log.levels.INFO)
+      else
+        vim.notify("❌ avante не собрался: " .. msg, vim.log.levels.ERROR)
       end
     end,
     cmd = {
@@ -247,43 +253,40 @@ return {
       --     рецепт, что и у build: пребуилты через curl+tar, cargo не нужен);
       --   * :AvanteRebuild — пересобрать вручную в любой момент.
       -- ================================================================== --
-      local function built_ok()
-        return pcall(function()
-          require("avante.path").get_templates_dir()
+      local B = require("config.avante_build")
+
+      -- Главный признак — файл библиотеки на диске (не код возврата сборки).
+      local function plugin_dir()
+        return vim.fn.stdpath("data") .. "/lazy/avante.nvim"
+      end
+
+      local function rebuild(opts)
+        local dir = plugin_dir()
+        if vim.fn.isdirectory(dir) == 0 then
+          vim.notify("avante не установлен — выполни :Lazy sync", vim.log.levels.WARN)
+          return
+        end
+        if not (opts and opts.silent) then
+          vim.notify("🔧 avante: собираю библиотеки для " .. B.TAG .. "…", vim.log.levels.INFO)
+        end
+        B.build(dir, function(ok, msg)
+          if ok then
+            vim.notify("✅ avante готов: " .. msg .. ". Перезапусти nvim, если чат ещё не работает.", vim.log.levels.INFO)
+          else
+            vim.notify("❌ avante не собрался:\n" .. msg, vim.log.levels.ERROR, { title = "avante" })
+          end
         end)
       end
 
-      local function rebuild()
-        local dir = vim.fn.stdpath("data") .. "/lazy/avante.nvim"
-        if vim.fn.isdirectory(dir) == 0 then
-          vim.notify("avante не установлен — открой любой файл и дождись :Lazy sync", vim.log.levels.WARN)
-          return
-        end
-        if vim.fn.executable("make") ~= 1 then
-          vim.notify("❌ avante: нужен make (Xcode Command Line Tools): xcode-select --install", vim.log.levels.ERROR)
-          return
-        end
-        vim.notify("🔧 avante: собираю avante_templates (make)…", vim.log.levels.INFO)
-        vim.fn.jobstart({ "make" }, {
-          cwd = dir,
-          on_exit = function(_, code)
-            vim.schedule(function()
-              if code == 0 and built_ok() then
-                vim.notify("✅ avante собран: чат и inline-подсказки работают", vim.log.levels.INFO)
-              else
-                vim.notify("❌ avante не собрался (make: " .. code .. "). Открой :Lazy build avante.nvim или :AvanteRebuild", vim.log.levels.ERROR)
-              end
-            end)
-          end,
-        })
-      end
+      vim.api.nvim_create_user_command("AvanteRebuild", function()
+        rebuild()
+      end, { desc = "🔧 Скачать/пересобрать библиотеки avante для закреплённого тега" })
 
-      vim.api.nvim_create_user_command("AvanteRebuild", rebuild, {
-        desc = "🔧 Пересобрать avante (make в каталоге плагина)",
-      })
-
-      if not built_ok() then
-        vim.schedule(rebuild)
+      -- Если библиотек нет — один раз пробуем сами при старте (тихо, без спама).
+      if not B.is_built(plugin_dir()) then
+        vim.schedule(function()
+          rebuild({ silent = true })
+        end)
       end
     end,
   },
