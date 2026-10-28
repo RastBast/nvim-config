@@ -34,7 +34,7 @@ return {
       })
 
       -- Твоя горячая клавиша
-      vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>", { silent = true })
+      vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>", { silent = true, desc = "🌲 Дерево файлов: вкл/выкл" })
     end,
   },
 }

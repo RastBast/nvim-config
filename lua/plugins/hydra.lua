@@ -1,15 +1,27 @@
+-- ========================================================================== --
+--                        HYDRA: SUPER MODE                                   --
+-- ========================================================================== --
+-- ИСПРАВЛЕНО: триггер <leader>h убивал harpoon.nvim.
+-- harpoon.lua биндит <leader>ha / <leader>hh / <leader>h1 / <leader>h2,
+-- а маппинг ровно на <leader>h срабатывал мгновенно (timeoutlen = 300),
+-- поэтому до harpoon дело не доходило никогда.
+-- Триггер перенесён на <leader>M (раньше не использовался).
 return {
   "nvimtools/hydra.nvim",
   dependencies = { "anuvyklack/keymap-layer.nvim" },
+  keys = {
+    { "<leader>M", desc = "🦹 Войти в Super Mode" },
+  },
   config = function()
     local Hydra = require("hydra")
 
-    -- Стилизация: Серый фон, Глубокий черный текст
+    -- Стилизация: серый фон, глубокий чёрный текст
     vim.api.nvim_set_hl(0, "HydraHint", { fg = "#000000", bg = "#808080", bold = true })
     vim.api.nvim_set_hl(0, "HydraBorder", { fg = "#808080", bg = "#808080" })
 
     local super_mode = Hydra({
       name = "SuperMode",
+      mode = "n",
       config = {
         color = "pink",
         invoke_on_body = true,
@@ -19,7 +31,6 @@ return {
         },
         foreign_keys = nil,
       },
-      -- Исправлено: убрали Esc из подчеркиваний, чтобы парсер не ругался
       hint = [[
  ^ ^          SUPER MODE (Commands Only)
  ^
@@ -29,17 +40,13 @@ return {
       heads = {
         { "s", ":w<CR>", { desc = "Save" } },
         { "f", ":Telescope find_files<CR>", { desc = "Files" } },
-        { "g", ":LazyGit<CR>", { exit = true } },
+        { "g", ":LazyGit<CR>", { exit = true, desc = "Git" } },
         { "b", ":Telescope buffers<CR>", { desc = "Buffers" } },
-
-        -- Выход (Esc работает тихо, q отображается в подсказке)
         { "q", nil, { exit = true, desc = "Quit" } },
-        { "<Esc>", nil, { exit = true } },
+        { "<Esc>", nil, { exit = true, desc = "Quit" } },
       },
     })
 
-    vim.keymap.set("n", "<leader>h", function()
-      super_mode:activate()
-    end, { desc = "Enter Super Mode" })
+    vim.keymap.set("n", "<leader>M", function() super_mode:activate() end, { desc = "🦹 Super Mode" })
   end,
 }

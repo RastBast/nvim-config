@@ -1,7 +1,17 @@
+-- ========================================================================== --
+--                        ДАШБОРД (alpha-nvim)                                --
+-- ========================================================================== --
+-- ИСПРАВЛЕНО:
+--  1) Кнопка "📂 Проекты" вела на :Telescope projects — такого расширения
+--     (telescope-project.nvim) в конфиге нет, нажатие давало E492.
+--     Заменено на :Telescope oldfiles.
+--  2) Таймер анимации создавался без close() и продолжал тикать после
+--     закрытия дашборда — добавлены остановка и закрытие таймера.
 return {
   {
     "goolord/alpha-nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
+    event = "VimEnter",
     config = function()
       local alpha = require("alpha")
       local dashboard = require("alpha.themes.dashboard")
@@ -31,25 +41,23 @@ return {
       }
 
       -- 2. СЦЕНА LOVE (Rast & Polina)
-           -- 2. СЦЕНА LOVE (Rast & Polina) — ЦЕЛЬНАЯ ТАЛИЯ
       local twins_scene = {
         [[      ⊚___________⊚       ⊚___________⊚       ]],
         [[     /             \\     /             \\      ]],
         [[    /   💙     💙   \\   /   🩷     🩷   \\     ]],
         [[   |        ◡        |  |        ◡       |    ]],
-        [[    \_______________/   \_______________/     ]],
-        [[     /             \\     \           /       ]],
-        [[    /               \\     )         (        ]], -- Линии талии
-        [[   |   |         |   |    /           \       ]], -- Соединение с бедрами
+        [[    \\_______________/   \\_______________/     ]],
+        [[     /             \\     \\           /       ]],
+        [[    /               \\     )         (        ]],
+        [[   |   |         |   |    /           \\       ]],
         [[   |   |_________|   |   |_____________|      ]],
-        [[    \_______________/   \_______________/     ]],
+        [[    \\_______________/   \\_______________/     ]],
         [[       |_|       |_|       |_|       |_|      ]],
         [[                                              ]],
         [[        (RAST)              (POLINA)          ]],
       }
 
-
-      -- 3. ЭПИЧЕСКАЯ БИТВА (ОГРОМНАЯ ЗМЕЯ)
+      -- 3. ЭПИЧЕСКАЯ БИТВА (GO DEFEATS PYTHON)
       local fight_scene = {
         [[       ⚔️  GO DEFEATS PYTHON  ⚔️      ]],
         [[                                     ]],
@@ -57,14 +65,15 @@ return {
         [[    /             \\      ____________ ]],
         [[   /   ●       ●   \\    /  ❌    ❌  \\  ]],
         [[  |        ◡        |  |      __      |  ]],
-        [[   \\_______________/    \\    /  \    /   ]],
-        [[    /      |      \\      \\__/    \__/    ]],
+        [[   \\_______________/    \\    /  \\    /   ]],
+        [[    /      |      \\      \\__/    \\__/    ]],
         [[   /       |       \\     /  ____  \\      ]],
         [[  |   |    |    |   |   /  /    \\  \\     ]],
         [[  |___|____|____|___|   \\  \\____/  /     ]],
         [[     |_|       |_|       \\________/      ]],
       }
-            -- 4. СЦЕНА HACKER (Системный взлом)
+
+      -- 4. СЦЕНА HACKER
       local hacker_scene = {
         [[       ░▒▓█ SYSTEM OVERLOAD █▓▒░       ]],
         [[                                       ]],
@@ -80,59 +89,55 @@ return {
         [[      |_|      [HACKED]       |_|      ]],
       }
 
-      -- ЛОГИКА ВЫБОРА
-            local scenes = { "dance", "love", "fight", "hacker" }
+      -- ЛОГИКА ВЫБОРА СЦЕНЫ
+      local scenes = { "dance", "love", "fight", "hacker" }
       math.randomseed(os.time())
       local choice = scenes[math.random(#scenes)]
 
-      -- Применяем выбранную сцену и цвет
-            -- ПРИМЕНЯЕМ ВЫБРАННУЮ СЦЕНУ И ЦВЕТ
       if choice == "love" then
         dashboard.section.header.val = twins_scene
-        -- Двухцветная раскраска: Лево - Голубой (Rast), Право - Розовый (Polina)
+        -- Двухцветная раскраска по колонкам: слева Rast, справа Polina
         dashboard.section.header.opts.hl = {
-            { "Identifier", 0, 26 }, 
-            { "Keyword", 27, 60 },    
+          { "Identifier", 0, 26 },
+          { "Keyword", 27, 60 },
         }
       elseif choice == "fight" then
         dashboard.section.header.val = fight_scene
-        dashboard.section.header.opts.hl = "ErrorMsg" -- Красный (Агрессивный)
+        dashboard.section.header.opts.hl = "ErrorMsg"
       elseif choice == "hacker" then
         dashboard.section.header.val = hacker_scene
-        dashboard.section.header.opts.hl = "DiagnosticOk" -- Ярко-зеленый (Терминальный)
+        dashboard.section.header.opts.hl = "DiagnosticOk"
       else
-        -- По умолчанию включается ТАНЕЦ
         dashboard.section.header.val = d1
-        dashboard.section.header.opts.hl = "Identifier" -- Голубой
+        dashboard.section.header.opts.hl = "Identifier"
       end
 
-
-      -- Кнопки меню
+      -- Кнопки меню (все команды существуют в конфиге)
       dashboard.section.buttons.val = {
-        dashboard.button("f", "  Найти файл", ":Telescope find_files <CR>"),
-        dashboard.button("r", "  Недавние файлы", ":Telescope oldfiles <CR>"), -- ВОТ ЭТА КНОПКА
-        dashboard.button("p", "📂 Проекты", ":Telescope projects <CR>"),
-        dashboard.button("q", "  Выход", ":qa <CR>"),
+        dashboard.button("f", "  Найти файл", ":Telescope find_files<CR>"),
+        dashboard.button("r", "  Недавние файлы", ":Telescope oldfiles<CR>"),
+        dashboard.button("g", "  Текст по проекту", ":Telescope live_grep<CR>"),
+        dashboard.button("e", "  Дерево файлов", ":NvimTreeToggle<CR>"),
+        dashboard.button("q", "  Выход", ":qa<CR>"),
       }
-
 
       alpha.setup(dashboard.config)
 
       -- Таймер анимации (только если выпал танец)
       if choice == "dance" then
-        local timer = vim.loop.new_timer()
+        local timer = (vim.uv or vim.loop).new_timer()
         local state = true
         timer:start(0, 500, vim.schedule_wrap(function()
           if vim.bo.filetype ~= "alpha" then
-            timer:stop()
+            pcall(function() timer:stop() end)
+            pcall(function() timer:close() end)
             return
           end
           dashboard.section.header.val = state and d2 or d1
           state = not state
-          alpha.redraw()
+          pcall(alpha.redraw)
         end))
       end
     end,
   },
 }
-

@@ -1,22 +1,20 @@
--- lua/plugins/docker-cli.lua
+-- ========================================================================== --
+--                   DOCKER: ПОДСВЕТКА DOCKERFILE                             --
+-- ========================================================================== --
+-- ИСПРАВЛЕНО: skanehira/docker.vim УДАЛЁН — плагин написан только под Vim
+-- и в Neovim ВСЕГДА падает с ошибкой:
+--   «docker.vim: doesn't support neovim. please use vim that version is
+--    8.1.1799 or above»
+--
+-- Чем заменён:
+--   * подсветка Dockerfile / docker-compose — этот файл (ekalinin/Dockerfile.vim);
+--   * интерфейс Docker (контейнеры, логи, образы, сети, kill) — lazydocker
+--     и docker CLI в плавающем окне toggleterm:
+--       <leader>dc — lazydocker (TUI-панель Docker, «маленькое окно»);
+--       <leader>dp — docker ps -a;  <leader>di — docker images;
+--       <leader>dn — docker network ls.
+--     (маппинги живут в lua/plugins/toggleterm.lua)
+--   * LSP для Dockerfile (dockerls) уже включён в lua/config/servers.lua.
 return {
-  "skanehira/docker.vim", -- Именно этот плагин дает команды :Docker...
-  cmd = { 
-    "Docker", 
-    "DockerContainers", 
-    "DockerImages", 
-    "DockerLogs", 
-    "DockerKill" 
-  },
-  keys = {
-    { "<leader>dc", "<cmd>Docker<CR>", desc = "Docker Dashboard" },
-    { "<leader>di", "<cmd>DockerImages<CR>", desc = "Docker Images" },
-    { "<leader>dC", "<cmd>DockerContainers<CR>", desc = "Docker Containers" },
-    { "<leader>dl", "<cmd>DockerLogs<CR>", desc = "Docker Logs" },
-  },
-  config = function()
-    -- Здесь можно добавить настройки, если нужно
-    vim.g.docker_terminal_position = 'top'
-  end
+  { "ekalinin/Dockerfile.vim", ft = { "dockerfile", "docker-compose" } },
 }
-

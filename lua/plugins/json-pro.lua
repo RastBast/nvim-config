@@ -1,24 +1,17 @@
+-- ========================================================================== --
+--                         ИНСТРУМЕНТЫ ДЛЯ JSON                               --
+-- ========================================================================== --
+-- ИСПРАВЛЕНО: отсюда убран дубль stevearc/aerial.nvim (владелец —
+-- lua/plugins/aerial.lua), осталась только работа через jq.
 return {
-  -- Визуальное дерево для JSON (как в VSCode)
   {
-    'stevearc/aerial.nvim', -- Мы его используем для Go, но он идеален и для JSON
+    "gennaro-tedesco/nvim-jqx",
+    ft = { "json", "yaml" },
+    cmd = { "JqxList", "JqxQuery" },
     config = function()
-      require('aerial').setup({
-        backends = { 'treesitter', 'lsp' },
-        layout = { min_width = 30 },
-        show_guides = true,
-      })
-      vim.keymap.set('n', '<leader>aj', '<cmd>AerialToggle!<cr>', { desc = '🌳 Дерево JSON/Структура' })
-    end
+      -- Показывает структуру/типы данных в JSON (нужен установленный `jq`)
+      vim.keymap.set("n", "<leader>jx", "<cmd>JqxList<cr>", { desc = "🔍 Список ключей JSON" })
+      vim.keymap.set("n", "<leader>jq", "<cmd>JqxQuery<cr>", { desc = "🔎 jq-запрос по JSON" })
+    end,
   },
-
-  -- Инструменты для работы с JSON (JQ)
-  {
-    'gennaro-tedesco/nvim-jqx',
-    ft = { 'json', 'yaml' },
-    config = function()
-      -- Показывает типы данных в JSON
-      vim.keymap.set('n', '<leader>jx', '<cmd>JqxList<cr>', { desc = '🔍 Список ключей JSON' })
-    end
-  }
 }

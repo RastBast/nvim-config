@@ -9,10 +9,20 @@ return {
     config = function()
       require('noice').setup({
         lsp = {
+          -- ВАЖНО: hover выключен. По умолчанию noice подменяет vim.lsp.buf.hover
+          -- на свою функцию и показывает подсказку в своём окне, мимо
+          -- vim.lsp.util.open_floating_preview. Из-за этого перехват перевода
+          -- (lua/config/hover_ru.lua) на K не срабатывал. С hover = false K
+          -- идёт штатным путём и перевод показывается сразу.
+          hover = { enabled = false },
           override = {
             ['vim.lsp.util.convert_input_to_markdown_lines'] = true,
             ['vim.lsp.util.stylize_markdown'] = true,
-            ['cmp.entry.get_documentation'] = true,
+            -- НЕ true: эту функцию уже подменяет lua/plugins/completions.lua
+            -- (перевод окна документации cmp на русский через config.ru_util).
+            -- При = true noice ругается «cmp.entry.get_documentation has been
+            -- overwritten by another plugin?» и просит именно enabled = false.
+            ['cmp.entry.get_documentation'] = { enabled = false },
           },
         },
         presets = {

@@ -12,6 +12,8 @@ return {
       })
       vim.keymap.set('n', '<Tab>', '<cmd>BufferLineCycleNext<cr>')
       vim.keymap.set('n', '<S-Tab>', '<cmd>BufferLineCyclePrev<cr>')
+      vim.keymap.set('n', ']b', '<cmd>BufferLineCycleNext<cr>', { desc = 'Следующая вкладка (буфер)' })
+      vim.keymap.set('n', '[b', '<cmd>BufferLineCyclePrev<cr>', { desc = 'Предыдущая вкладка (буфер)' })
     end
   }
 }

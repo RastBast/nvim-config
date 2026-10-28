@@ -2,9 +2,10 @@ return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
     dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
-    ft = { "markdown", "obsidian" }, -- включаем для MD и Obsidian
+    ft = { "markdown", "obsidian", "Avante" }, -- Avante — для рендера ответов ИИ
     config = function()
       require("render-markdown").setup({
+        file_types = { "markdown", "obsidian", "Avante" },
         heading = {
           icons = { "❶ ", "❷ ", "❸ ", "❹ ", "❺ ", "❻ " }, -- красивые цифры для заголовков
         },
