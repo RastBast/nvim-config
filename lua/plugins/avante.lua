@@ -28,7 +28,10 @@
 -- поэтому там нельзя ставить эмодзи — будет «E239: Invalid sign text»
 -- и весь setup() упадёт (avante init.lua:288).
 --
--- Сборка: build = "make" тянет ПРЕДСОБРАННЫЕ бинари через curl+tar
+-- Сборка (ИСПРАВЛЕНО: «missing avante_templates» = native-библиотеки не собраны):
+--   build.sh скачивает ПРЕДСОБРАННЫЕ библиотеки из релиза GitHub (curl + tar,
+--   cargo не нужен). Если не вышло — запасной вариант make (тогда нужен cargo).
+--   Вручную: :Lazy build avante.nvim  или  :AvanteBuild
 -- (cargo не нужен; нужен только curl и tar — есть в macOS/Linux).
 --
 -- Все схемы опций сверены с исходниками avante-corp/avante.nvim (бывш. yetone) (2026-09):
@@ -42,7 +45,17 @@ return {
     event = "VeryLazy",
     version = false, -- НИКОГДА не "*" — плагин ломается на тегах
     -- пребуилт-бинари через curl+tar; cargo не требуется
-    build = vim.fn.has("win32") ~= 0 and "make BUILD_FROM_SOURCE=true" or "make",
+    build = function(plugin)
+      if vim.fn.has("win32") ~= 0 then
+        vim.system({ "cmd", "/c", "make", "BUILD_FROM_SOURCE=true" }, { cwd = plugin.dir }):wait()
+        return
+      end
+      local r = vim.system({ "bash", "./build.sh" }, { cwd = plugin.dir, text = true }):wait()
+      if r.code ~= 0 then
+        vim.notify("avante: готовые библиотеки не скачались, пробую make (нужен cargo)\n" .. (r.stderr or ""), vim.log.levels.WARN)
+        vim.system({ "make" }, { cwd = plugin.dir, text = true }):wait()
+      end
+    end,
     cmd = {
       "AvanteAsk", "AvanteChat", "AvanteChatNew", "AvanteEdit",
       "AvanteFocus", "AvanteRefresh", "AvanteStop", "AvanteHistory",

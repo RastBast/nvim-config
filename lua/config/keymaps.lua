@@ -64,5 +64,9 @@ vim.keymap.set("v", "p", '"_dP', { desc = "Вставить, не затирая
 vim.keymap.set("n", "<leader>w", ":w<CR>", { desc = "Сохранить" })
 vim.keymap.set("n", "<leader>q", ":q<CR>", { desc = "Закрыть окно" })
 
+-- Запись макросов переехала с q на b (q теперь — «назад к началу слова», см. spider.lua).
+-- remap = false: b → нативная q (старт/стоп записи).
+vim.keymap.set("n", "b", "q", { remap = false, desc = "🎬 Запись макроса (q → b)" })
+
 -- Переход в режим терминала по Esc (удобно с toggleterm)
 vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Выйти в Normal в терминале" })
