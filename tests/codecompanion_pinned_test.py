@@ -47,12 +47,14 @@ local log = setmetatable({}, { __index = function(_, key) return function(_, ...
 package.preload['codecompanion.utils.log'] = function() return log end
 package.preload['codecompanion.utils.adapters'] = function() return {} end
 package.preload['plenary.curl'] = function() return {} end
+package.preload['codecompanion.interactions.shared.tags'] = function() return {} end
+package.preload['codecompanion.utils.tool_transformers'] = function() return {} end
 package.preload['codecompanion.adapters.http.openai'] = function() return {handlers={tools={}}} end
 local cfg = {adapters={http={}, acp={}}, interactions={chat={}}}
 package.preload['codecompanion.config'] = function() return cfg end
 vim.env.AI_PROVIDER = 'openrouter'
 vim.env.OPENROUTER_API_KEY = 'dummy'
-local opts = require('plugins.ai')[1].opts
+local opts = require('plugins.ai')[1].opts()
 cfg.adapters.http = opts.adapters.http
 cfg.interactions.chat = opts.interactions.chat
 local engine = require('codecompanion.adapters')
@@ -63,7 +65,10 @@ for _, id in ipairs({'groq', 'kimi', 'openrouter', 'custom'}) do
  assert(adapter.env.chat_url == '/chat/completions', id)
  assert(type(adapter.handlers.chat_output) == 'function', id)
 end
+vim.env.AVANTE_GEMINI_API_KEY = 'scoped-gemini'
+local gemini = engine.resolve('gemini')
+assert(gemini.model.name == 'gemini-3.6-flash' and gemini.env.api_key() == 'scoped-gemini')
 local adapter = engine.resolve(opts.interactions.chat.adapter)
 assert(adapter.name == 'openrouter' and adapter.model.name == 'openrouter/free')
 ''')
-print('OK: разрешение четырёх адаптеров реальным кодом CodeCompanion из lockfile')
+print('OK: разрешение пяти адаптеров реальным кодом CodeCompanion из lockfile')

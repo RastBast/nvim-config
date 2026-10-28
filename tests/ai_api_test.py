@@ -35,17 +35,43 @@ for _,v in ipairs(ARGS) do assert(not tostring(v):find('private-test-key', 1, tr
 RESPONSE = { code = 0, stdout = 'error\n401', stderr = '' }
 AI.chat({}, {}, done); assert(not text and err:find('HTTP 401', 1, true))
 RESPONSE = { code = 7, stdout = '', stderr = 'cannot connect' }
-AI.chat({}, {}, done); assert(not text and err:find('cannot connect',1,true))
+AI.chat({}, {}, done); assert(not text and err:find('curl 7',1,true))
+RESPONSE = { code = 28, stdout = '', stderr = 'private-test-key should not leak' }
+AI.chat({}, {}, done); assert(not text and err:find('curl 28',1,true) and not err:find('private-test-key',1,true))
+vim.env.AI_TIMEOUT = '75'
+AI.chat({}, {}, done); assert(ARGS[4] == '75')
+vim.env.AI_TIMEOUT = '0'
+AI.chat({}, {}, done); assert(ARGS[4] == '40')
+vim.env.AI_TIMEOUT = nil
+vim.env.AI_PROXY = 'http://user:password@localhost:1080'
+AI.chat({}, {}, done)
+assert(STDIN:find('proxy =', 1, true) and STDIN:find('password',1,true))
+for _,v in ipairs(ARGS) do assert(not tostring(v):find('password',1,true)) end
+RESPONSE = { code = 0, stdout = '401', stderr = '' }
+vim.fn.has = function() return 0 end
+AI.network_check()
+assert(NOTES[#NOTES].msg:find('HTTP 401',1,true))
+assert(STDIN:find('password',1,true) and not STDIN:find('private-test-key',1,true))
+vim.env.AI_PROXY = nil
+vim.env.GROQ_API_KEY = 'bad\nkey'
+AI.chat({}, {}, done); assert(err:find('перевод строки', 1, true))
+vim.env.GROQ_API_KEY = 'private-test-key'
+
 
 package.preload['codecompanion.adapters'] = function()
-  return { extend = function(base, opts) assert(base == 'openai_compatible'); return opts end }
+  return { extend = function(base, opts) assert(base == 'openai_compatible' or base == 'gemini'); return opts end }
 end
 local function spec_for(id)
   vim.env.AI_PROVIDER = id
   package.loaded['plugins.ai'] = nil
-  return require('plugins.ai')[1].opts
+  return require('plugins.ai')[1].opts()
 end
 local spec = spec_for('groq')
+vim.env.AVANTE_GEMINI_API_KEY = 'scoped'; vim.env.GEMINI_API_KEY = 'regular'
+assert(spec.adapters.http.gemini().env.api_key() == 'scoped')
+vim.env.AVANTE_GEMINI_API_KEY = nil
+assert(spec.adapters.http.gemini().env.api_key() == 'regular')
+vim.env.GEMINI_API_KEY = nil
 local prompt = spec.prompt_library['Explain Code'].prompts[1].content({filetype='go', lines={'a := 1','b := 2'}})
 assert(prompt:find('a := 1\nb := 2', 1, true) and not prompt:find('${selected}',1,true))
 local adapter = spec.adapters.http.groq()
@@ -70,15 +96,24 @@ vim.fn.has = function() return 1 end
 vim.tbl_extend = function(_, a, b) for k,v in pairs(b) do a[k]=v end; return a end
 vim.env.AI_PROVIDER = 'groq'; vim.env.AVANTE_PROVIDER = nil; vim.env.AVANTE_SUGGEST_PROVIDER = nil
 package.loaded['plugins.avante'] = nil
-local av = require('plugins.avante')[1].opts
+local av = require('plugins.avante')[1].opts()
 assert(av.provider == 'groq' and av.auto_suggestions_provider == 'groq')
+-- Спеки уже импортированы, но выбор до загрузки плагина ещё учитывается.
+local av_spec = require('plugins.avante')[1]
+local cc_spec = require('plugins.ai')[1]
+vim.g.ai_provider = 'openrouter'
+vim.env.OPENROUTER_API_KEY = 'another-key'
+assert(av_spec.opts().provider == 'openrouter')
+assert(cc_spec.opts().interactions.chat.adapter.name == 'openrouter')
+vim.g.ai_provider = nil
+
 vim.env.AVANTE_PROVIDER = 'openrouter-free'
 package.loaded['plugins.avante'] = nil
-av = require('plugins.avante')[1].opts
+av = require('plugins.avante')[1].opts()
 assert(av.auto_suggestions_provider == 'openrouter-free')
 vim.env.AVANTE_SUGGEST_PROVIDER = 'gemini-flash'
 package.loaded['plugins.avante'] = nil
-av = require('plugins.avante')[1].opts
+av = require('plugins.avante')[1].opts()
 assert(av.auto_suggestions_provider == 'gemini-flash')
 ''')
 print('OK: AiAsk, ошибки, ключ через stdin, адаптеры и выбор провайдера подсказок')

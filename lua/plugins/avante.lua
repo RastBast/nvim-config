@@ -81,7 +81,8 @@ return {
       "folke/snacks.nvim",             -- input-виджеты
       "MeanderingProgrammer/render-markdown.nvim", -- рендер ответов (ft Avante добавлен в markdown.lua)
     },
-    opts = {
+    opts = function()
+      return {
       -- ========================= ПРОВАЙДЕР ================================ --
       -- По умолчанию Gemini. Google блокирует запросы с IP неподдерживаемых
       -- стран: «400 User location is not supported for the API use».
@@ -91,7 +92,7 @@ return {
       --   set -Ux AVANTE_PROVIDER "openrouter-free"
       --   set -Ux OPENROUTER_API_KEY "sk-or-..."
       --   set -Ux AVANTE_SUGGEST_PROVIDER "openrouter-free"
-      -- По умолчанию gemini; если задан AI_PROVIDER (groq, openai, mistral…) — он.
+      -- Приоритет: AVANTE_PROVIDER, выбор в сессии / AI_PROVIDER, первый доступный ключ, затем gemini.
       provider = vim.env.AVANTE_PROVIDER or require("config.ai_api").avante_default(),
       -- inline-подсказки — тем же провайдером (дешёвая flash-модель)
       auto_suggestions_provider = vim.env.AVANTE_SUGGEST_PROVIDER
@@ -232,7 +233,8 @@ return {
           insert = "<C-s>",  -- отправить сообщение из поля ввода
         },
       },
-    },
+      }
+    end,
     config = function(plugin, opts)
       local B = require("config.avante_build")
       local function plugin_dir() return plugin.dir end

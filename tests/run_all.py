@@ -24,6 +24,7 @@ SUITES = [
     ("Go PRO: функции, клавиши, сниппеты, ленивые команды", "go_pro_test.py"),
     ("PATH для git и автопроверка lazy", "env_path_test.py"),
     ("avante: сборка библиотек по тегу, откат на make", "avante_build_test.py"),
+    ("Noice и Mason Nix LSP", "noice_mason_test.py"),
     ("ИИ: запросы и адаптеры", "ai_api_test.py"),
     ("ИИ: curl и локальный HTTP-сервер", "ai_http_test.py"),
     ("CodeCompanion из lockfile (если задан CC_SOURCE)", "codecompanion_pinned_test.py"),

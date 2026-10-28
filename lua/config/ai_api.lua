@@ -169,9 +169,8 @@ function M.resolve(id)
     return nil, ("не задана модель: set -Ux %s \"имя-модели\" (fish)"):format(p.model_env or "AI_MODEL")
   end
   local proxy = p.proxy_env and vim.env[p.proxy_env] or nil
-  if proxy == "" then
-    proxy = nil
-  end
+  if not proxy or proxy == "" then proxy = vim.env.AI_PROXY end
+  if proxy == "" then proxy = nil end
   local insecure = p.insecure_env and (vim.env[p.insecure_env] or "") ~= "" and vim.env[p.insecure_env] ~= "0"
   return {
     id = id, label = p.label, base = base, key = key, model = model, local_ = p.local_,
@@ -211,6 +210,76 @@ local function http_error(code, body)
   return table.concat(parts, ": ")
 end
 
+-- Ни адресов с возможными токенами, ни stderr curl не показываем в сообщениях.
+local function network_error(code, id)
+  local hints = {
+    [5] = "не найден прокси: проверьте AI_PROXY/GEMINI_PROXY",
+    [6] = "не удалось разрешить имя сервера (DNS)",
+    [7] = "не удалось подключиться к серверу или прокси",
+    [28] = "истекло время ожидания; проверьте сеть, VPN и прокси; диагностика: <leader>AN",
+    [35] = "ошибка TLS-соединения; проверьте сеть и прокси",
+    [60] = "сертификат TLS не принят; проверьте сертификаты и прокси",
+  }
+  return ("сеть (%s, curl %s): %s"):format(id, tostring(code), hints[code] or "запрос не выполнен; диагностика: <leader>AN")
+end
+
+local function request_timeout(value)
+  local n = tonumber(value) or tonumber(vim.env.AI_TIMEOUT) or TIMEOUT
+  if n < 1 or n > 600 then return TIMEOUT end
+  return n
+end
+
+-- Параметры с возможными секретами передаём curl через stdin, не через argv.
+local function curl_config(key, proxy)
+  local lines = {}
+  local function quote(value)
+    if value:find("[\r\n]") then return nil end
+    return value:gsub("\\", "\\\\"):gsub('"', '\\"')
+  end
+  if proxy then
+    local escaped = quote(proxy)
+    if not escaped then return nil, "прокси содержит перевод строки" end
+    lines[#lines + 1] = 'proxy = "' .. escaped .. '"'
+  end
+  if key then
+    local escaped = quote(key)
+    if not escaped then return nil, "ключ содержит перевод строки" end
+    lines[#lines + 1] = 'header = "Authorization: Bearer ' .. escaped .. '"'
+  end
+  return #lines > 0 and table.concat(lines, "\n") .. "\n" or nil
+end
+
+-- Только проверка доступности /models без ключа и без кода пользователя.
+-- HTTP 401/403/404 означает лишь, что сервер ответил, а не что ИИ работает.
+function M.network_check()
+  local p, why = M.resolve()
+  if not p then return vim.notify("ИИ: " .. why, vim.log.levels.WARN) end
+  if vim.fn.executable("curl") == 0 then return vim.notify("ИИ: нет curl", vim.log.levels.ERROR) end
+  if p.base:match("^https?://[^/]*@") or p.base:find("[?#]") then
+    return vim.notify("ИИ: проверка отменена: адрес содержит учётные данные или параметры", vim.log.levels.WARN)
+  end
+  local stdin, config_err = curl_config(nil, p.proxy)
+  if config_err then return vim.notify("ИИ: " .. config_err, vim.log.levels.WARN) end
+  local sink = vim.fn.has("win32") == 1 and "NUL" or "/dev/null"
+  local args = { "curl", "-sS", "--max-time", "12", "-o", sink, "-w", "%{http_code}", p.base .. "/models" }
+  if stdin then vim.list_extend(args, { "-K", "-" }) end
+  if p.insecure then args[#args + 1] = "-k" end
+  vim.notify("Проверяю сеть ИИ (" .. p.id .. ") без отправки ключа и кода…", vim.log.levels.INFO)
+  local ok = pcall(vim.system, args, { text = true, stdin = stdin }, function(res)
+    vim.schedule(function()
+      local status = tonumber(vim.trim(res.stdout or ""))
+      if res.code ~= 0 then
+        return vim.notify("ИИ: " .. network_error(res.code, p.id), vim.log.levels.WARN)
+      end
+      if not status or status == 0 then
+        return vim.notify("ИИ: сервер не вернул HTTP-ответ (" .. p.id .. ")", vim.log.levels.WARN)
+      end
+      vim.notify(("ИИ: %s ответил HTTP %d. Это только проверка сети, не ключа и модели."):format(p.id, status), vim.log.levels.INFO)
+    end)
+  end)
+  if not ok then vim.notify("ИИ: не удалось запустить curl", vim.log.levels.ERROR) end
+end
+
 --- Один запрос chat/completions. cb(text|nil, причина|nil, провайдер|nil).
 --- opts: provider (id), json (bool — JSON-режим), temperature, timeout.
 function M.chat(messages, opts, cb)
@@ -235,30 +304,20 @@ function M.chat(messages, opts, cb)
     end)
   end
   local args = {
-    "curl", "-sS", "--max-time", tostring(opts.timeout or TIMEOUT),
+    "curl", "-sS", "--max-time", tostring(request_timeout(opts.timeout)),
     "-w", "\n%{http_code}",
     "-X", "POST", p.base .. "/chat/completions",
     "-H", "Content-Type: application/json",
     "-d", vim.json.encode(body),
   }
-  if p.proxy then
-    vim.list_extend(args, { "-x", p.proxy })
-  end
-  if p.insecure then
-    args[#args + 1] = "-k"
-  end
-  local stdin = nil
-  if p.key then
-    -- Заголовок с ключом уходит curl через stdin (-K -): ключ не виден в ps
-    args[#args + 1] = "-K"
-    args[#args + 1] = "-"
-    stdin = 'header = "Authorization: Bearer ' .. p.key .. '"\n'
-  end
+  if p.insecure then args[#args + 1] = "-k" end
+  local stdin, config_err = curl_config(p.key, p.proxy)
+  if config_err then return vim.schedule(function() cb(nil, config_err, p) end) end
+  if stdin then vim.list_extend(args, { "-K", "-" }) end
   local ok = pcall(vim.system, args, { text = true, stdin = stdin }, function(res)
     vim.schedule(function()
       if res.code ~= 0 then
-        local err = vim.trim(res.stderr or "")
-        return cb(nil, "сеть: " .. (err ~= "" and err or ("curl код " .. tostring(res.code))), p)
+        return cb(nil, network_error(res.code, p.id), p)
       end
       local out = res.stdout or ""
       local payload, code_s = out:match("^(.*)\n(%d%d%d)%s*$")
@@ -341,7 +400,7 @@ end
 
 --- Какой провайдер avante выбрать по умолчанию (имя из avante_providers или встроенное).
 function M.avante_default()
-  local id = vim.env.AI_PROVIDER
+  local id = M.active_id()
   if id and id ~= "" then
     if id == "gemini" or id == "openai" or id == "ollama" then
       return id
@@ -411,7 +470,7 @@ function M.pick()
     local r, why = M.resolve(p.id)
     if r then
       vim.notify(
-        ("ИИ: %s, модель %s. K и :AiAsk — сразу; для чатов задайте AI_PROVIDER и перезапустите Neovim")
+        ("ИИ: %s, модель %s. K и :AiAsk — сразу; ещё не загруженные чаты возьмут выбор. Для постоянного выбора задайте AI_PROVIDER")
           :format(r.label, r.model),
         vim.log.levels.INFO
       )
@@ -497,6 +556,7 @@ function M.setup()
   vim.api.nvim_create_user_command("AiStatus", function()
     M.float(" 🤖 ИИ-провайдеры ", M.status())
   end, { desc = "🤖 Какие ИИ настроены (ключи — только по именам переменных)" })
+  vim.api.nvim_create_user_command("AiCheck", M.network_check, { desc = "Проверить сеть ИИ без ключа и кода" })
   vim.api.nvim_create_user_command("AiAsk", function(o)
     if o.args == "" then
       return vim.ui.input({ prompt = "Вопрос ИИ: " }, function(q)
@@ -508,6 +568,7 @@ function M.setup()
     M.ask(o.args)
   end, { nargs = "*", desc = "🤖 Вопрос любому ИИ, ответ в окне" })
 
+  vim.keymap.set("n", "<leader>AN", M.network_check, { desc = "🌐 Проверить сеть выбранного ИИ" })
   vim.keymap.set("n", "<leader>Ap", M.pick, { desc = "🤖 Выбрать ИИ-провайдера (Groq, Gemini, OpenAI…)" })
   vim.keymap.set("n", "<leader>Aq", function()
     vim.cmd("AiAsk")

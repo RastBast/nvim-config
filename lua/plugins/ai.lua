@@ -19,22 +19,6 @@ local function openai_compat(name, label, url, key_env, model)
   end
 end
 
-local cc = AI.cc_adapter()
-local function cc_model()
-  local r = AI.resolve()
-  if r and AI.cc_map[r.id] == cc then
-    return r.model
-  end
-  return nil
-end
--- Таблица {name=...} без model в этой версии не разрешается как имя адаптера.
-local chat_adapter = cc
-local selected_model = cc_model()
-if selected_model then
-  chat_adapter = { name = cc, model = selected_model }
-end
-local groq_model = (AI.resolve("groq")) and AI.resolve("groq").model or "openai/gpt-oss-120b"
-
 return {
   {
     "olimorris/codecompanion.nvim",
@@ -59,10 +43,35 @@ return {
       { "<leader>Hae", ":CodeCompanion<cr>", desc = "📤 Отправить выделение ИИ", mode = { "n", "v" } },
       { "<leader>Hac", "<cmd>CodeCompanionCmd<cr>", desc = "✨ Команда в CodeCompanion", mode = { "n", "v" } },
     },
-    opts = {
+    opts = function()
+      local cc = AI.cc_adapter()
+      local function cc_model()
+        local r = AI.resolve()
+        if r and AI.cc_map[r.id] == cc then
+          return r.model
+        end
+        return nil
+      end
+      -- Таблица {name=...} без model в этой версии не разрешается как имя адаптера.
+      local chat_adapter = cc
+      local selected_model = cc_model()
+      if selected_model then
+        chat_adapter = { name = cc, model = selected_model }
+      end
+      local groq_model = (AI.resolve("groq")) and AI.resolve("groq").model or "openai/gpt-oss-120b"
+      return {
       adapters = {
         http = {
           -- Groq: OpenAI-совместимый API, ключ — переменная GROQ_API_KEY (fish: set -Ux GROQ_API_KEY "…")
+          gemini = function()
+            return require("codecompanion.adapters").extend("gemini", {
+              env = { api_key = function()
+                local scoped = vim.env.AVANTE_GEMINI_API_KEY
+                return scoped and scoped ~= "" and scoped or vim.env.GEMINI_API_KEY
+              end },
+              schema = { model = { default = vim.env.GEMINI_MODEL or "gemini-3.6-flash" } },
+            })
+          end,
           groq = openai_compat("groq", "Groq", "https://api.groq.com/openai/v1", "GROQ_API_KEY", groq_model),
           kimi = openai_compat("kimi", "Kimi", "https://api.moonshot.ai/v1", "MOONSHOT_API_KEY", vim.env.MOONSHOT_MODEL or "moonshot-v1-8k"),
           openrouter = openai_compat("openrouter", "OpenRouter", "https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", vim.env.OPENROUTER_MODEL or "openrouter/free"),
@@ -109,7 +118,8 @@ return {
           },
         },
       },
-    },
+      }
+    end,
   },
 
   -- Красивый diff для изменений, которые предлагает ИИ

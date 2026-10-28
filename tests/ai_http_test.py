@@ -22,6 +22,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(raw)))
         self.end_headers()
         self.wfile.write(raw)
+    def do_GET(self):
+        requests_seen.append((self.path, self.headers.get('Authorization'), None))
+        self.send_response(401)
+        self.end_headers()
     def log_message(self, *_):
         pass
 
@@ -57,6 +61,8 @@ try:
 vim.env.AI_PROVIDER = 'custom'; vim.env.AI_API_KEY = 'test-key'; vim.env.AI_MODEL = 'local-model'
 vim.env.AI_BASE_URL = BASE .. '/v1'
 vim.fn.executable = function() return 1 end
+vim.fn.has = function() return 0 end
+vim.list_extend = function(dst, src) for _, v in ipairs(src) do dst[#dst+1] = v end; return dst end
 vim.json = { encode = PY_ENCODE, decode = PY_DECODE }
 vim.system = PY_SYSTEM
 local ai = require('config.ai_api')
@@ -66,11 +72,15 @@ assert(result == 'local answer' and failure == nil)
 vim.env.AI_BASE_URL = BASE .. '/unauthorized/v1'
 ai.chat({{role='user', content='test question'}}, {}, function(a,b) result,failure=a,b end)
 assert(result == nil and failure:find('HTTP 401',1,true) and failure:find('denied',1,true))
+vim.env.AI_BASE_URL = BASE .. '/v1'
+ai.network_check()
+assert(NOTES[#NOTES].msg:find('HTTP 401', 1, true))
 ''')
     assert requests_seen[0][0] == '/v1/chat/completions'
     assert requests_seen[0][1] == 'Bearer test-key'
     assert requests_seen[0][2]['model'] == 'local-model'
     assert requests_seen[0][2]['messages'][0]['content'] == 'test question'
+    assert requests_seen[2][0] == '/v1/models' and requests_seen[2][1] is None
     print('OK: реальный curl, локальный HTTP, тело запроса, ключ, ответ 200 и ошибка 401')
 finally:
     server.shutdown()

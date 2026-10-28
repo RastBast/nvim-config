@@ -59,7 +59,8 @@ M.list = {
   { ft = "r", parser = "r", toolchain = { "r_language_server" }, fmt = { "styler" } },
   { ft = "julia", parser = "julia", toolchain = { "julials" }, fmt = { "runic" } },
   { ft = "terraform", parser = "terraform", lsp = { "terraformls" }, fmt = { "terraform_fmt" } },
-  { ft = "nix", parser = "nix", lsp = { "nil_ls" }, fmt = { "nixfmt" } },
+  -- nil собирается в Mason из исходников через cargo: используем установленный системно nil.
+  { ft = "nix", parser = "nix", toolchain = { "nil_ls" }, fmt = { "nixfmt" } },
   { ft = "vue", parser = "vue", lsp = { "vue_ls" }, fmt = { "prettier" } },
   { ft = "svelte", parser = "svelte", lsp = { "svelte" }, fmt = { "prettier" } },
   { ft = "graphql", parser = "graphql", lsp = { "graphql" }, fmt = { "prettier" } },
