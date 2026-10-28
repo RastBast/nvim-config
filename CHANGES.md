@@ -1,5 +1,13 @@
 # Что исправлено в конфиге (2026-08-30)
 
+## 2026-10-28 · Ошибка «Failed to spawn process git» в lazy.nvim
+
+- **Причина шума:** автопроверка lazy (`checker`) при каждом старте делала `git fetch` для всех ~120 плагинов. Без git в PATH каждый вызов падал.
+- **Сделано:** `checker.enabled = false` в `init.lua`. Обновления — вручную через `:Lazy update` / `:Lazy sync`.
+- **Понятное сообщение:** если git не найден даже после починки PATH (`lua/config/env_path.lua`), выводится одно сообщение ERROR «Нет git» с командами установки вместо сотни ошибок.
+- **Проверено:** `tests/env_path_test.py` (16 проверок): дописывание PATH, порядок, идемпотентность, наличие/отсутствие git, отсутствие автопроверки. Реальный macOS в sandbox недоступен: поведение на Mac нужно подтвердить командами `which git` и `:EnvCheck`.
+- **Документация:** строка в таблице неполадок DOCS.md.
+
 ## 2026-10-28 · Go PRO: как в VS Code и GoLand
 
 - **Новые клавиши** (`lua/config/go_pro.lua`): `<leader>gh` подсказки типов и параметров (inlay hints, по умолчанию выкл.), `<leader>gL` codelens над функцией, `<leader>gR` тест с `-race` (в тесте — только он), `<leader>gB` бенчмарк функции, `<leader>gc` покрытие, `<leader>gG` escape analysis, `<leader>gp` outline пакета, `<leader>gS` заполнить case'ы switch, `<leader>gE` заполнить return, `<leader>gM` go mod tidy, `<leader>gn` go generate, `<leader>gA` тесты для всех функций файла, `<leader>gV` go vet, `<leader>gH` / `<leader>gO` кто вызывает / что вызывает (call hierarchy), `<leader>gJ` JSON → struct (визуал).

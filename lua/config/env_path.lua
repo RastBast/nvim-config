@@ -63,6 +63,22 @@ function M.setup()
   end
 
   M.added = added
+
+  -- git не найден даже после починки PATH: одно понятное сообщение вместо
+  -- сотни «Failed to spawn process git» в :Lazy.
+  M.git_missing = vim.fn.executable("git") ~= 1
+  if M.git_missing then
+    vim.schedule(function()
+      vim.notify(
+        "git не найден: lazy.nvim не сможет ставить и обновлять плагины.\n"
+          .. "Установи: xcode-select --install   или   brew install git\n"
+          .. "Потом перезапусти nvim и выполни :EnvCheck",
+        vim.log.levels.ERROR,
+        { title = "Нет git" }
+      )
+    end)
+  end
+
   return added
 end
 

@@ -108,7 +108,10 @@ vim.opt.rtp:prepend(lazypath)
 
 -- Загружаем все плагины из папки ~/.config/nvim/lua/plugins/
 require("lazy").setup("plugins", {
-  checker = { enabled = true, notify = false },   -- не дёргать уведомлениями
+  -- Автопроверка обновлений при старте = `git fetch` для КАЖДОГО плагина.
+  -- Выключена: без git это давало ~120 ошибок «Failed to spawn process git».
+  -- Обновлять вручную: :Lazy update / :Lazy sync. Диагностика: :EnvCheck.
+  checker = { enabled = false, notify = false },
   change_detection = { notify = false },
   install = { colorscheme = { "catppuccin-mocha", "habamax" } },
   performance = {
