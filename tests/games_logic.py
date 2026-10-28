@@ -7,7 +7,9 @@
 import os
 import sys
 
-import lupa
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lupa  # noqa: F401 (проверка наличия; рантайм — в _lua)
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 
@@ -21,7 +23,9 @@ vim.keymap = vim.keymap or { set = function() end }
 
 
 def lua_runtime():
-    lua = lupa.LuaRuntime(unpack_returned_tuples=True)
+    import _lua
+    lua, _kind = _lua.runtime()
+    print('Lua runtime:', _kind)
     lua.execute('package.path = "%s/lua/?.lua;%s/lua/?/init.lua;" .. package.path' % (ROOT, ROOT))
     lua.execute(STUB)
     return lua

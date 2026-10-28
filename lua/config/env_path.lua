@@ -63,6 +63,22 @@ function M.setup()
   end
 
   M.added = added
+
+  -- git не найден даже после починки PATH: одно понятное сообщение вместо
+  -- сотни «Failed to spawn process git» в :Lazy.
+  M.git_missing = vim.fn.executable("git") ~= 1
+  if M.git_missing then
+    vim.schedule(function()
+      vim.notify(
+        "git не найден: lazy.nvim не сможет ставить и обновлять плагины.\n"
+          .. "Установи: xcode-select --install   или   brew install git\n"
+          .. "Потом перезапусти nvim и выполни :EnvCheck",
+        vim.log.levels.ERROR,
+        { title = "Нет git" }
+      )
+    end)
+  end
+
   return added
 end
 
@@ -81,6 +97,20 @@ function M.check()
   if M.added and #M.added > 0 then
     lines[#lines + 1] = "добавлено конфигом: " .. table.concat(M.added, ", ")
   end
+
+  -- avante: нативная библиотека для чата и подсказок (см. config/avante_build.lua)
+  local okB, B = pcall(require, "config.avante_build")
+  if okB then
+    local dir = vim.fn.stdpath("data") .. "/lazy/avante.nvim"
+    lines[#lines + 1] = " "
+    if vim.fn.isdirectory(dir) == 0 then
+      lines[#lines + 1] = "avante: плагин не установлен (:Lazy sync)"
+    else
+      lines[#lines + 1] = "avante " .. B.TAG .. ": " .. (B.is_built(dir) and "библиотека ЕСТЬ" or "библиотеки НЕТ, выполни :AvanteRebuild")
+      lines[#lines + 1] = "  файл: " .. B.lib_file(dir)
+    end
+  end
+
   vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "Проверка окружения" })
 end
 

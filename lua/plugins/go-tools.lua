@@ -29,6 +29,9 @@ return {
       "GoBuild", "GoTest", "GoTestFunc", "GoTestFile", "GoTestPkg",
       "GoLint", "GoVulnCheck", "GoMockGen", "GoIfErr", "GoImpl",
       "GoAddTag", "GoFillStruct", "GoJson2Struct",
+      -- go_pro.lua (клавиши gc gM gn gS gE gG gp gA):
+      "GoCoverage", "GoModTidy", "GoGenerate", "GoFillSwitch", "GoGenReturn",
+      "GoGCDetails", "GoPkgOutline", "GoAddAllTest",
     },
     build = ':lua require("go.install").update_all_sync()',
     config = function()

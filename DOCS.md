@@ -152,7 +152,7 @@ lua/
 │   ├── languages.lua        — единый список языков (45): LSP, treesitter, форматтеры
 │   ├── termcmd.lua          — запуск TUI (k9s, lazydocker, gh dash…) в плавающем терминале
 │   ├── webtools.lua         — GitHub (gh dash), GitLab (glab-tui), Хабр (:Habr)
-│   ├── themes.lua           — 7 тем (2 на catppuccin + 5 полных схем), :Theme, <leader>uT
+│   ├── themes.lua           — 8 тем (2 на catppuccin + 5 оригинальных схем + Halloween), :Theme, <leader>uT
 │   ├── cmd_palette.lua      — палитра команд <leader><Space> (все :команды с описанием)
 │   ├── browser_ask.lua      — запрос в Firefox: <leader>Ab, :Ask
 │   ├── ru_util.lua          — переводчики (DeepL через DEEPL_API_KEY), :RuCheck
@@ -501,7 +501,8 @@ lua/
 | `<leader>uo` | 😴 Питомец: сон | `pets` |
 | `<leader>up` | 🐾 Питомец: меню «выбрать и призвать» (вид, окрас, имя) | `pets` |
 | `<leader>ug` / `uy` / `ut` / `uG` | 🐹 гофер Харек / 🐱 нян-кот / 🍞 тостер / 👻 призрак (мемы) | `pets` |
-| `<leader>uT` | 🎨 Выбрать тему (7 штук: новая, старая и 5 полных схем) | `themes` |
+| `<leader>uP` | 🎃 Тыква (хэллоуин-питомец) | `pets` |
+| `<leader>uT` | 🎨 Выбрать тему (8 штук: новая, старая, 5 оригинальных схем и Halloween) | `themes` |
 | `<leader>ux` | 💀 Убрать питомцев | `pets` |
 | `<leader>w` | Сохранить | `keymaps` |
 | `<leader>Wc` | 💻 Фокус: файл (код) | `winnav` |
@@ -572,10 +573,11 @@ lua/
 
 | Клавиша | Режим | Что делает | Где задано |
 |---|---|---|---|
-| `b` | n, o, x | Умное b (подслова) | `spider` |
+| `q` | n, o, x | Назад к началу слова (подслова) | `spider` (бывш. `b`) |
+| `b` | n | Запись макроса (старт/стоп) | нативная `q`, переназначена на `b` |
 | `e` | n, o, x | Умное e (подслова) | `spider` |
 | `ge` | n, o, x | Умное ge (подслова) | `spider` |
-| `s` | n, o, x | Прыжок | `flash` |
+| `gs` | n, o, x | Прыжок flash (метки). Раньше был `s` — теперь `s` отдан окружениям | `flash` |
 | `w` | n, o, x | Умное w (подслова) | `spider` |
 | `[[` | n, t | Предыдущее слово | `snacks` |
 | `]]` | n, t | Следующее слово | `snacks` |
@@ -1080,6 +1082,7 @@ Quickfix по JSON/SQL — `nvim-jqx` (`<leader>jq`, `<leader>jx` — для JSO
 | «docker.vim: doesn't support neovim» | Плагин Vim-only — **удалён** из конфига. Если ошибка осталая — `rm -rf ~/.local/share/nvim/lazy/docker.vim` |
 | Ошибки/подсказки LSP по-русски | Из коробки: `diag_ru.lua` — ошибки при наборе (Go/Docker/SQL/proto/Lua…), `hover_ru.lua` — подсказка `K` (код не трогается), `notify_ru.lua` — уведомления и вывод сборок (`<leader>HGb`, lint), окно документации автодополнения — через `cmp.entry.get_documentation`. Кеш переводов — файл `stdpath("cache")/ru_cache.json`, переживает перезапуск; первый показ: notify ждёт перевод до 0.7 с (обычно успевает — сразу русский), диагностика — до 2.5 с; кеш греется и переживает перезапуск. Выкл: `:DiagRu off`, `:HoverRu off`, `:NotifyRu off` |
 | Плагин «Failed: checkout/clone» | Почти всегда битый кеш: `:Lazy restore <имя>` или `rm -rf` папки + `:Lazy sync` |
+| `Failed to spawn process git` на всех плагинах в `:Lazy` | nvim не находит `git` в PATH. Конфиг сам добавляет `/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin`, mason. Если git так и не найден — появится одно сообщение «Нет git». Лечение: `xcode-select --install` или `brew install git`, перезапуск nvim, `:EnvCheck` (путь git и PATH). Автопроверка обновлений при старте выключена (`checker.enabled = false`), поэтому ошибок больше не сыплется; обновлять вручную: `:Lazy update` |
 | `famiu/bufdelete.nvim`, `stevearc/dressing.nvim` | **Удалены из конфига** (заменены snacks). Записи в `lazy-lock.json` могут остаться — не мешают; `:Lazy clean` удалит папки |
 | `failed to install cmake` (mason-lspconfig) | Пакет `cmake-language-server` ставится из PyPI и **не поддерживает Python 3.14+**. Конфиг переведён на `neocmake` (бинарник neocmakelsp из GitHub). Если старый пакет остался: `:MasonUninstall cmake-language-server`, затем `:MasonInstall neocmakelsp`. Подробности — `:MasonLog` |
 | Любой `failed to install …` для серверов из PyPI | Причина почти всегда в версии Python на машине. Смотри `:MasonLog`. Лечение: поставить Python 3.13 (`brew install python@3.13`) или заменить сервер (как с cmake) |
@@ -1453,8 +1456,8 @@ require("config.streak").setup({
 | `H` | В начало строки (первый непробельный символ). В визуальном режиме растягивает выделение |
 | `L` | В конец строки. В визуальном режиме растягивает выделение |
 | `n` / `N` | Следующее / предыдущее совпадение поиска; строка сразу центрируется на экране |
-| `s` | Прыжок flash: нажми `s`, набери 1–2 символа, выбери метку |
-| `b` / `e` / `ge` | «Умные» слова (spider): учитывают подслова CamelCase и snake_case |
+| `gs` | Прыжок flash: нажми `gs`, набери 1–2 символа, выбери метку. `s` — префикс окружений (`sa`, `sd`, `sr`…) |
+| `q` / `e` / `ge` | «Умные» слова (spider): учитывают подслова CamelCase и snake_case (назад — `q`, бывш. `b`) |
 | `<M-H>` / `<M-L>` | Переставить слово влево / вправо (move.nvim) |
 | `<M-j>` / `<M-k>` | Перенести строку вниз / вверх (в визуальном — блок) |
 | `<C-d>` / `<C-u>` | Полстраницы вниз / вверх, плавно (neoscroll, дефолтные клавиши плагина) |
@@ -1525,7 +1528,7 @@ require("config.streak").setup({
 
 Префиксы сервиса в запросе: `P=текст` или `?P=текст` — Perplexity, `G=текст` или `?G=текст` — Google, `D=` — DuckDuckGo, `C=` — ChatGPT. Без префикса — сервис по умолчанию (Perplexity).
 
-### Темы (7 штук)
+### Темы (8 штук)
 
 | В меню | Имя для `:Theme` | Основа | Плагин |
 |---|---|---|---|
@@ -1536,15 +1539,18 @@ require("config.streak").setup({
 | 🌊 Kanagawa (wave) | `kanagawa` | схема `kanagawa-wave` | `rebelot/kanagawa.nvim` |
 | 🌙 Rosé Pine (moon) | `rosepine` | схема `rose-pine-moon` | `rose-pine/neovim` |
 | 🟦 Carbonfox | `carbonfox` | схема `carbonfox` | `EdenEast/nightfox.nvim` |
+| 🎃 Halloween | `halloween` | catppuccin-mocha + палитра Halloween: чёрный фон, оранжевые ключевые слова, фиолетовые комментарии; эффекты в терминале — §45 | `catppuccin/nvim` |
 
 | Клавиша / команда | Что делает |
 |---|---|
-| `<leader>uT` | 🎨 Меню из 7 тем |
+| `<leader>uT` | 🎨 Меню из 8 тем |
 | `:Theme <имя>` | Включить тему сразу, например `:Theme tokyonight` |
 | `:Theme` | То же меню, что `<leader>uT` |
 
 * Выбор сохраняется в `stdpath("state")/theme.txt` и применяется при старте.
 * Пять полных схем — отдельные плагины с `lazy = true`: они грузятся при первом выборе и не замедляют старт.
+* Пять оригинальных схем (Tokyo Night, Gruvbox, Kanagawa, Rosé Pine, Carbonfox) — в их собственном стиле, с их цветами и фоном. Фон `#000000` — только у «Новой», «Старой» и Halloween.
+* Тема включается сразу при старте nvim, без `VimEnter`: `themes.setup()` вызывается в `init.lua` после `lazy.setup`, а у полных схем стоит `priority = 1000`.
   На новой машине первый раз — `:Lazy sync`. Если схема не загрузилась, появится ERROR с этой подсказкой.
 * Фон у всех тем принудительно чёрный `#000000` (требование пользователя); остальные цвета — из самой схемы.
 * «Новая» и «Старая» — оверлеи подсветки поверх catppuccin, сохранены как были.
@@ -1594,7 +1600,7 @@ require("config.streak").setup({
 | `:StreakHour` | 🔥 во сколько МСК день считается законченным | `streak.lua` |
 | `:StreakNotify` | 🔥 сообщения о огоньках | `streak.lua` |
 | `:StreakRepo` | 🔥 вручную добавить репозиторий (обычно не нужно: находит сам) | `streak.lua` |
-| `:Theme` | Выбрать тему: new \| classic \| tokyonight \| gruvbox \| kanagawa \| rosepine \| carbonfox (без аргумента — меню) | `themes.lua` |
+| `:Theme` | Выбрать тему: new \| classic \| tokyonight \| gruvbox \| kanagawa \| rosepine \| carbonfox \| halloween (без аргумента — меню) | `themes.lua` |
 | `:Tui` | 🧰 Меню TUI-утилит | `tui_tools.lua` |
 | `:TuiCheck` | 🩺 Проверка TUI-утилит | `tui_tools.lua` |
 | `:Tele` | ✈ tele: full \| panel \| chat \| <имя чата> | `telegram.lua` |
@@ -1658,7 +1664,7 @@ require("config.streak").setup({
 | `sindrets/diffview.nvim` | Сравнение веток и коммитов, история файла | diffview.lua | **нет** |
 | `ekalinin/Dockerfile.vim` | Подсветка и типы Dockerfile | docker-cli.lua | да |
 | `j-hui/fidget.nvim` | Прогресс работы LSP в углу экрана | fidget.lua | да |
-| `folke/flash.nvim` | Быстрые прыжки по видимому тексту (s) | flash.lua | да |
+| `folke/flash.nvim` | Быстрые прыжки по видимому тексту (gs) | flash.lua | да |
 | `willothy/flatten.nvim` | Открывает файлы из вложенного nvim в текущем окне | flatten.lua | **нет** |
 | `rafamadriz/friendly-snippets` | Готовые сниппеты для многих языков | completions.lua | **нет** |
 | `akinsho/git-conflict.nvim` | Разрешение git-конфликтов (своё / чужое / оба) | git-conflict.lua | **нет** |
@@ -1718,7 +1724,7 @@ require("config.streak").setup({
 | `rcarriga/nvim-notify` | Всплывающие уведомления | noice.lua, notify.lua | да |
 | `michaelrommel/nvim-silicon` | Красивый PNG-скриншот кода (нужен silicon), <leader>sc | silicon.lua | да |
 | `nvim-pack/nvim-spectre` | Поиск и замена по проекту | spectre.lua | да |
-| `chrisgrieser/nvim-spider` | Умные w / e / b / ge по подсловам (CamelCase, snake_case) | spider.lua | **нет** |
+| `chrisgrieser/nvim-spider` | Умные w / e / q / ge по подсловам (CamelCase, snake_case) | spider.lua | **нет** |
 | `KadoBOT/nvim-spotify` | Управление Spotify из Neovim | spotify.lua | да |
 | `nvim-tree/nvim-tree.lua` | Дерево файлов | nvim-tree.lua | да |
 | `nvim-treesitter/nvim-treesitter` | Подсветка и разбор кода по дереву (parsers) | aerial.lua, ai.lua, avante.lua, go-tools.lua, markdown.lua, neotest.lua, treesitter.lua, ts-context.lua | да |
@@ -1868,6 +1874,66 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 Ограничения: в sandbox нет `go` и `gotests`, поэтому генерацию проверили тестами
 на фиктивных узлах treesitter, а не на настоящем Go-файле. Перед использованием
 сгенерируй тест и проверь `go test ./...` на Mac.
+
+### Go PRO: как в VS Code и GoLand (`lua/config/go_pro.lua`)
+
+Что уже было до этого раздела: меню `<leader>gi` (Alt+Enter), тесты и покрытие через go.nvim,
+формочка struct и автодополнение полей, `if err`, интерфейсы, теги struct, русские сниппеты,
+отладка тестов (`<leader>dt`), `gopls` с gofumpt и staticcheck, переименование, references,
+реализации, извлечение в функцию. Ниже добавлено то, чего не хватало.
+
+| Клавиша | Что делает | Как работает |
+|---|---|---|
+| `<leader>gh` | Подсказки типов и параметров (inlay hints) вкл/выкл | `gopls` показывает типы переменных, имена параметров, поля struct-литералов. По умолчанию выключены — включаются клавишей |
+| `<leader>gL` | Codelens под курсором | «run test», «debug test», generate, tidy: то, что VS Code показывает над функциями. Строки-подсказки gopls выводит сам |
+| `<leader>gR` | Тест с `-race` | Внутри `TestXxx` — только этот тест. В другом месте — весь пакет. Вывод в плавающем терминале |
+| `<leader>gB` | Бенчмарк функции | Курсор внутри `BenchmarkXxx`: `-bench` с `-benchmem`, обычные тесты отключены |
+| `<leader>gc` | Покрытие тестов в буфере | go.nvim `:GoCoverage`: покрытые и непокрытые строки |
+| `<leader>gG` | Escape analysis | `-gcflags=-m`: какие переменные уходят в кучу. Помогает найти лишние аллокации |
+| `<leader>gp` | Структура пакета (outline) | go.nvim `:GoPkgOutline`: функции, типы, методы с переходом |
+| `<leader>gS` | Заполнить case'ы switch | Курсор на switch: добавляет case для констант или типов (`:GoFillSwitch`) |
+| `<leader>gE` | Заполнить return | Курсор в функции: return с нулевыми значениями под сигнатуру (`:GoGenReturn`) |
+| `<leader>gM` | `go mod tidy` | `:GoModTidy` |
+| `<leader>gn` | `go generate` | `:GoGenerate` для пакета |
+| `<leader>gA` | Тесты для всех функций файла | `:GoAddAllTest` через gotests |
+| `<leader>gV` | `go vet ./...` | Из папки файла, плавающий терминал |
+| `<leader>gH` | Кто вызывает функцию | Call hierarchy gopls: список мест вызова с переходом |
+| `<leader>gO` | Что вызывает функция | Call hierarchy gopls: вызываемые функции |
+| `<leader>gJ` (визуал) | JSON → struct | Выдели JSON, введи имя типа: struct с json-тегами (`:GoJson2Struct`) |
+
+В меню `<leader>gi` добавлены те же действия и ещё: inline переменной (`refactor.inline`),
+полный список рефакторингов gopls. Все клавиши видны в `<leader>?` (группа Go).
+
+**Сниппеты** (`lua/config/go_snips.lua`, в автодополнении с русским описанием):
+
+| Триггер | Что вставляет |
+|---|---|
+| `gtt` | Table-driven тест: срез кейсов и `t.Run` |
+| `gbench` | `BenchmarkX(b *testing.B)` с `for range b.N` |
+| `gexample` | `ExampleX` с блоком `// Output:` |
+| `gerrs` | `errors.As`: достать конкретный тип ошибки |
+| `ggo` | Горутина на каждый элемент и `sync.WaitGroup` |
+| `gmu` | Struct с `sync.Mutex` и методом под блокировкой |
+| `gctx` | Функция с `context.Context` и проверкой отмены |
+| `gselect` | `select` с таймаутом и отменой контекста |
+| `gfor` | `for range` с индексом и значением |
+| `gswitch` | Type switch с `case` и `default` |
+| `gdefer` | `defer` с закрытием ресурса без потери ошибки Close (нужен именованный `err`) |
+| `glog` | Структурированный лог `log/slog` в JSON |
+| `gjson` | Struct с json-тегами (`omitempty` у поля name) |
+| `ghttp` | HTTP-обработчик `(w http.ResponseWriter, r *http.Request)` |
+
+**Настройки gopls** (`lua/plugins/lsp-config.lua`): подсказки (`hints`), codelens (`test`, `generate`,
+`tidy`, `vendor`, `run_govulncheck`), анализаторы `shadow` и `unusedwrite`, `hoverKind = "FullDocumentation"`.
+Старые настройки (gofumpt, staticcheck, автодополнение импортов) сохранены.
+
+**Ленивая загрузка.** go.nvim грузится при первом вызове `:Go…`. Все команды, которые вызывают новые
+клавиши, перечислены в `cmd = {…}` в `lua/plugins/go-tools.lua`. Тест `tests/go_pro_test.py` проверяет,
+что каждая такая команда там есть (иначе будет `E492`).
+
+**Ограничения.** В sandbox нет `go`, `gopls` и `gotests`, поэтому проверены логика сборки команд,
+регистрация клавиш, сниппеты и соответствие именам команд закреплённой версии go.nvim (5c741a2).
+Реальный запуск проверьте на Mac: `go version`, открыть `.go`, нажать `<leader>gh`, `<leader>gR` в тесте.
 
 ## 29. PostgreSQL и другие базы (SQL)
 
@@ -2457,7 +2523,7 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 
 Все клавиши из справки `<leader>?` и клавиши баз данных. Таблица — по группам, с описаниями. Клавиша с `<leader>` — пробел. Режим: `n` обычный, `v` / `x` визуальный, `i` вставка, `t` терминал.
 
-Всего записей справки: **452** (из них клавиши баз данных — 36; 416 остальные: 405 из `lua/config/keydocs/g1…g12` и 11 зеркал `<leader>HU…` из `tui_tools.lua`).
+Точное число записей справки меняется при добавлении клавиш; смотрите его в `<leader>?` (источник — `lua/config/keydocs/g1…g12.lua`).
 
 ### Игры, картинки, питомцы, история, выравнивание, sudo — 27
 
@@ -2542,7 +2608,7 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 | `<leader>Gl` | n | GitLab: glab-tui | Открывает GitLab TUI (merge requests и issues) в плавающем терминале. Нужны glab (brew install glab, glab auth login) и установленный glab-tui (https://github.com/rcieri/glab-tui). Имя утилиты меняется в lua/config/webtools.lua (GITLAB_BIN), можно вернуть gitlab-tui. |
 | `<leader>Gb` | n | Хабр: читать статьи | Список свежих статей Хабра из RSS. Выбор статьи открывает её во вкладке Neovim: заголовок, автор, дата и текст. q — закрыть вкладку, o — открыть в браузере. Команда: :Habr. Текст берётся через JSON API Хабра; если установлен pandoc, разметка аккуратнее. |
 | `<leader>Ab` | n | Спросить в Firefox | Спрашивает запрос в Neovim и открывает Firefox с ответом (по умолчанию Perplexity, сервис меняется в lua/config/browser_ask.lua). В визуальном режиме подставляет выделенный текст. Команда: :Ask текст. |
-| `<leader>uT` | n | Выбрать тему (7 штук) | Меню из 7 цветовых тем: «Новая» (чёрный фон, яркая палитра) и «Старая» (прежние цвета) на catppuccin, плюс 5 полных схем — Tokyo Night, Gruvbox, Kanagawa, Rosé Pine, Carbonfox. Фон у всех чёрный #000000. Полные схемы грузятся при первом выборе. Выбор сохраняется между запусками. То же без меню: :Theme <имя>. |
+| `<leader>uT` | n | Выбрать тему (8 штук) | Меню из 8 цветовых тем: «Новая» (чёрный фон, яркая палитра) и «Старая» (прежние цвета) на catppuccin, 5 оригинальных схем — Tokyo Night, Gruvbox, Kanagawa, Rosé Pine, Carbonfox (в их собственном стиле и фоне), и Halloween (чёрный фон, оранжевое и фиолетовое). Фон «Новой», «Старой» и Halloween — чёрный #000000. Полные схемы грузятся при первом выборе. Выбор сохраняется между запусками. То же без меню: :Theme <имя>. |
 
 ### Плагины и инструменты — 72
 
@@ -2782,7 +2848,8 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 | `<C-n>` | n | Несколько курсоров: слово | visual-multi: выделяет следующее совпадение слова под курсором. Повторное нажатие — следующее. Работает и в визуальном режиме. |
 | `w` | n | Умное w (подсловами) | spider: переход к следующему «слову» с учётом CamelCase и snake_case (обычное w — только по пробелам). |
 | `e` | n | Умное e (подсловами) | spider: конец следующего «слова» с учётом CamelCase и snake_case. |
-| `b` | n | Умное b (подсловами) | spider: начало предыдущего «слова» с учётом CamelCase и snake_case. |
+| `q` | n | Назад к началу слова (подсловами) | spider: начало предыдущего «слова» с учётом CamelCase и snake_case. Раньше было на `b`. |
+| `b` | n | Запись макроса | Старт/стоп записи (нативная `q`, переназначена на `b`). |
 | `ge` | n | Умное ge (подсловами) | spider: конец предыдущего «слова» с учётом CamelCase и snake_case. |
 
 ### Клавиши, найденные аудитом (заданы в плагинах) — 40
@@ -2970,3 +3037,96 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 | `]b` | n | Следующая вкладка (буфер) | Переход к следующему буферу — к следующей вкладке в bufferline. |
 | `[b` | n | Предыдущая вкладка (буфер) | Переход к предыдущему буферу — к предыдущей вкладке в bufferline. |
 | `<leader><Space>` | n | Палитра команд | Список всех пользовательских команд `:Имя` с описанием. Без аргументов — запуск сразу; с аргументами — подстановка `:Имя ` в строку. Новые команды появляются сами. |
+
+---
+
+## 45. Хэллоуин, markdown, avante и клавиши переехали (2026-10-28)
+
+### Клавиши, которые поменялись
+
+| Клавиша | Режим | Что теперь | Было |
+|---|---|---|---|
+| `gs` | n, o, x | Прыжок flash: метки на видимом тексте | `s` (конфликтовал с окружениями) |
+| `s` | n | Префикс окружений mini.surround: `sa` добавить, `sd` удалить, `sr` заменить, `sf`/`sF` найти вправо/влево, `sh` подсветить, `sn` обновить количество строк | прыжок flash |
+| `q` | n, o, x | Назад к началу предыдущего слова (spider, по подсловам) | `b` |
+| `b` | n | Запись макроса: старт / стоп (нативная `q`, переназначена на `b`) | назад к слову (spider) |
+| `<leader>uH` | n | 🎃 Оверлей Хэллоуина вкл / выкл (летучие мыши над экраном, тема, тыква в строке состояния) | окно-анимация |
+| `<leader>uHw` | n | 🎃 Окно-анимация «ночь»: летучие мыши и призрак. Закрыть — `q` или `Esc` | — |
+| `<leader>uP` | n | 🎃 Тыква — питомец (хэллоуин) | — |
+| `<leader>mL` | n | 📖 Markdown: live-превью в браузере на чистом python3 (без Node) | — |
+| `<leader>mT` | n | 📑 Markdown: оглавление (`:Toc`) | — |
+| `<leader>mE` | n | 📐 Markdown: выровнять таблицу (`:TableFormat`) | — |
+
+* В нормальном режиме `b` вызывает нативную `q` (`remap = false`). Старт записи — `b` и имя регистра, стоп — `b`.
+* В операторном режиме `db` / `cb` — нативный `b` Vim (по пробелам). Умный back теперь — `dq` / `cq`.
+* Проверьте после обновления: запись `b a …  b` останавливается, а `@a` воспроизводит макрос. Если стоп ведёт себя иначе — сообщите, поправим маппинг.
+* `<leader>uH` и `<leader>uHw` начинаются одинаково. Поэтому `<leader>uH` срабатывает после паузы `timeoutlen` (в конфиге не менялся, по умолчанию Neovim ждёт 1 с). Если пауза мешает — клавишу окна можно переназначить (например, на `<leader>uW`).
+
+### Окружения (`s…`) и прыжки (`gs`)
+
+Раньше `s` был прыжком flash, а `sa` / `sd` / `sr` (mini.surround) ждали второй символ, и nvim «зависал». Решение: прыжок переехал на `gs`, окружения остались на `s`.
+
+* `saiw"` — обернуть слово в кавычки; в визуальном режиме — обернуть выделение.
+* `sd"` — убрать кавычки; `sr"'` — заменить кавычки на одинарные.
+* `sf` / `sF` — найти окружение вправо / влево; `sh` — подсветить его; `sn` — обновить число строк поиска.
+
+### Markdown: пять инструментов
+
+| Что | Клавиши / команды | Что делает | Плагин |
+|---|---|---|---|
+| Вид в терминале | (автоматически в `.md`) | Заголовки с цифрами ❶❷❸, списки, таблицы, блоки кода, чекбоксы ☐ / ☑ | `MeanderingProgrammer/render-markdown.nvim` |
+| Live-превью в браузере (python3) | `<leader>mL`, `:MdPreview`, `:MdPreviewStop`, `:MdPreviewStatus` | Локальный сервер на `127.0.0.1:45771`. Страница обновляется на лету, в том числе по несохранённому тексту. Браузер открывается сам | `lua/config/md_preview.lua` (без внешних плагинов) |
+| Предпросмотр через Node | `<leader>mv` (вкл / выкл), `<leader>mV` (открыть) | Альтернативный предпросмотр, нужен Node.js | `iamcco/markdown-preview.nvim` |
+| Оглавление | `<leader>mT`, `:Toc` | Окно оглавления с переходом по разделам | `preservim/vim-markdown` |
+| Выровнять таблицу | `<leader>mE`, `:TableFormat` | Выравнивает колонки таблицы под курсором | `godlygeek/tabular` |
+| Фолдинг и переходы | `za`, `zc`, `zo`, `zR`, `zM`; `]]`, `[[` | Сворачивание разделов по `#`, `##`; переход к следующему / предыдущему заголовку | `preservim/vim-markdown` |
+
+* Live-превью (`<leader>mL`) не требует Node и интернета: HTML рисует сам сервер, `python3` — единственная зависимость. Диагностика: `:MdPreviewStatus`.
+* Предпросмотр на localhost вашего Mac — наружу не выставляется (`mkdp_open_to_the_world = 0`, `127.0.0.1` в `md_preview.lua`).
+* Если `<leader>mv` выдаёт `E117: Unknown function: mkdp#util#install` — плагин ещё не собран: `:Lazy build markdown-preview.nvim`, затем перезапуск nvim. Для предпросмотра без сборки используйте `<leader>mL`.
+* Список продолжается при `Enter` в списке (`auto_insert_bullets`).
+
+### Halloween: оверлей, окно и эффекты в терминале
+
+| Клавиша / команда | Что делает |
+|---|---|
+| `<leader>uT` → 🎃 Halloween | Тема: чёрный фон, оранжевые ключевые слова, фиолетовые комментарии, зелёные переменные, жёлтые строки. При выборе — уведомление с ASCII-тыквой |
+| `<leader>uH` или `:Halloween [on|off]` | Оверлей: летучие мыши и призраки летают поверх экрана (окно без фокуса, `zindex` 60, полностью прозрачное). Включает тему Halloween и тыкву в строке состояния (`🎃👻🦇`) |
+| `<leader>uHw` или `:HalloweenWin` | Плавающее окно «ночь»: летучие мыши летят над призраком. Закрыть — `q` или `Esc` |
+| `:Boo` | Призрак пролетает над текущим окном и исчезает |
+
+* Состояние оверлея переживает перезапуск: файл `stdpath("state")/halloween.txt` (обычно `~/.local/state/nvim/halloween.txt`). Выключили — и после перезапуска оверлей не поднимется.
+* Палитра терминала во время оверлея — цвета Ghostty этого проекта (`terminal_color_1` = `#ff0000` и т. д.). При выключении палитра возвращается.
+* Всё — текст (ASCII и символы), работает в любом терминале, без картинок. Код: `lua/config/halloween.lua`, цвета: `lua/config/themes.lua` (`apply_halloween`), тыква в строке состояния: `lua/plugins/lualine.lua`.
+
+### avante: `missing avante_templates` — что это и как починить
+
+* **Что значит:** нативные библиотеки avante не собраны (файла `lua/avante_templates.so` в каталоге плагина нет). Без них не работают чат, inline-подсказки и `:AvanteAsk`.
+* **Что сделано в конфиге (2026-10-28):**
+  * **Версия закреплена на теге `v0.4.8`** (`tag = "v0.4.8"` в `lua/plugins/avante.lua`). Готовые бинарники релиза собраны под этот код; `main` новее на 34 коммита и с ними несовместим.
+  * **Сборка** — `lua/config/avante_build.lua`: скачивает готовую библиотеку для тега (`curl` + `tar`, без git и cargo). Если не вышло — запасной `make`, но он требует cargo.
+  * **Успех = файл есть на диске.** Раньше `build.sh` без git тихо печатал «No latest tag» и завершался с кодом 0, то есть «собрано», хотя файла не было.
+  * **Одно понятное сообщение** с причиной вместо потока ошибок в `:messages`.
+* **Что сделать на Mac:**
+  1. Обновить конфиг (`git pull`), перезапустить nvim.
+  2. `:Lazy sync` — lazy переключит avante на тег `v0.4.8`.
+  3. `:AvanteRebuild` — скачает библиотеки (нужны интернет, curl и tar; они есть в macOS).
+  4. Перезапустить nvim и открыть чат (`<leader>Aa`).
+* **Если сообщение «не скачалась»:** проверь доступ к GitHub из сети. Тогда поставь Rust (`brew install rust`) и повтори `:AvanteRebuild`: сборка пойдёт из исходников через `make`.
+* **Команда `:AvanteBuild`** — встроенная в avante, использует свой `build.sh` и может тихо падать без git. Для починки используй `:AvanteRebuild`.
+* **Обновить avante позже:** поменять `tag` в `lua/plugins/avante.lua` и `M.TAG` в `lua/config/avante_build.lua` на один и тот же новый тег, затем `:Lazy sync` и `:AvanteRebuild`.
+
+### Питомцы: что изменилось
+
+* Гофер Харек перерисован (уши, светлая морда, зубы, большие глаза, хвост). Генератор — `tools/gen_pet_sprites.py`.
+* Новый питомец — тыква (`<leader>uP`, спрайты `assets/pets/pumpkin/`, 18 PNG, вид зарегистрирован в `pets_custom.lua`).
+* Прогулка питомца теперь занимает всю нижнюю строку экрана (`popup.width = "100%"`). Ограничение движка `pets.nvim`: ходьба только по горизонтали, по вертикали не ходит.
+
+### Шахматы
+
+* Клетка 6×3 символа, фигуры — глифами ♔♕♖♗♘♙ (белые) и ♚♛♜♝♞♟ (чёрные). Окно 56×34. Ходы и правила не менялись.
+
+### Ghostty
+
+* Ключ истории — `scrollback-limit = 50000000` (байты). `scrollback-limit-lines` в старых версиях даёт ошибку `unknown field`.
+

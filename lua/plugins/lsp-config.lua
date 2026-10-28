@@ -54,9 +54,27 @@ return {
             gopls = {
               completeUnimported = true,
               usePlaceholders = true,
-              analyses = { unusedparams = true, unusedvariable = true, nilness = true },
+              analyses = {
+                unusedparams = true, unusedvariable = true, nilness = true,
+                shadow = true, unusedwrite = true,
+              },
               staticcheck = true,
               gofumpt = true,
+              hoverKind = "FullDocumentation",
+              semanticTokens = true,
+              -- «▶ run test | debug test» и генерация над функциями, как в VS Code
+              codelenses = {
+                generate = true, gc_details = false, regenerate_cgo = true,
+                run_govulncheck = true, test = true, tidy = true,
+                upgrade_dependency = true, vendor = true,
+              },
+              -- inlay hints: включаются клавишей <leader>gh (по умолчанию выключены)
+              hints = {
+                assignVariableTypes = true, compositeLiteralFields = true,
+                compositeLiteralTypes = true, constantValues = true,
+                functionTypeParameters = true, parameterNames = true,
+                rangeVariableTypes = true,
+              },
             },
           },
         },
@@ -99,11 +117,8 @@ return {
           map("]d", function() vim.diagnostic.jump({ count = 1 }) end, "⬇ След. ошибка", "n")
           map("<leader>d", vim.diagnostic.open_float, "🩺 Диагностика строки", "n")
 
-          -- Инлайновые подсказки типов (если сервер умеет)
-          local client = vim.lsp.get_client_by_id(ev.data.client_id)
-          if client and client.supports_method and client:supports_method("textDocument/inlayHint") then
-            vim.lsp.inlay_hint.enable(true, { bufnr = ev.buf })
-          end
+          -- Инлайновые подсказки (серые «a...:», «int», «[]int») НЕ включаем здесь:
+          -- они выключены по умолчанию. Включить для Go: <leader>gh (переключатель).
         end,
       })
     end,

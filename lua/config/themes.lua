@@ -14,8 +14,8 @@
 --   carbonfox  — Carbonfox, EdenEast/nightfox.nvim               — полная схема.
 --
 -- Полные схемы — отдельные плагины (lazy = true): грузятся при первом выборе
--- через require("lazy").load. Фон у всех тем принудительно чёрный #000000
--- (требование пользователя) — см. black_bg().
+-- через require("lazy").load. «Новая», «старая» и «Halloween» — фон #000000
+-- (требование пользователя). Пять оригинальных схем — свой фон и цвета, без переопределений.
 local M = {}
 
 local BASE = "catppuccin-mocha"
@@ -28,6 +28,26 @@ local BG_GROUPS = {
   "NvimTreeNormal", "NvimTreeNormalNC", "NvimTreeEndOfBuffer",
   "NvimTreeStatusLine", "NvimTreeStatuslineNc",
 }
+
+-- «Серые» группы: у схем они серо-стальные и выглядят чужими пятнами
+-- (скриншот: серое пятно в дереве файлов на чёрном фоне). У оверлейных тем
+-- фон этих групп = чёрный; видимость (fg) сохраняется.
+local EXTRA_BG_GROUPS = {
+  "NvimTreeCursorLine", "NvimTreeCursorLineNC",
+  "NvimTreeWinSeparator", "NvimTreeVertSplit",
+  "WinSeparator", "VertSplit", "WinBar", "WinBarNC",
+  "Folded", "FoldColumn", "ColorColumn",
+  "TabLine", "TabLineFill",
+  "PmenuSel", "PmenuSbar", "PmenuThumb",
+  "QuickFixLine", "CursorLineNr",
+  "WhichKeyFloat", "WhichKeyBorder",
+}
+
+local function black_extra()
+  for _, group in ipairs(EXTRA_BG_GROUPS) do
+    vim.api.nvim_set_hl(0, group, { bg = "#000000" })
+  end
+end
 
 -- ---------------------------------------------------------------------------
 -- Тема «new»
@@ -48,6 +68,7 @@ local function apply_new()
   for _, group in ipairs(BG_GROUPS) do
     vim.api.nvim_set_hl(0, group, { bg = P.black })
   end
+  black_extra()
 
   vim.api.nvim_set_hl(0, "CursorLine", { bg = "#0a0a1a" })
   vim.api.nvim_set_hl(0, "FloatBorder", { fg = P.glow, bg = P.black })
@@ -91,6 +112,7 @@ local function apply_classic()
   for _, group in ipairs(BG_GROUPS) do
     vim.api.nvim_set_hl(0, group, { bg = BLACK })
   end
+  black_extra()
 
   -- catppuccin custom_highlights (как были)
   vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#00ff00", bold = true })
@@ -116,13 +138,56 @@ local function apply_classic()
 end
 
 -- ---------------------------------------------------------------------------
--- Чёрный фон для полных схем: держим требование «фон строго #000000».
--- Остальные цвета берутся из самой схемы.
+-- Тема «Halloween»: палитра пользователя, чёрный фон, оранжевое и фиолетовое.
+-- Эффекты в терминале — lua/config/halloween.lua (<leader>uH, :Halloween, :Boo).
 -- ---------------------------------------------------------------------------
-local function black_bg()
+local function apply_halloween()
+  local P = {
+    black = BLACK,
+    violet = "#6902de",  -- комментарии, номера строк
+    orange = "#ff9500",  -- ключевые слова, типы
+    green = "#2bff00",   -- переменные и поля
+    red = "#ff0000",     -- ошибки, условия
+    yellow = "#fffb00", -- строки
+    cyan = "#00eeff",    -- функции (с подчёркиванием)
+    glow = "#0d00ff",    -- синее свечение: рамки, выделение, поиск
+    text = "#e6e6e6",
+  }
   for _, group in ipairs(BG_GROUPS) do
-    vim.api.nvim_set_hl(0, group, { bg = BLACK })
+    vim.api.nvim_set_hl(0, group, { bg = P.black })
   end
+  black_extra()
+  vim.api.nvim_set_hl(0, "CursorLine", { bg = "#140a00" })
+  vim.api.nvim_set_hl(0, "FloatBorder", { fg = P.orange, bg = P.black })
+  vim.api.nvim_set_hl(0, "WinSeparator", { fg = P.orange })
+  vim.api.nvim_set_hl(0, "Visual", { bg = P.glow, fg = "#ffffff" })
+  vim.api.nvim_set_hl(0, "Search", { bg = P.glow, fg = "#ffffff" })
+  vim.api.nvim_set_hl(0, "IncSearch", { bg = P.orange, fg = P.black, bold = true })
+  vim.api.nvim_set_hl(0, "CursorLineNr", { fg = P.orange, bold = true })
+  vim.api.nvim_set_hl(0, "LineNr", { fg = P.violet })
+
+  vim.api.nvim_set_hl(0, "@keyword", { fg = P.orange, bold = true })
+  vim.api.nvim_set_hl(0, "@keyword.function", { fg = P.orange, bold = true })
+  vim.api.nvim_set_hl(0, "@repeat", { fg = P.orange })
+  vim.api.nvim_set_hl(0, "@conditional", { fg = P.orange })
+  vim.api.nvim_set_hl(0, "@function", { fg = P.cyan, underline = true })
+  vim.api.nvim_set_hl(0, "@function.call", { fg = P.cyan, underline = true })
+  vim.api.nvim_set_hl(0, "@function.builtin", { fg = P.cyan, underline = true })
+  vim.api.nvim_set_hl(0, "@method", { fg = P.cyan, underline = true })
+  vim.api.nvim_set_hl(0, "@variable", { fg = P.green })
+  vim.api.nvim_set_hl(0, "@variable.member", { fg = P.green })
+  vim.api.nvim_set_hl(0, "@parameter", { fg = P.green, italic = true })
+  vim.api.nvim_set_hl(0, "@string", { fg = P.yellow })
+  vim.api.nvim_set_hl(0, "@string.special", { fg = P.yellow })
+  vim.api.nvim_set_hl(0, "@number", { fg = P.violet, bold = true })
+  vim.api.nvim_set_hl(0, "@boolean", { fg = P.violet, bold = true })
+  vim.api.nvim_set_hl(0, "@constant", { fg = P.violet, bold = true })
+  vim.api.nvim_set_hl(0, "@type", { fg = P.orange })
+  vim.api.nvim_set_hl(0, "Comment", { fg = P.violet, italic = true })
+  vim.api.nvim_set_hl(0, "WhichKey", { fg = P.orange, bold = true })
+  vim.api.nvim_set_hl(0, "WhichKeyGroup", { fg = P.cyan, bold = true })
+  vim.api.nvim_set_hl(0, "WhichKeyDesc", { fg = P.text })
+  vim.api.nvim_set_hl(0, "WhichKeySeparator", { fg = P.glow })
 end
 
 M.themes = {
@@ -136,26 +201,30 @@ M.themes = {
   },
   tokyonight = {
     label = "🌃 Tokyo Night (night): тёмно-синяя",
-    base = "tokyonight-night", plugin = "tokyonight.nvim", apply = black_bg,
+    base = "tokyonight-night", plugin = "tokyonight.nvim",
   },
   gruvbox = {
     label = "🟤 Gruvbox: тёплая, ретро",
-    base = "gruvbox", plugin = "gruvbox.nvim", apply = black_bg,
+    base = "gruvbox", plugin = "gruvbox.nvim",
   },
   kanagawa = {
     label = "🌊 Kanagawa (wave): японская тушь",
-    base = "kanagawa-wave", plugin = "kanagawa.nvim", apply = black_bg,
+    base = "kanagawa-wave", plugin = "kanagawa.nvim",
   },
   rosepine = {
     label = "🌙 Rosé Pine (moon): мягкая роза",
-    base = "rose-pine-moon", plugin = "rose-pine", apply = black_bg,
+    base = "rose-pine-moon", plugin = "rose-pine",
   },
   carbonfox = {
     label = "🟦 Carbonfox: графит и неон",
-    base = "carbonfox", plugin = "nightfox.nvim", apply = black_bg,
+    base = "carbonfox", plugin = "nightfox.nvim",
+  },
+  halloween = {
+    label = "🎃 Halloween: тыквы, ведьмы, чёрный фон",
+    base = BASE, plugin = "catppuccin", apply = apply_halloween,
   },
 }
-M.order = { "new", "classic", "tokyonight", "gruvbox", "kanagawa", "rosepine", "carbonfox" }
+M.order = { "new", "classic", "tokyonight", "gruvbox", "kanagawa", "rosepine", "carbonfox", "halloween" }
 M.default = "new"
 M.current = M.default
 
@@ -222,7 +291,9 @@ function M.set(name, opts)
     return
   end
   M.apply(name) -- на случай, если ColorScheme уже не сработал
-  if not opts.silent then
+  if name == "halloween" and not opts.silent then
+    require("config.halloween").pumpkin_notify("Тема Halloween включена. Ночная сцена: <leader>uH")
+  elseif not opts.silent then
     vim.notify("Тема: " .. M.themes[name].label, vim.log.levels.INFO)
   end
 end
@@ -256,12 +327,16 @@ function M.setup()
     end,
   })
 
-  -- Вызывается из init.lua ПОСЛЕ lazy.setup: плагины тем уже зарегистрированы,
-  -- поэтому сохранённая тема применяется сразу, без VimEnter.
-  if M.current ~= M.default then
-    M.set(M.current, { silent = true })
-  else
-    M.apply(M.current)
+  -- СТАРТ ОДНИМ ПЕРЕКЛЮЧЕНИЕМ (без мерцания). Вызывается из init.lua ПОСЛЕ
+  -- lazy.setup: плагины тем уже зарегистрированы (priority = 1000), поэтому
+  -- сохранённая тема встаёт до первой отрисовки UI. Раньше init.lua сначала
+  -- ставил страховочный catppuccin, а потом здесь переключал — тема мигала.
+  -- Страховка catppuccin/habamax теперь срабатывает только если схема не встала.
+  local ok = pcall(M.set, M.current, { silent = true })
+  if not ok or not vim.g.colors_name then
+    if not pcall(vim.cmd.colorscheme, "catppuccin-mocha") then
+      pcall(vim.cmd.colorscheme, "habamax")
+    end
   end
 
   vim.api.nvim_create_user_command("Theme", function(opts)
@@ -278,7 +353,10 @@ function M.setup()
     desc = "Выбрать тему: " .. table.concat(M.order, " | ") .. " (без аргумента — меню)",
   })
 
-  vim.keymap.set("n", "<leader>uT", M.pick, { desc = "🎨 Выбрать тему (7 штук)" })
+  vim.keymap.set("n", "<leader>uT", M.pick, { desc = "🎨 Выбрать тему (8 штук)" })
+
+  -- эффекты Хэллоуина (<leader>uH, :Halloween, :Boo)
+  require("config.halloween").setup()
 end
 
 return M

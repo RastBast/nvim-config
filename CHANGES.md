@@ -1,5 +1,65 @@
 # Что исправлено в конфиге (2026-08-30)
 
+## 2026-10-28 · avante: `missing avante_templates` и ошибки в чате
+
+- **Причина:** нативные библиотеки avante не собирались. `build.sh` без git тихо завершался с кодом 0 («No latest tag»), запасной `make` требует cargo и его ошибка терялась. Lua-код плагина брался с `main`, который новее готовых бинарников релиза.
+- **Сделано:**
+  - версия закреплена на теге `v0.4.8` (`tag = "v0.4.8"` в `lua/plugins/avante.lua`);
+  - новый модуль `lua/config/avante_build.lua`: готовая библиотека для тега через curl+tar (без git и cargo), запасной make; успех только когда файл `lua/avante_templates.so` есть на диске;
+  - `:AvanteRebuild` использует тот же модуль; авто-попытка при старте — один раз, тихо;
+  - понятные сообщения: не скачалось (с адресом), тихий сбой, нет cargo (подсказка `brew install rust`), ошибка make (код и хвост лога).
+- **Проверено:** `tests/avante_build_test.py` (38 проверок): выбор архива по платформе, ссылка на тег, сценарии 404 / тихий сбой / make / нет команд, совпадение тега в спецификации и модуле. Реальная загрузка с GitHub и сборка на Mac в sandbox не проверялись.
+- **Что сделать пользователю:** `git pull`, перезапуск nvim, `:Lazy sync`, `:AvanteRebuild`.
+
+## 2026-10-28 · Ошибка «Failed to spawn process git» в lazy.nvim
+
+- **Причина шума:** автопроверка lazy (`checker`) при каждом старте делала `git fetch` для всех ~120 плагинов. Без git в PATH каждый вызов падал.
+- **Сделано:** `checker.enabled = false` в `init.lua`. Обновления — вручную через `:Lazy update` / `:Lazy sync`.
+- **Понятное сообщение:** если git не найден даже после починки PATH (`lua/config/env_path.lua`), выводится одно сообщение ERROR «Нет git» с командами установки вместо сотни ошибок.
+- **Проверено:** `tests/env_path_test.py` (16 проверок): дописывание PATH, порядок, идемпотентность, наличие/отсутствие git, отсутствие автопроверки. Реальный macOS в sandbox недоступен: поведение на Mac нужно подтвердить командами `which git` и `:EnvCheck`.
+- **Документация:** строка в таблице неполадок DOCS.md.
+
+## 2026-10-28 · Go PRO: как в VS Code и GoLand
+
+- **Новые клавиши** (`lua/config/go_pro.lua`): `<leader>gh` подсказки типов и параметров (inlay hints, по умолчанию выкл.), `<leader>gL` codelens над функцией, `<leader>gR` тест с `-race` (в тесте — только он), `<leader>gB` бенчмарк функции, `<leader>gc` покрытие, `<leader>gG` escape analysis, `<leader>gp` outline пакета, `<leader>gS` заполнить case'ы switch, `<leader>gE` заполнить return, `<leader>gM` go mod tidy, `<leader>gn` go generate, `<leader>gA` тесты для всех функций файла, `<leader>gV` go vet, `<leader>gH` / `<leader>gO` кто вызывает / что вызывает (call hierarchy), `<leader>gJ` JSON → struct (визуал).
+- **Меню `<leader>gi`** дополнено этими действиями и inline переменной (`refactor.inline`).
+- **gopls:** подсказки (`hints`), codelens (test, generate, tidy, vendor, run_govulncheck), анализаторы shadow и unusedwrite, `hoverKind = "FullDocumentation"`. Прежние настройки сохранены.
+- **Сниппеты (14):** `gtt`, `gbench`, `gexample`, `gerrs`, `ggo`, `gmu`, `gctx`, `gselect`, `gfor`, `gswitch`, `gdefer`, `glog`, `gjson`, `ghttp`.
+- **Ленивая загрузка:** новые команды go.nvim добавлены в `cmd = {…}` в `go-tools.lua`, иначе E492.
+- **Проверено:** `tests/go_pro_test.py` (102 проверки). Логика сборки `go test` (ошибка найдена тестом и исправлена: `vim.list_extend` из заглушки не работал, заменён на явный цикл), регистрация клавиш, конфликты (каждая клавиша ровно в одном месте), соответствие именам команд закреплённой версии go.nvim. Реальный `go` в sandbox не запускался.
+- **Документация:** раздел 28 в DOCS.md (клавиши, сниппеты, gopls, ограничения), `<leader>?` (g10).
+
+## 2026-10-28 · Перенос недостающего из веток: s, мерцание, Halloween-оверлей, markdown, тыква
+
+Аудит всех веток и `main` показал, что недостающие функции есть только в `bb057c3c` (остальные ветки либо уже покрыты, либо новее у нас). Перенесено:
+
+- **Баг после `s`:** `s` ждала второй символ (flash и окружения `sa`/`sd`/`sr` делили один префикс). Прыжок flash переехал на `gs`; `s` теперь только префикс окружений mini.surround (`sa`, `sd`, `sr`, `sf`, `sF`, `sh`, `sn`).
+- **Мерцание темы на старте:** `init.lua` больше не ставит `colorscheme` до `themes.setup()`. Сохранённая тема применяется в `setup()`; catppuccin-mocha/habamax — только если она не сработала.
+- **Фон `#000000`:** `EXTRA_BG_GROUPS` и `black_extra()` в `new`, `classic`, `halloween`: дерево файлов (NvimTree), разделители окон, WinBar, Folded, ColorColumn, TabLine, Pmenu, QuickFix, CursorLineNr, WhichKey.
+- **Halloween (вариант A):** `<leader>uH` и `:Halloween [on|off]` — оверлей летучих мышей и призраков поверх экрана (окно без фокуса, `winblend=100`, `zindex=60`), тема Halloween, тыква `🎃👻🦇` в строке состояния. Состояние сохраняется в `stdpath("state")/halloween.txt`. Окно-анимация переехала на `<leader>uHw` и `:HalloweenWin` (закрыть: `q`/`Esc`). Палитра терминала — цвета Ghostty этого проекта. `<leader>uH` срабатывает после `timeoutlen`, потому что у `<leader>uHw` тот же префикс.
+- **Markdown:** live-превью в браузере на чистом python3 без Node — `<leader>mL`, `:MdPreview`, `:MdPreviewStop`, `:MdPreviewStatus` (`lua/config/md_preview.lua`, `127.0.0.1:45771`). Несохранённый буфер попадает в превью. Плюс `<leader>mT` (`:Toc`), `<leader>mE` (`:TableFormat`, `tabular`), чекбоксы ☐/☑. `lazy-lock.json`: добавлены `vim-markdown` и `tabular`.
+- **Avante:** `build` — функция с проверкой готовых библиотек; `:AvanteRebuild` пересобирает вручную.
+- **Питомец-тыква:** `<leader>uP` (спрайты `assets/pets/pumpkin/`, 18 PNG).
+- **Справка и доки:** `keydocs` (`gs`, `sa`…`sn`, `<leader>uHw`, `<leader>uP`, `<leader>mL/mT/mE`), DOCS.md (раздел 45 переписан: клавиши, markdown, Halloween, avante, питомцы).
+- **Тесты:** `halloween_test.py` (31 проверка: кадры, оверлей вкл/выкл, состояние, клавиши), `md_preview_test.py` (30 проверок, включая живой python3-сервер: HTTP `/view`, `/`, рендер заголовков, жирного, кода, таблиц, чекбоксов, обновление по изменению файла), `themes_test.py` (порядок запуска без мерцания, страховка внутри `setup()`), `config_specs_test.py` (83 проверки: `gs`, окружения, markdown, avante, тыква, lazy-lock, справка и доки).
+
+Не перенесено: `buf_ls` из `01a05448` (уже есть: `protols` и format в `languages.lua`/`format.lua`); `DEEPL_AUTH_KEY` (только `DEEPL_API_KEY`); `font-size` Ghostty 16 (у нас 14, без подтверждения).
+
+## 2026-10-28 · Хэллоуин, markdown, avante, b → q, темы-оригиналы
+
+- **Ошибка Halloween (E5113):** `themes.lua:332` → `halloween.lua:53: unexpected symbol near '/'`. В LuaJIT нет оператора `//` (он есть только в Lua 5.3+). Заменён на `math.floor(a / b)`. Проверка только под LuaJIT 2.1.
+- **Ошибка markdown-preview (E117):** `Unknown function: mkdp#util#install`. `build` теперь строка `cd app && npx --yes yarn install` (как в README плагина). Нужен Node.js/npm.
+- **Ghostty:** `scrollback-limit-lines: unknown field` — ключа нет, верно `scrollback-limit`. Полноэкранный режим: `fullscreen = non-native`, `macos-non-native-fullscreen = true`, `window-save-state = never` (сохранённое обычное окно больше не перекрывает полноэкранный старт). Последнее — по исходникам Ghostty, на Mac не проверено.
+- **Тесты:** `tests/run_all.py` — 8 наборов: синтаксис всех 136 `.lua` под LuaJIT, логика игр, шахматы (perft и интерфейс), Хэллоуин (кадры, `:Boo`), темы и порядок запуска, спецификации плагинов и Ghostty, спрайты питомцев.
+- **avante:** `missing avante_templates` — нативные библиотеки не собирались. `build` теперь функция: сначала `build.sh` (готовые библиотеки из релиза), затем запасной `make` (нужен cargo). Вручную: `:Lazy build avante.nvim`.
+- **Темы:** `VimEnter` убран, тема применяется сразу после `lazy.setup`. Пять полных схем — в оригинальном стиле и фоне. Добавлена 🎃 Halloween (чёрный фон, палитра).
+- **Halloween в терминале:** `<leader>uH` / `:Halloween` — анимация с летучими мышами и призраком; `:Boo`; при выборе темы — уведомление с тыквой.
+- **Клавиши:** `q` — назад к началу слова (spider), `b` — запись макросов.
+- **Markdown:** `markdown-preview.nvim` (`<leader>mv`, `<leader>mV`, браузер, обновление на каждое изменение), `vim-markdown` (фолдинг `za`/`zc`).
+- **Питомцы:** гофер перерисован; прогулка на всю нижнюю строку (`popup.width = "100%"`). Ходьба только по горизонтали — ограничение `pets.nvim`.
+- **Шахматы:** клетка 6×3, фигуры глифами, окно 56×34.
+- **Ghostty:** `scrollback-limit = 50000000` (байты, работает во всех версиях).
+
 ## 2026-10-28 · Ghostty, дерево файлов, темы без VimEnter, крупные шахматы
 
 - **Ghostty:** ошибка `scrollback-limit-lines: unknown field` — ключа нет в старых версиях. Теперь

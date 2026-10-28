@@ -108,7 +108,14 @@ vim.opt.rtp:prepend(lazypath)
 
 -- Загружаем все плагины из папки ~/.config/nvim/lua/plugins/
 require("lazy").setup("plugins", {
-  checker = { enabled = true, notify = false },   -- не дёргать уведомлениями
+  -- Автопроверка обновлений при старте = `git fetch` для КАЖДОГО плагина.
+  -- Выключена: без git это давало ~120 ошибок «Failed to spawn process git».
+  -- Обновлять вручную: :Lazy update / :Lazy sync. Диагностика: :EnvCheck.
+  -- Не больше 8 git-процессов одновременно. На macOS по умолчанию лимита нет:
+  -- ~120 процессов сразу исчерпывают открытые файлы, и часть падает с
+  -- «Failed to spawn process git» (uv.spawn возвращает nil).
+  concurrency = 8,
+  checker = { enabled = false, notify = false },
   change_detection = { notify = false },
   install = { colorscheme = { "catppuccin-mocha", "habamax" } },
   performance = {
@@ -122,16 +129,16 @@ require("lazy").setup("plugins", {
 --                         ПРИМЕНЕНИЕ ТЕМЫ И ФИЛЬТРЫ                          --
 -- ========================================================================== --
 
--- Тема ставится плагином lua/plugins/colorscheme.lua (catppuccin).
--- Здесь только страховка: если плагин ещё не скачан — падаем на habamax.
-if not pcall(vim.cmd.colorscheme, "catppuccin-mocha") then
-  pcall(vim.cmd.colorscheme, "habamax")
-end
-
 -- Темы: выбор в nvim — <leader>uT или :Theme (см. lua/config/themes.lua).
--- Вызывается ПОСЛЕ lazy.setup и страховки выше, поэтому сохранённую тему
--- можно применить сразу (без VimEnter) и не перетереть её страховкой.
+-- ВАЖНО: переключение ровно ОДНО. Раньше здесь стояла страховка colorscheme
+-- catppuccin, а themes.setup() потом переключал на сохранённую тему — на старте
+-- мелькала дефолтная тема. Теперь themes.setup() сам ставит сохранённую тему
+-- (плагины тем зарегистрированы lazy.setup, priority = 1000), а страховка
+-- catppuccin/habamax срабатывает только если схема не загрузилась.
 require("config.themes").setup()
+
+-- Markdown: live-превью в браузере (<leader>mL, :MdPreview)
+require("config.md_preview").setup()
 
 -- Фильтр всплывающих уведомлений (пропускаем только КРАСНЫЕ ОШИБКИ)
 do
@@ -231,6 +238,7 @@ require("config.hover_ru").setup()
 require("config.gloss").setup() -- K (визуал) и <leader>Kw: английский по словам с частью речи; :Gloss
 require("config.ai_api").setup() -- ИИ любой: <leader>Ap (выбор: Groq, Gemini, OpenAI…), <leader>Aq; :AiProvider, :AiStatus, :AiAsk
 require("config.go_ide").setup() -- Go как в GoLand: <leader>gi (меню), gT/gC/gD/ga/go/gr/gx; :GoIde
+require("config.go_pro").setup() -- Go как в VS Code/GoLand: gh gL gR gB gc gM gn gS gE gG gp gA gV gH gO gJ
 require("config.tui_tools").setup() -- <leader>U: TUI-утилиты (k9s, iredis, pgcli, lazysql, dive…); :Tui
 
 -- Русские ошибки LSP на лету (Go/Docker/SQL/proto/...): выкл: :DiagRu off

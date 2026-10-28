@@ -4,3 +4,4 @@
 /backups/
 /swaps/
 /.git/
+__pycache__/
