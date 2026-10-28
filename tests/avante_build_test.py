@@ -80,6 +80,7 @@ vim.uv.os_uname = function() return UNAME end
 vim.uv.fs_stat = function(p) if EXISTS[p] then return {} end return nil end
 vim.system = function(cmd, opts, cb)
   CALLS[#CALLS + 1] = table.concat(cmd, " ")
+  if SPAWN_FAIL then error("spawn failed") end
   local r = HANDLER(cmd, opts)
   local prev = IN_FAST
   IN_FAST = true
@@ -92,6 +93,7 @@ B = require("config.avante_build")
 
 function SETUP(o)
   CALLS, EXISTS, EXEC = {}, {}, {}
+  SPAWN_FAIL = o.spawn_fail
   for _, c in ipairs(o.exec or {}) do EXEC[c] = true end
   UNAME = o.uname
   if o.built then EXISTS[LIB] = true end
@@ -213,6 +215,9 @@ def main():
     check("ничего нет (ни curl, ни make): понятная ошибка, без падения",
           rt.eval("RES_OK") is False and "brew install rust" in str(rt.eval("RES_MSG")))
 
+    run(f"SETUP{{ exec={{'curl','tar'}}, {MAC_ARM}, spawn_fail=true }}")
+    check("ошибка запуска curl: понятный отказ без исключения", rt.eval("RES_OK") is False)
+
     # -------------------------------------------- синхронная обёртка (lazy) ---
     run(f"SETUP{{ exec={{'curl','tar'}}, {MAC_ARM}, tar_produces=true }}")
     rt.execute("BR_OK, BR_MSG = B.build_blocking(DIR, 1000)")
@@ -239,7 +244,7 @@ def main():
           "B.is_built(plugin_dir())" in av)
     check("avante_build.lua: нет тавтологий (or true)", "or true" not in bm)
     check("avante_build.lua: vim.system вызывается только через sys() (колбэк уходит в главный цикл)",
-          bm.count("vim.system(") == 1 and "vim.schedule(function()" in bm)
+          bm.count("pcall(vim.system,") == 1 and "vim.schedule(function()" in bm)
 
     failed = sum(1 for _, ok in checks if not ok)
     print(f"\nпроверок: {len(checks)}, провалов: {failed}")

@@ -1,31 +1,8 @@
--- ========================================================================== --
---                       AI: CODECOMPANION + KIMI                             --
--- ========================================================================== --
--- ИСПРАВЛЕНО:
---  1) Адаптер kimi в codecompanion.nvim уже встроен
---     (lua/codecompanion/adapters/http/kimi.lua, url api.moonshot.ai,
---     ключ из MOONSHOT_API_KEY). Самодельный адаптер через
---     `extend("openai", ...)` был лишним и писался по устаревшей схеме —
---     в текущей версии адаптеры лежат в `adapters.http`, а не в `adapters`.
---  2) `strategies` — устаревшее имя (config.lua подменяет его на
---     `interactions`), переписано на актуальное.
---  3) `display.diff.provider = "mini_diff"` — такой опции нет
---     (у display.diff есть enabled/threshold_for_chat/window/word_highlights),
---     поэтому mini.diff подключён как отдельный плагин.
---  4) Команды :CodeCompanionSend НЕ СУЩЕСТВУЕТ. Реальные команды:
---     CodeCompanion, CodeCompanionChat, CodeCompanionActions, CodeCompanionCmd,
---     CodeCompanionCLI, CodeCompanionCodeReview.
---     Отправка выделения в инлайн-чат — это :CodeCompanion в visual-режиме.
---  5) Свой промпт «Explain Code» переехал из `interactions` в `prompt_library`
---     (с `interaction = "chat"` и `opts.alias`). В `interactions` он никогда
---     не регистрировался, а `opts.mapping` в CodeCompanion не поддерживается.
---  6) api_key для kimi — имя переменной окружения, а не её значение
---     (см. комментарий у `env` ниже).
--- Провайдеры: единый реестр в lua/config/ai_api.lua (Groq и др.).
--- Выбранный провайдер (<leader>Ap или AI_PROVIDER) становится адаптером чата.
+-- CodeCompanion: встроенные и OpenAI-совместимые адаптеры из реестра ИИ.
+-- В закреплённой версии нет встроенных HTTP-адаптеров Kimi и OpenRouter.
 local AI = require("config.ai_api")
 
--- Адаптер Groq и «свой сервис» — через штатный openai_compatible codecompanion.
+-- OpenAI-совместимые сервисы — через openai_compatible CodeCompanion.
 local function openai_compat(name, label, url, key_env, model)
   return function()
     return require("codecompanion.adapters").extend("openai_compatible", {
@@ -34,8 +11,8 @@ local function openai_compat(name, label, url, key_env, model)
       env = {
         url = url,
         api_key = key_env, -- ИМЯ переменной с ключом, не сам ключ
-        chat_url = "/v1/chat/completions",
-        models_endpoint = "/v1/models",
+        chat_url = "/chat/completions",
+        models_endpoint = "/models",
       },
       schema = { model = { default = model } },
     })
@@ -50,11 +27,11 @@ local function cc_model()
   end
   return nil
 end
-local chat_adapter = { name = cc }
-if cc_model() then
-  chat_adapter.model = cc_model()
-elseif cc == "kimi" then
-  chat_adapter.model = "moonshot-v1-8k" -- запасной вариант, как было раньше
+-- Таблица {name=...} без model в этой версии не разрешается как имя адаптера.
+local chat_adapter = cc
+local selected_model = cc_model()
+if selected_model then
+  chat_adapter = { name = cc, model = selected_model }
 end
 local groq_model = (AI.resolve("groq")) and AI.resolve("groq").model or "openai/gpt-oss-120b"
 
@@ -86,34 +63,18 @@ return {
       adapters = {
         http = {
           -- Groq: OpenAI-совместимый API, ключ — переменная GROQ_API_KEY (fish: set -Ux GROQ_API_KEY "…")
-          groq = openai_compat("groq", "Groq", "https://api.groq.com/openai", "GROQ_API_KEY", groq_model),
+          groq = openai_compat("groq", "Groq", "https://api.groq.com/openai/v1", "GROQ_API_KEY", groq_model),
+          kimi = openai_compat("kimi", "Kimi", "https://api.moonshot.ai/v1", "MOONSHOT_API_KEY", vim.env.MOONSHOT_MODEL or "moonshot-v1-8k"),
+          openrouter = openai_compat("openrouter", "OpenRouter", "https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", vim.env.OPENROUTER_MODEL or "openrouter/free"),
           -- Любой свой OpenAI-совместимый сервис: AI_BASE_URL, AI_API_KEY, AI_MODEL
-          -- AI_BASE_URL в ai_api.lua включает /v1 (…/v1); здесь chat_url уже содержит /v1 — срезаем хвост
+          -- AI_BASE_URL — полный базовый путь API; /chat/completions добавится автоматически
           custom = openai_compat(
             "custom",
             "Свой сервис",
-            ((vim.env.AI_BASE_URL or "http://localhost:8080"):gsub("/v1/?$", "")),
+            ((vim.env.AI_BASE_URL or "http://localhost:8080/v1"):gsub("/+$", "")),
             "AI_API_KEY",
             vim.env.AI_MODEL or "model"
           ),
-          -- Встроенный адаптер kimi + ключ из окружения.
-          -- Нужен только `export MOONSHOT_API_KEY=...` в shell.
-          extend = {
-            kimi = {
-              -- ИМЯ переменной, а не её значение: CodeCompanion сам читает
-              -- переменную в момент запроса. Раньше здесь стояло
-              -- os.getenv(...) or "MOONSHOT_API_KEY": при заданном ключе
-              -- его значение принималось за имя переменной, а при незаданном
-              -- в запрос уходила строка "MOONSHOT_API_KEY" → 401.
-              env = {
-                api_key = "MOONSHOT_API_KEY",
-              },
-              schema = {
-                model = { default = "moonshot-v1-8k" }, -- есть 32k и 128k
-                temperature = { default = 0.7 },
-              },
-            },
-          },
         },
       },
 
@@ -140,7 +101,10 @@ return {
           prompts = {
             {
               role = "user",
-              content = "Объясни подробно, что делает этот код:\n\n```\n${selected}\n```",
+              content = function(context)
+                return "Объясни подробно, что делает этот код:\n\n```" .. (context.filetype or "")
+                  .. "\n" .. table.concat(context.lines or {}, "\n") .. "\n```"
+              end,
             },
           },
         },

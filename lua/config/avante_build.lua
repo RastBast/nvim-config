@@ -62,11 +62,13 @@ end
 -- vim.system вызывает колбэк в fast-контексте, где нельзя звать vim.fn.*
 -- (E5560). Поэтому любой колбэк переносим в главный цикл.
 local function sys(cmd, opts, cb)
-  return vim.system(cmd, opts, function(r)
-    vim.schedule(function()
-      cb(r)
-    end)
+  local ok, result = pcall(vim.system, cmd, opts, function(r)
+    vim.schedule(function() cb(r) end)
   end)
+  if not ok then
+    vim.schedule(function() cb({ code = -1, stderr = tostring(result) }) end)
+  end
+  return ok and result or nil
 end
 
 local function has(cmd)
@@ -82,14 +84,14 @@ end
 --- Асинхронная сборка. on_done(ok:boolean, msg:string) вызывается один раз.
 ---@param dir string каталог плагина avante.nvim
 ---@param on_done fun(ok: boolean, msg: string)
-function M.build(dir, on_done)
+function M.build(dir, on_done, force)
   local function finish(ok, msg)
     vim.schedule(function()
       on_done(ok, msg)
     end)
   end
 
-  if M.is_built(dir) then
+  if not force and M.is_built(dir) then
     return finish(true, "библиотеки уже на месте")
   end
 

@@ -141,14 +141,7 @@ function M.toggle_inlay()
   if not need_go() then
     return
   end
-  local ih = vim.lsp.inlay_hint
-  if not ih then
-    notify("Подсказки требуют Neovim 0.10+", vim.log.levels.WARN)
-    return
-  end
-  local on = ih.is_enabled({ bufnr = 0 })
-  ih.enable(not on, { bufnr = 0 })
-  notify(on and "Подсказки типов и параметров: выкл" or "Подсказки типов и параметров: вкл")
+  require("config.inlay").toggle()
 end
 
 -- Codelens над функциями: «run test | debug test | generate | tidy»

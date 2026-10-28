@@ -111,10 +111,11 @@ require("lazy").setup("plugins", {
   -- Автопроверка обновлений при старте = `git fetch` для КАЖДОГО плагина.
   -- Выключена: без git это давало ~120 ошибок «Failed to spawn process git».
   -- Обновлять вручную: :Lazy update / :Lazy sync. Диагностика: :EnvCheck.
-  -- Не больше 8 git-процессов одновременно. На macOS по умолчанию лимита нет:
+  -- Не больше 4 git-процессов одновременно. На macOS по умолчанию лимита нет:
   -- ~120 процессов сразу исчерпывают открытые файлы, и часть падает с
   -- «Failed to spawn process git» (uv.spawn возвращает nil).
-  concurrency = 8,
+  concurrency = 4,
+  git = { timeout = 300 }, -- медленная сеть: 120 секунд по умолчанию часто недостаточно
   checker = { enabled = false, notify = false },
   change_detection = { notify = false },
   install = { colorscheme = { "catppuccin-mocha", "habamax" } },
@@ -238,6 +239,20 @@ require("config.hover_ru").setup()
 require("config.gloss").setup() -- K (визуал) и <leader>Kw: английский по словам с частью речи; :Gloss
 require("config.ai_api").setup() -- ИИ любой: <leader>Ap (выбор: Groq, Gemini, OpenAI…), <leader>Aq; :AiProvider, :AiStatus, :AiAsk
 require("config.go_ide").setup() -- Go как в GoLand: <leader>gi (меню), gT/gC/gD/ga/go/gr/gx; :GoIde
+vim.keymap.set("n", "<leader>AE", "<cmd>EnvCheck<cr>", { desc = "Диагностика git и avante" })
+vim.keymap.set("n", "<leader>AL", "<cmd>Lazy<cr>", { desc = "Плагины: открыть Lazy" })
+vim.keymap.set("n", "<leader>AU", function()
+  if vim.fn.has("nvim-0.12") == 0 then
+    vim.notify("avante v0.4.8 требует Neovim 0.12+. Обновите Neovim.", vim.log.levels.WARN)
+    return
+  end
+  if vim.fn.exists(":AvanteRebuild") == 2 then
+    vim.cmd("AvanteRebuild")
+  else
+    vim.notify("avante недоступен: откройте <leader>AL и повторите установку", vim.log.levels.WARN)
+  end
+end, { desc = "🔧 Восстановить avante" })
+require("config.inlay").setup() -- inlay hints изначально выключены; <leader>uh
 require("config.go_pro").setup() -- Go как в VS Code/GoLand: gh gL gR gB gc gM gn gS gE gG gp gA gV gH gO gJ
 require("config.tui_tools").setup() -- <leader>U: TUI-утилиты (k9s, iredis, pgcli, lazysql, dive…); :Tui
 

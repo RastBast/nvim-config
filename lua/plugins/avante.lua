@@ -46,6 +46,7 @@ return {
   {
     "avante-corp/avante.nvim",
     event = "VeryLazy",
+    cond = vim.fn.has("nvim-0.12") == 1, -- v0.4.8 вызывает :quit на более старом Neovim
     version = false, -- НИКОГДА не "*" — плагин ломается на тегах
     -- ЗАКРЕПЛЕНО на теге v0.4.8: готовые бинарники релиза собраны под этот код.
     -- Lua с main (новее на 34 коммита) с бинарниками v0.4.8 не совместим.
@@ -59,7 +60,7 @@ return {
       if ok then
         vim.notify("avante: " .. msg, vim.log.levels.INFO)
       else
-        vim.notify("❌ avante не собрался: " .. msg, vim.log.levels.ERROR)
+        error("avante не собрался: " .. msg)
       end
     end,
     cmd = {
@@ -93,7 +94,9 @@ return {
       -- По умолчанию gemini; если задан AI_PROVIDER (groq, openai, mistral…) — он.
       provider = vim.env.AVANTE_PROVIDER or require("config.ai_api").avante_default(),
       -- inline-подсказки — тем же провайдером (дешёвая flash-модель)
-      auto_suggestions_provider = vim.env.AVANTE_SUGGEST_PROVIDER or "gemini-flash",
+      auto_suggestions_provider = vim.env.AVANTE_SUGGEST_PROVIDER
+        or ((vim.env.AVANTE_PROVIDER or require("config.ai_api").avante_default()) == "gemini" and "gemini-flash"
+          or (vim.env.AVANTE_PROVIDER or require("config.ai_api").avante_default())),
       -- Универсальные провайдеры (Groq, OpenRouter, Mistral, DeepSeek, Kimi, свой сервис)
       -- берутся из lua/config/ai_api.lua. Переключение в чате: :AvanteSwitchProvider
       providers = vim.tbl_extend("force", require("config.ai_api").avante_providers(), {
@@ -230,63 +233,102 @@ return {
         },
       },
     },
-    config = function(_, opts)
-      require("avante").setup(opts)
-
-      -- «Объясни выделенный код / ошибку» по-русски в сайдбаре.
-      -- Выдели код (или встань на строку с ошибкой) и нажми <leader>Ax.
-      vim.keymap.set({ "n", "v" }, "<leader>Ax", function()
-        vim.cmd("AvanteAsk Объясни по-русски этот код или ошибку под курсором: что происходит, почему и как исправить")
-      end, { desc = "🤖 Объяснить код/ошибку (Gemini)" })
-
-      -- ================================================================== --
-      -- ЛЕЧЕНИЕ «missing avante_templates» (2026-10-28)
-      -- ------------------------------------------------------------------ --
-      -- Ошибка из трейсбека пользователя: avante/llm.lua:290 → path.lua:312
-      -- «Make sure to build avante (missing avante_templates)». Возникает,
-      -- когда плагин уже лежал в lazy/ ДО того, как в спеке появился
-      -- build = "make": lazy собирает только при установке/обновлении, и
-      -- собранный .so просто отсутствовал. Теперь:
-      --   * на старте проверяем avante.path.get_templates_dir() — он сам
-      --     бросает ошибку, если сборки нет;
-      --   * нет сборки → тихо запускаем `make` в каталоге плагина (тот же
-      --     рецепт, что и у build: пребуилты через curl+tar, cargo не нужен);
-      --   * :AvanteRebuild — пересобрать вручную в любой момент.
-      -- ================================================================== --
+    config = function(plugin, opts)
       local B = require("config.avante_build")
+      local function plugin_dir() return plugin.dir end
+      local running, configured = false, false
 
-      -- Главный признак — файл библиотеки на диске (не код возврата сборки).
-      local function plugin_dir()
-        return vim.fn.stdpath("data") .. "/lazy/avante.nvim"
+      -- Существование файла не гарантирует, что он подходит архитектуре и Lua.
+      -- До успешной загрузки нельзя вызывать setup: иначе чат установит
+      -- ModeChanged autocmd и упадёт при первом вводе текста.
+      local function available()
+        if not B.is_built(plugin_dir()) then return false, "файл avante_templates отсутствует" end
+        local loader, err = package.loadlib(B.lib_file(plugin_dir()), "luaopen_avante_templates")
+        if not loader then return false, tostring(err) end
+        local ok, result = pcall(require, "avante_templates")
+        if not ok then
+          -- LuaJIT может оставить sentinel после неудачной загрузки; иначе
+          -- следующий require после восстановления сообщит «previous error».
+          package.loaded.avante_templates = nil
+          return false, tostring(result)
+        end
+        return true
       end
 
-      local function rebuild(opts)
-        local dir = plugin_dir()
-        if vim.fn.isdirectory(dir) == 0 then
-          vim.notify("avante не установлен — выполни :Lazy sync", vim.log.levels.WARN)
+      local function setup_if_ready()
+        if configured then return true end
+        local ready, reason = available()
+        if not ready then return false, reason end
+        local ok, err = pcall(function() require("avante").setup(opts) end)
+        if not ok then return false, tostring(err) end
+        configured = true
+        vim.keymap.set({ "n", "v" }, "<leader>Ax", function()
+          vim.cmd("AvanteAsk Объясни по-русски этот код или ошибку под курсором: что происходит, почему и как исправить")
+        end, { desc = "🤖 Объяснить код/ошибку" })
+        return true
+      end
+
+      local function rebuild(rebuild_opts)
+        if running then
+          vim.notify("avante: сборка уже выполняется", vim.log.levels.INFO)
           return
         end
-        if not (opts and opts.silent) then
-          vim.notify("🔧 avante: собираю библиотеки для " .. B.TAG .. "…", vim.log.levels.INFO)
+        if vim.fn.isdirectory(plugin_dir()) == 0 then
+          vim.notify("avante не установлен: откройте <leader>AL и повторите установку", vim.log.levels.WARN)
+          return
         end
-        B.build(dir, function(ok, msg)
+        running = true
+        if not (rebuild_opts and rebuild_opts.silent) then
+          vim.notify("avante: сборка " .. B.TAG .. "…", vim.log.levels.INFO)
+        end
+        -- Удаляем только непригодную библиотеку: иначе неудачный make может
+        -- оставить старый файл и создать ложное впечатление успешной сборки.
+        local loadable = available()
+        if not loadable and B.is_built(plugin_dir()) then vim.fn.delete(B.lib_file(plugin_dir())) end
+        B.build(plugin_dir(), function(ok, msg)
+          running = false
           if ok then
-            vim.notify("✅ avante готов: " .. msg .. ". Перезапусти nvim, если чат ещё не работает.", vim.log.levels.INFO)
+            local ready, reason = setup_if_ready()
+            if ready then
+              vim.notify("avante готов: " .. msg, vim.log.levels.INFO)
+            else
+              vim.notify("avante: библиотека не загрузилась/ошибка setup: " .. reason .. "\nПроверьте архитектуру и перезапустите Neovim.", vim.log.levels.ERROR)
+            end
           else
-            vim.notify("❌ avante не собрался:\n" .. msg, vim.log.levels.ERROR, { title = "avante" })
+            vim.notify("avante не собрался:\n" .. msg .. "\nПовторить: <leader>AU", vim.log.levels.ERROR)
           end
-        end)
+        end, not loadable)
       end
 
-      vim.api.nvim_create_user_command("AvanteRebuild", function()
-        rebuild()
-      end, { desc = "🔧 Скачать/пересобрать библиотеки avante для закреплённого тега" })
+      vim.api.nvim_create_user_command("AvanteRebuild", function() rebuild() end,
+        { desc = "Скачать или собрать библиотеки avante" })
 
-      -- Если библиотек нет — один раз пробуем сами при старте (тихо, без спама).
-      if not B.is_built(plugin_dir()) then
-        vim.schedule(function()
-          rebuild({ silent = true })
-        end)
+      -- Команды avante регистрируются его plugin/ до config. Пока setup не
+      -- завершён, не позволяем им открыть сломанный чат; после сборки те же
+      -- обёртки пропускают вызовы в оригинальный API.
+      local api_ok, api = pcall(require, "avante.api")
+      if api_ok then
+        for _, name in ipairs({ "ask", "full_view_ask", "edit", "focus", "refresh" }) do
+          local original = api[name]
+          if type(original) == "function" then
+            api[name] = function(...)
+              if not configured then
+                vim.notify("avante ещё не готов. Восстановление: <leader>AU", vim.log.levels.WARN)
+                return
+              end
+              return original(...)
+            end
+          end
+        end
+      end
+      local ready, reason = setup_if_ready()
+      if not ready then
+        if not available() then
+          vim.notify("avante пока отключён: " .. reason .. "\nПробуем восстановить; повторить: <leader>AU", vim.log.levels.WARN)
+          vim.schedule(function() rebuild({ silent = true }) end)
+        else
+          vim.notify("Ошибка настройки avante: " .. reason .. "\nПроверьте зависимости через <leader>AL и перезапустите Neovim.", vim.log.levels.ERROR)
+        end
       end
     end,
   },

@@ -411,7 +411,7 @@ function M.pick()
     local r, why = M.resolve(p.id)
     if r then
       vim.notify(
-        ("ИИ: %s, модель %s. Разбор K и :AiAsk — сразу; чат CodeCompanion и avante — после перезапуска Neovim")
+        ("ИИ: %s, модель %s. K и :AiAsk — сразу; для чатов задайте AI_PROVIDER и перезапустите Neovim")
           :format(r.label, r.model),
         vim.log.levels.INFO
       )
