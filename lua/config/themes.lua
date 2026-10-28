@@ -1,5 +1,5 @@
 -- ========================================================================== --
---                 ТЕМЫ: 7 штук, выбор прямо в Neovim                         --
+--                 ТЕМЫ: 8 штук, выбор прямо в Neovim                         --
 -- ========================================================================== --
 -- Выбрать тему:   <leader>uT   или   :Theme   или   :Theme tokyonight
 -- Выбор запоминается в stdpath("state")/theme.txt и применяется при старте.
@@ -7,20 +7,32 @@
 --   new        — «Новая»: чёрный фон, палитра пользователя, синее свечение #0d00ff
 --                (оверлей поверх catppuccin-mocha, см. apply_new).
 --   classic    — «Старая»: прежние цвета до правок (оверлей поверх catppuccin-mocha).
+--   halloween  — «Хэллоуин»: чёрный фон, тыква/неон/фиолет (оверлей поверх catppuccin).
 --   tokyonight — Tokyo Night (night), folke/tokyonight.nvim      — полная схема.
 --   gruvbox    — Gruvbox, ellisonleao/gruvbox.nvim               — полная схема.
 --   kanagawa   — Kanagawa (wave), rebelot/kanagawa.nvim          — полная схема.
 --   rosepine   — Rosé Pine (moon), rose-pine/neovim              — полная схема.
 --   carbonfox  — Carbonfox, EdenEast/nightfox.nvim               — полная схема.
 --
--- Полные схемы — отдельные плагины (lazy = true): грузятся при первом выборе
--- через require("lazy").load. Фон у всех тем принудительно чёрный #000000
--- (требование пользователя) — см. black_bg().
+-- Полные схемы — отдельные плагины (lazy = true, priority = 1000): грузятся при
+-- первом выборе через require("lazy").load. С 2026-10-28 (вечер) они живут В
+-- ОРИГИНАЛЬНОМ стиле: свои цвета И свои фоны, без принудительного #000000 —
+-- пользователь попросил «переделай в оригинальном стиле, можно все цвета и
+-- фоны». Чёрный фон #000000 остаётся только у оверлейных тем (new/classic/
+-- halloween) — это их фирменный знак.
+--
+-- СТАРТ БЕЗ МЕРЦАНИЯ: раньше init.lua сначала ставил страховочный colorscheme,
+-- потом themes.setup() переключал на сохранённый — тема мигала на старте.
+-- Теперь setup() САМ сначала пытается включить сохранённую тему (плагины тем
+-- зарегистрированы lazy.setup к этому моменту, у всех priority = 1000 — схема
+-- встаёт до первой отрисовки UI), и только если это не удалось — падает на
+-- catppuccin-mocha / habamax. Переключение ровно одно.
 local M = {}
 
 local BASE = "catppuccin-mocha"
 local BLACK = "#000000"
 
+-- Фон редактора, дерева и всех плавающих окон у оверлейных тем.
 local BG_GROUPS = {
   "Normal", "NormalFloat", "SignColumn", "MsgArea",
   "StatusLine", "StatusLineNC", "Pmenu", "NormalNC", "FloatBorder",
@@ -29,9 +41,31 @@ local BG_GROUPS = {
   "NvimTreeStatusLine", "NvimTreeStatuslineNc",
 }
 
--- ---------------------------------------------------------------------------
+-- «Серые» группы: у схем они серо-стальные и выглядят чужеродными пятнами
+-- (скриншот пользователя: серое пятно в дереве файлов на чёрном фоне).
+-- У оверлейных тем фон этих групп = фон редактора (#000000), а где нужна
+-- видимость (Visual, Search, MatchParen…) — свечение темы, не серый.
+local EXTRA_BG_GROUPS = {
+  "NvimTreeCursorLine", "NvimTreeCursorLineNC",
+  "NvimTreeWinSeparator", "NvimTreeVertSplit",
+  "WinSeparator", "VertSplit", "WinBar", "WinBarNC",
+  "Folded", "FoldColumn", "ColorColumn",
+  "TabLine", "TabLineFill",
+  "PmenuSel", "PmenuSbar", "PmenuThumb",
+  "QuickFixLine", "CursorLineNr",
+  "WhichKeyFloat", "WhichKeyBorder",
+}
+
+--- Фон «серых» групп = чёрный; сами группы видимость не теряют (fg остаётся).
+local function black_extra()
+  for _, group in ipairs(EXTRA_BG_GROUPS) do
+    vim.api.nvim_set_hl(0, group, { bg = BLACK })
+  end
+end
+
+-- --------------------------------------------------------------------------- --
 -- Тема «new»
--- ---------------------------------------------------------------------------
+-- --------------------------------------------------------------------------- --
 local function apply_new()
   local P = {
     black = BLACK,      -- фон (обязательно)
@@ -48,13 +82,18 @@ local function apply_new()
   for _, group in ipairs(BG_GROUPS) do
     vim.api.nvim_set_hl(0, group, { bg = P.black })
   end
+  black_extra()
 
   vim.api.nvim_set_hl(0, "CursorLine", { bg = "#0a0a1a" })
   vim.api.nvim_set_hl(0, "FloatBorder", { fg = P.glow, bg = P.black })
-  vim.api.nvim_set_hl(0, "WinSeparator", { fg = P.glow })
+  vim.api.nvim_set_hl(0, "WinSeparator", { fg = P.glow, bg = P.black })
   vim.api.nvim_set_hl(0, "Visual", { bg = P.glow, fg = "#ffffff" })
   vim.api.nvim_set_hl(0, "Search", { bg = P.glow, fg = "#ffffff" })
   vim.api.nvim_set_hl(0, "IncSearch", { bg = P.glow, fg = "#ffffff", bold = true })
+  vim.api.nvim_set_hl(0, "MatchParen", { bg = P.glow, fg = "#ffffff", bold = true })
+  vim.api.nvim_set_hl(0, "PmenuSel", { bg = P.glow, fg = "#ffffff" })
+  vim.api.nvim_set_hl(0, "QuickFixLine", { bg = P.glow, fg = "#ffffff" })
+  vim.api.nvim_set_hl(0, "Folded", { bg = P.black, fg = P.violet, italic = true })
 
   vim.api.nvim_set_hl(0, "CursorLineNr", { fg = P.orange, bold = true })
   vim.api.nvim_set_hl(0, "LineNr", { fg = P.violet })
@@ -84,13 +123,17 @@ local function apply_new()
   vim.api.nvim_set_hl(0, "WhichKeySeparator", { fg = P.glow })
 end
 
--- ---------------------------------------------------------------------------
+-- --------------------------------------------------------------------------- --
 -- Тема «classic» — прежние цвета (состояние до правок, коммит 338f31f)
--- ---------------------------------------------------------------------------
+-- --------------------------------------------------------------------------- --
 local function apply_classic()
   for _, group in ipairs(BG_GROUPS) do
     vim.api.nvim_set_hl(0, group, { bg = BLACK })
   end
+  black_extra()
+
+  vim.api.nvim_set_hl(0, "WinSeparator", { fg = "#4d4d4d", bg = BLACK })
+  vim.api.nvim_set_hl(0, "Folded", { bg = BLACK, fg = "#4d4d4d", italic = true })
 
   -- catppuccin custom_highlights (как были)
   vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#00ff00", bold = true })
@@ -115,14 +158,66 @@ local function apply_classic()
   vim.api.nvim_set_hl(0, "@parameter", { fg = "#c3e88d", italic = true })
 end
 
--- ---------------------------------------------------------------------------
--- Чёрный фон для полных схем: держим требование «фон строго #000000».
--- Остальные цвета берутся из самой схемы.
--- ---------------------------------------------------------------------------
-local function black_bg()
+-- --------------------------------------------------------------------------- --
+-- Тема «halloween» — тыква, неон и фиолетовый туман (оверлей, чёрный фон)
+-- --------------------------------------------------------------------------- --
+local function apply_halloween()
+  local P = {
+    black = BLACK,
+    pumpkin = "#ff7a00", -- тыква: ключевые слова, активный номер строки
+    bone = "#e8e3d5",    -- костяной текст подсказок
+    purple = "#9d5cff",  -- комментарии, номера строк, константы
+    deep = "#6a00b8",    -- фиолетовое свечение: рамки, выделение, поиск
+    slime = "#7dff5c",   -- слизь: переменные и поля
+    candy = "#ffd75c",   -- конфета: строки в кавычках
+    witch = "#b36bff",   -- ведьма: функции и методы
+    amber = "#ffb84d",   -- параметры, типы
+    blood = "#ff3b3b",   -- ошибки/boolean
+  }
+
   for _, group in ipairs(BG_GROUPS) do
-    vim.api.nvim_set_hl(0, group, { bg = BLACK })
+    vim.api.nvim_set_hl(0, group, { bg = P.black })
   end
+  black_extra()
+
+  vim.api.nvim_set_hl(0, "CursorLine", { bg = "#140a00" })
+  vim.api.nvim_set_hl(0, "FloatBorder", { fg = P.deep, bg = P.black })
+  vim.api.nvim_set_hl(0, "WinSeparator", { fg = P.deep, bg = P.black })
+  vim.api.nvim_set_hl(0, "Visual", { bg = P.deep, fg = "#ffffff" })
+  vim.api.nvim_set_hl(0, "Search", { bg = P.pumpkin, fg = "#000000", bold = true })
+  vim.api.nvim_set_hl(0, "IncSearch", { bg = P.pumpkin, fg = "#000000", bold = true })
+  vim.api.nvim_set_hl(0, "MatchParen", { bg = P.deep, fg = "#ffffff", bold = true })
+  vim.api.nvim_set_hl(0, "PmenuSel", { bg = P.deep, fg = "#ffffff" })
+  vim.api.nvim_set_hl(0, "QuickFixLine", { bg = P.deep, fg = "#ffffff" })
+  vim.api.nvim_set_hl(0, "Folded", { bg = P.black, fg = P.purple, italic = true })
+
+  vim.api.nvim_set_hl(0, "CursorLineNr", { fg = P.pumpkin, bold = true })
+  vim.api.nvim_set_hl(0, "LineNr", { fg = P.purple })
+
+  vim.api.nvim_set_hl(0, "@keyword", { fg = P.pumpkin, bold = true })
+  vim.api.nvim_set_hl(0, "@keyword.function", { fg = P.pumpkin, bold = true })
+  vim.api.nvim_set_hl(0, "@repeat", { fg = P.pumpkin })
+  vim.api.nvim_set_hl(0, "@conditional", { fg = P.pumpkin })
+  vim.api.nvim_set_hl(0, "@function", { fg = P.witch, underline = true })
+  vim.api.nvim_set_hl(0, "@function.call", { fg = P.witch, underline = true })
+  vim.api.nvim_set_hl(0, "@function.builtin", { fg = P.witch, underline = true })
+  vim.api.nvim_set_hl(0, "@method", { fg = P.witch, underline = true })
+  vim.api.nvim_set_hl(0, "@variable", { fg = P.slime })
+  vim.api.nvim_set_hl(0, "@variable.member", { fg = P.slime })
+  vim.api.nvim_set_hl(0, "@parameter", { fg = P.amber, italic = true })
+  vim.api.nvim_set_hl(0, "@variable.parameter", { fg = P.amber, italic = true })
+  vim.api.nvim_set_hl(0, "@string", { fg = P.candy })
+  vim.api.nvim_set_hl(0, "@string.special", { fg = P.candy })
+  vim.api.nvim_set_hl(0, "@number", { fg = P.purple, bold = true })
+  vim.api.nvim_set_hl(0, "@boolean", { fg = P.blood, bold = true })
+  vim.api.nvim_set_hl(0, "@constant", { fg = P.purple, bold = true })
+  vim.api.nvim_set_hl(0, "@type", { fg = P.amber })
+  vim.api.nvim_set_hl(0, "@comment", { fg = P.purple, italic = true })
+
+  vim.api.nvim_set_hl(0, "WhichKey", { fg = P.pumpkin, bold = true })
+  vim.api.nvim_set_hl(0, "WhichKeyGroup", { fg = P.witch, bold = true })
+  vim.api.nvim_set_hl(0, "WhichKeyDesc", { fg = P.bone })
+  vim.api.nvim_set_hl(0, "WhichKeySeparator", { fg = P.deep })
 end
 
 M.themes = {
@@ -134,28 +229,33 @@ M.themes = {
     label = "🕰 Старая: прежние цвета",
     base = BASE, plugin = "catppuccin", apply = apply_classic,
   },
+  halloween = {
+    label = "🎃 Хэллоуин: тыква, неон, фиолетовый туман",
+    base = BASE, plugin = "catppuccin", apply = apply_halloween,
+  },
+  -- Полные схемы — ОРИГИНАЛЬНЫЙ стиль: свои палитры и свои фоны (apply = nil).
   tokyonight = {
-    label = "🌃 Tokyo Night (night): тёмно-синяя",
-    base = "tokyonight-night", plugin = "tokyonight.nvim", apply = black_bg,
+    label = "🌃 Tokyo Night (night): оригинал, тёмно-синяя",
+    base = "tokyonight-night", plugin = "tokyonight.nvim", apply = nil,
   },
   gruvbox = {
-    label = "🟤 Gruvbox: тёплая, ретро",
-    base = "gruvbox", plugin = "gruvbox.nvim", apply = black_bg,
+    label = "🟤 Gruvbox: оригинал, тёплая ретро",
+    base = "gruvbox", plugin = "gruvbox.nvim", apply = nil,
   },
   kanagawa = {
-    label = "🌊 Kanagawa (wave): японская тушь",
-    base = "kanagawa-wave", plugin = "kanagawa.nvim", apply = black_bg,
+    label = "🌊 Kanagawa (wave): оригинал, японская тушь",
+    base = "kanagawa-wave", plugin = "kanagawa.nvim", apply = nil,
   },
   rosepine = {
-    label = "🌙 Rosé Pine (moon): мягкая роза",
-    base = "rose-pine-moon", plugin = "rose-pine", apply = black_bg,
+    label = "🌙 Rosé Pine (moon): оригинал, мягкая роза",
+    base = "rose-pine-moon", plugin = "rose-pine", apply = nil,
   },
   carbonfox = {
-    label = "🟦 Carbonfox: графит и неон",
-    base = "carbonfox", plugin = "nightfox.nvim", apply = black_bg,
+    label = "🟦 Carbonfox: оригинал, графит и неон",
+    base = "carbonfox", plugin = "nightfox.nvim", apply = nil,
   },
 }
-M.order = { "new", "classic", "tokyonight", "gruvbox", "kanagawa", "rosepine", "carbonfox" }
+M.order = { "new", "classic", "halloween", "tokyonight", "gruvbox", "kanagawa", "rosepine", "carbonfox" }
 M.default = "new"
 M.current = M.default
 
@@ -194,6 +294,9 @@ end
 --- Загрузить плагин темы (если это полная схема) и включить базовую схему.
 local function activate(name)
   local t = M.themes[name]
+  if not t then
+    return false, "нет темы " .. tostring(name)
+  end
   if t.plugin then
     local ok_lazy, lazy = pcall(require, "lazy")
     if ok_lazy then
@@ -246,6 +349,9 @@ function M.pick()
   end)
 end
 
+-- --------------------------------------------------------------------------- --
+-- СТАРТ: одно переключение, без мерцания дефолтной темы.
+-- --------------------------------------------------------------------------- --
 function M.setup()
   load_saved()
 
@@ -256,13 +362,23 @@ function M.setup()
     end,
   })
 
-  -- Вызывается из init.lua ПОСЛЕ lazy.setup: плагины тем уже зарегистрированы,
-  -- поэтому сохранённая тема применяется сразу, без VimEnter.
+  -- 1) Пытаемся включить СОХРАНЁННУЮ тему сразу: плагины тем уже
+  --    зарегистрированы lazy.setup (вызван до нас в init.lua), у всех
+  --    priority = 1000 — схема встаёт до первой отрисовки UI.
+  -- 2) Не удалось (плагин не скачан, схема упала) — страховка catppuccin/habamax.
+  -- Переключение ровно одно, поэтому дефолтная тема не мелькает.
+  local started = false
   if M.current ~= M.default then
-    M.set(M.current, { silent = true })
-  else
-    M.apply(M.current)
+    started = activate(M.current)
   end
+  if not started then
+    -- сохранённая схема не встала (плагин не скачан и т.п.) — страховка
+    if not pcall(vim.cmd.colorscheme, BASE) then
+      pcall(vim.cmd.colorscheme, "habamax")
+    end
+    M.current = M.default
+  end
+  M.apply(M.current) -- оверлей поверх включённой схемы
 
   vim.api.nvim_create_user_command("Theme", function(opts)
     if opts.args == "" then
@@ -278,7 +394,7 @@ function M.setup()
     desc = "Выбрать тему: " .. table.concat(M.order, " | ") .. " (без аргумента — меню)",
   })
 
-  vim.keymap.set("n", "<leader>uT", M.pick, { desc = "🎨 Выбрать тему (7 штук)" })
+  vim.keymap.set("n", "<leader>uT", M.pick, { desc = "🎨 Выбрать тему (8 штук)" })
 end
 
 return M

@@ -466,3 +466,18 @@ N                      n      Предыдущее совпадение (по ц
 <leader>=              n      Выровнять по символу (оператор)
 <leader>=              x      Выровнять выделение по символу
 <leader>qW             n      Записать через sudo
+q                    n      Назад-слово умное (spider, было b)
+q                    x,o    Назад-слово умное (spider, было b)
+Q                    n      Запись макроса (раньше q)
+gza                  n,x    Surround: добавить окружение (было sa)
+gzd                  n      Surround: удалить окружение (было sd)
+gzf                  n      Surround: найти справа (было sf)
+gzF                  n      Surround: найти слева (было sF)
+gzh                  n      Surround: подсветить (было sh)
+gzr                  n      Surround: заменить (было sr)
+gzn                  n      Surround: окно поиска n_lines
+<leader>uH           n      Хэллоуин-вайб вкл/выкл (тема+мыши+тыква)
+<leader>uP           n      Питомец: тыква (хэллоуин)
+<leader>Im           n      Markdown: live-превью в браузере (вкл/выкл)
+<leader>It           n      Markdown: оглавление (:Toc)
+<leader>IT           n      Markdown: выровнять таблицу

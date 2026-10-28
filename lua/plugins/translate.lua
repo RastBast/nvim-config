@@ -16,9 +16,19 @@ return {
     { "<leader>te", ":Translate en<CR>", desc = "🌐 Перевести на английский", mode = { "n", "v" } },
   },
   config = function()
+    -- КЛЮЧ DeepL из окружения (2026-10-28): translate.nvim читает его только
+    -- из vim.g.deepl_api_auth_key (lua/translate/preset/command/deepl.lua:11).
+    -- Положил ключ в переменную окружения — перевод подхватился сам:
+    --   fish: set -Ux DEEPL_AUTH_KEY "…:fx"   bash/zsh: export DEEPL_AUTH_KEY=…
+    if (vim.env.DEEPL_AUTH_KEY or "") ~= "" then
+      vim.g.deepl_api_auth_key = vim.env.DEEPL_AUTH_KEY
+    end
+    local has_deepl = (vim.g.deepl_api_auth_key or "") ~= ""
     require("translate").setup({
       default = {
-        command = "google",
+        -- С ключом DeepL — он (работает из РФ без VPN); без ключа — google
+        -- (бесплатный, но из РФ без VPN может не отвечать).
+        command = has_deepl and "deepl_free" or "google",
         output = "split", -- вместо плавающего окна — сплит
       },
       preset = {

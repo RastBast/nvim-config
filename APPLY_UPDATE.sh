@@ -1014,6 +1014,33 @@ for m in hover_ru diag_ru notify_ru; do
 done
 grep -q 'config.hover_ru' init.lua && echo '  ✓ init.lua'
 
+# ============================================================================
+#  GHOSTTY: синхронизация конфига терминала (2026-10-28)
+#  Раньше скрипт обновлял только nvim-файлы, и macos/ghostty/config НЕ
+#  доезжал до ~/.config/ghostty/config: терминал жил со СТАРЫМ конфигом —
+#  отсюда ошибка «scrollback-limit-lines: unknown field» на старте Ghostty
+#  и невключённый полноэкранный режим (скриншот пользователя).
+#  Теперь: есть свежий конфиг в репозитории — кладём его в Ghostty,
+#  прежний пользовательский сохраняем резервной копией рядом.
+# ============================================================================
+GC_SRC="$DEST/macos/ghostty/config"
+GC_DST="$HOME/.config/ghostty/config"
+if [ -f "$GC_SRC" ]; then
+  mkdir -p "$HOME/.config/ghostty"
+  if [ -f "$GC_DST" ] && cmp -s "$GC_SRC" "$GC_DST"; then
+    echo '  ✓ ghostty: конфиг уже актуальный'
+  else
+    if [ -f "$GC_DST" ]; then
+      cp "$GC_DST" "$GC_DST.bak-$(date +%Y%m%d-%H%M%S)"
+    fi
+    cp "$GC_SRC" "$GC_DST"
+    echo "  ✓ ghostty: конфиг обновлён ($GC_DST); старый — в резервной копии"
+    echo "    Перечитай в Ghostty: cmd+shift+,  (или перезапусти терминал)"
+  fi
+else
+  echo '  ! ghostty: в конфиге нет macos/ghostty/config — пропускаю'
+fi
+
 echo
 echo "Готово. Перезапусти Neovim."
 echo "Клавиши: <leader>HGS — формочка struct, <leader>HGf — поля под курсором."

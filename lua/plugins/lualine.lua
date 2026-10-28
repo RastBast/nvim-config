@@ -61,6 +61,12 @@ return {
         sections = {
           lualine_c = { { "filename", path = 1 } },
           lualine_x = {
+            -- 🎃 тыква-индикатор хэллоуин-режима (lua/config/halloween.lua)
+            {
+              function() return "🎃👻🦇" end,
+              cond = function() return vim.g.halloween_on == 1 end,
+              color = { fg = "#ff7a00" },
+            },
             { pomo_status, color = { fg = "#e0af68" } },
             { spotify_status, color = { fg = "#1DB954" } },
             -- ✈ непрочитанные Telegram (мост к tele); пусто, когда новых нет

@@ -122,15 +122,14 @@ require("lazy").setup("plugins", {
 --                         ПРИМЕНЕНИЕ ТЕМЫ И ФИЛЬТРЫ                          --
 -- ========================================================================== --
 
--- Тема ставится плагином lua/plugins/colorscheme.lua (catppuccin).
--- Здесь только страховка: если плагин ещё не скачан — падаем на habamax.
-if not pcall(vim.cmd.colorscheme, "catppuccin-mocha") then
-  pcall(vim.cmd.colorscheme, "habamax")
-end
-
 -- Темы: выбор в nvim — <leader>uT или :Theme (см. lua/config/themes.lua).
--- Вызывается ПОСЛЕ lazy.setup и страховки выше, поэтому сохранённую тему
--- можно применить сразу (без VimEnter) и не перетереть её страховкой.
+-- ВАЖНО (2026-10-28): раньше здесь стояла страховка `colorscheme catppuccin`,
+-- а themes.setup() ПЕРЕключал на сохранённую тему — из-за двойного
+-- переключения на старте мелькала дефолтная тема. Теперь переключение ровно
+-- ОДНО: themes.setup() сам сначала ставит сохранённую тему (плагины тем к
+-- этому моменту зарегистрированы lazy.setup, у всех priority = 1000 — схема
+-- встаёт до первой отрисовки UI), а страховка catppuccin/habamax срабатывает
+-- только если сохранённая схема не загрузилась. Никакого VimEnter.
 require("config.themes").setup()
 
 -- Фильтр всплывающих уведомлений (пропускаем только КРАСНЫЕ ОШИБКИ)
@@ -224,6 +223,8 @@ require("config.webtools").setup() -- <leader>Gh/Gl/Gb: GitHub, GitLab, Хабр
 require("config.keydoc").setup() -- справка по клавишам: <leader>? и режим <leader>?m
 require("config.sudo_write").setup() -- :SudoWrite и <leader>qW: запись файла через sudo
 require("config.games").setup() -- игры: <leader>Xc шахматы, Xs змейка, Xt тетрис, Xf 2048, Xm меню
+require("config.md_preview").setup() -- <leader>Im / :MdPreview: live-превью markdown в браузере
+require("config.halloween").setup() -- <leader>uH / :Halloween: тема + мыши + тыква
 
 -- Русский перевод LSP-подсказок (hover): переводится только проза,
 -- код в ```-блоках и inline `code` не трогается. Выкл: :HoverRu off

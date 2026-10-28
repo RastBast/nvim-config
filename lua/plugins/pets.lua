@@ -19,6 +19,7 @@ return {
       { "<leader>uy", "<cmd>PetsNewCustom nyan classic Нян<cr>", desc = "🐱 Нян-кот (мем)" },
       { "<leader>ut", "<cmd>PetsNewCustom toaster silver Тостер<cr>", desc = "🍞 Тостер (мем)" },
       { "<leader>uG", "<cmd>PetsNewCustom ghost white Бу<cr>", desc = "👻 Призрак «бу» (мем)" },
+      { "<leader>uP", "<cmd>PetsNewCustom pumpkin orange Тыква<cr>", desc = "🎃 Тыква (хэллоуин-питомец)" },
       { "<leader>uo", "<cmd>PetsSleepToggle<cr>", desc = "😴 Питомец: сон" },
       { "<leader>ux", "<cmd>PetsKillAll<cr>", desc = "💀 Убрать питомцев" },
     },
@@ -28,7 +29,11 @@ return {
       default_pet = "gopher",
       default_style = "blue",
       random = true, -- случайный питомец по :PetsNew
-      popup = { delay = 5000 },
+      -- ШИРИНА АРЕНЫ (2026-10-28): питомец гуляет ВНУТРИ окна-попапа pets.nvim
+      -- (lua/pets/animations.lua: set_next_col ограничен popup.win_config.width).
+      -- Дефолт плагина — width = "30%", поэтому зверёк «торчал в одном месте»:
+      -- ему просто некуда было идти. 100% — бегает по ВСЕМУ экрану.
+      popup = { width = "100%", winblend = 100 },
     },
   },
 }
