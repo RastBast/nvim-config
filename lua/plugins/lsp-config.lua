@@ -68,7 +68,7 @@ return {
                 run_govulncheck = true, test = true, tidy = true,
                 upgrade_dependency = true, vendor = true,
               },
-              -- inlay hints: включаются клавишей <leader>gh (по умолчанию выключены)
+              -- inlay hints: включаются <leader>uh или <leader>gh (по умолчанию выключены)
               hints = {
                 assignVariableTypes = true, compositeLiteralFields = true,
                 compositeLiteralTypes = true, constantValues = true,
@@ -118,7 +118,7 @@ return {
           map("<leader>d", vim.diagnostic.open_float, "🩺 Диагностика строки", "n")
 
           -- Инлайновые подсказки (серые «a...:», «int», «[]int») НЕ включаем здесь:
-          -- они выключены по умолчанию. Включить для Go: <leader>gh (переключатель).
+          -- они выключены по умолчанию. Включить: <leader>uh, для Go также <leader>gh.
         end,
       })
     end,

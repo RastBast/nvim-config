@@ -20,9 +20,9 @@ return {
             ['vim.lsp.util.stylize_markdown'] = true,
             -- НЕ true: эту функцию уже подменяет lua/plugins/completions.lua
             -- (перевод окна документации cmp на русский через config.ru_util).
-            -- При = true noice ругается «cmp.entry.get_documentation has been
-            -- overwritten by another plugin?» и просит именно enabled = false.
-            ['cmp.entry.get_documentation'] = { enabled = false },
+            -- В закреплённом Noice это boolean: таблица даже с enabled=false
+            -- истинна в Lua и включает override, вызывая конфликт.
+            ['cmp.entry.get_documentation'] = false,
           },
         },
         presets = {

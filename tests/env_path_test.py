@@ -127,8 +127,8 @@ def main():
     check("init.lua: checker не включён нигде",
           "checker = { enabled = true" not in init)
     check("init.lua: :EnvCheck зарегистрирована", 'nvim_create_user_command("EnvCheck"' in init)
-    check("init.lua: lazy ограничен 8 параллельными процессами (concurrency)",
-          "concurrency = 8" in init and init.index('require("lazy").setup(') < init.index("concurrency = 8"))
+    check("init.lua: lazy ограничен 4 параллельными процессами (concurrency)",
+          "concurrency = 4" in init and init.index('require("lazy").setup(') < init.index("concurrency = 4"))
     check("init.lua: env_path подключён первым (до lazy)",
           init.index('require("config.env_path").setup()') < init.index('require("lazy").setup('))
 

@@ -1,7 +1,8 @@
 -- Группа 10: ИИ-точка входа (Groq и др.) и GoLand-функции Go (lua/config/go_ide.lua).
 -- Поля: { lhs, mode (по умолч. "n"), name, doc }
 return {
-  { lhs = "<leader>Ap", name = "ИИ: выбрать провайдера", doc = "Меню ИИ-провайдеров (Groq, Gemini, OpenAI, OpenRouter, Mistral, DeepSeek, Kimi, Ollama, свой сервис). Выбор действует на перевод K, :AiAsk и :AiProvider; чат CodeCompanion и avante — после перезапуска Neovim. Ключи — только из переменных окружения." },
+  { lhs = "<leader>Ap", name = "ИИ: выбрать провайдера", doc = "Меню ИИ-провайдеров (Groq, Gemini, OpenAI, OpenRouter, Mistral, DeepSeek, Kimi, Ollama, свой сервис). Выбор действует на перевод K, :AiAsk и :AiProvider; ещё не загруженные чаты используют этот выбор; уже открытые не переключаются. Выбор на сессию не сохраняется, постоянно: AI_PROVIDER. Ключи — только из переменных окружения." },
+  { lhs = "<leader>AN", name = "ИИ: проверить сеть", doc = "Без ключа и текста проверяет доступность /models выбранного ИИ. HTTP-ответ не гарантирует правильность ключа и модели. Ошибки указывают на DNS, VPN или прокси." },
   { lhs = "<leader>Aq", name = "ИИ: быстрый вопрос", doc = "Спрашивает выбранный ИИ (то же, что :AiAsk): вопрос вводится в строке, ответ открывается в окне (q или Esc — закрыть)." },
   { lhs = "<leader>gi", name = "Go IDE: меню", doc = "Меню функций в духе GoLand (Alt+Enter): тест, конструктор, документация, файл↔тест, импорты, if err, интерфейсы, теги, запуск пакета, references, rename, code action. Работает только в Go-файлах." },
   { lhs = "<leader>HGi", name = "Go IDE: меню (зеркало)", doc = "То же меню, что <leader>gi, в группе <leader>HG (Go)." },
@@ -13,7 +14,7 @@ return {
   { lhs = "<leader>gr", name = "Go: запуск пакета", doc = "Запускает go run . в плавающем терминале (toggleterm)." },
   { lhs = "<leader>gx", mode = "x", name = "Go: извлечь выделение", doc = "Извлекает выделенный код в переменную или функцию через gopls (code action). Выдели код в визуальном режиме и нажми." },
   -- Go PRO: как в VS Code и GoLand (lua/config/go_pro.lua)
-  { lhs = "<leader>gh", name = "Go: подсказки типов и параметров", doc = "Inlay hints gopls: типы переменных, имена параметров, поля struct-литералов прямо в тексте. Выключены по умолчанию (как в VS Code); переключатель. Нужен Neovim 0.10+." },
+  { lhs = "<leader>gh", name = "Go: подсказки типов и параметров", doc = "Inlay hints gopls: типы переменных, имена параметров, поля struct-литералов прямо в тексте. Выключены по умолчанию; переключатель для текущего Go-буфера. Во всех языках также <leader>uh. Нужен Neovim 0.10+." },
   { lhs = "<leader>gL", name = "Go: codelens над функцией", doc = "Выполняет действие codelens под курсором: «run test», «debug test», go generate, go mod tidy. Строки-подсказки над функциями gopls показывает сам." },
   { lhs = "<leader>gR", name = "Go: тест с -race", doc = "Внутри TestXxx — запускает только этот тест с детектором гонок (-race). В другом месте — весь пакет (go test -race .). Вывод в плавающем терминале." },
   { lhs = "<leader>gB", name = "Go: бенчмарк функции", doc = "Курсор внутри BenchmarkXxx — запускает его: go test -run '^$' -bench '^BenchmarkXxx$' -benchmem." },
