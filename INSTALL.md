@@ -6,7 +6,7 @@
 
 | Что | Зачем | Установка (macOS) |
 |---|---|---|
-| Neovim **0.10+** | база | `brew install neovim` |
+| Neovim **0.11+**; для Avante **0.12+** | база; Avante v0.4.8 требует 0.12 | `brew install neovim` |
 | `git` | lazy клонирует плагины | `brew install git` |
 | clang | сборка treesitter-парсеров | `xcode-select --install` |
 | `ripgrep` | live-grep `<leader>fg` | `brew install ripgrep` |
@@ -22,7 +22,7 @@
 Опционально для proto: `buf`, `protolint` — можно из Neovim: `:MasonInstall buf protolint`.
 `grpcurl` для gRPC из терминала: https://github.com/fullstorydev/grpcurl.
 
-Проверка версии: `nvim --version` → первая строка ≥ 0.10.
+Проверка версии: `nvim --version` → первая строка ≥ 0.11; для чата Avante — ≥ 0.12.
 
 ## 1. Алacritty: шрифт с иконками
 
@@ -193,6 +193,7 @@ Groq — **обязательный** провайдер в этом конфи�
 | Перевод по словам с грамматикой | выдели английский текст → `K` (или `<leader>Kw` для слова) |
 | Быстрый вопрос любому ИИ | `<leader>Aq` (ответ откроется в окне) |
 | Чат-агент, объяснить код, inline | `<leader>Aa`, `<leader>Ax` (avante); `<leader>Hat` (CodeCompanion) |
+| Схема архитектуры (прототип) | `<leader>mA` или `:ArchMenu`: компоненты и связи через меню, граф в браузере; сохранить `:w` |
 
 Перевод `K` и `:AiAsk` переключаются сразу. Чат CodeCompanion и avante
 читают провайдера при запуске Neovim — после смены `AI_PROVIDER`
@@ -237,6 +238,7 @@ Groq — **обязательный** провайдер в этом конфи�
 | Плагин «Failed: checkout…» | `:Lazy restore <имя>` или `rm -rf ~/.local/share/nvim/lazy/<имя>` + `:Lazy sync` |
 | Переводы приходят английскими | нет curl/сети до translate.googleapis.com — конфиг молча работает по-английски, кеш греется при появлении сети |
 | Ошибка `RestAPI/proto is not in std` | это твой проект: импорт должен начинаться с имени модуля из `go.mod` |
+| avante: `missing avante_templates` | Нужен Neovim 0.12+. Выполни `:Lazy update avante.nvim`, перезапусти nvim; проверь `:AvanteStatus` и при необходимости выполни `:AvanteRebuild`. Подробности — DOCS.md, раздел 45 |
 | avante: `E239: Invalid sign text` при загрузке | в `windows.input.prefix` стоял эмодзи: текст знака не может быть шире 2 ячеек. Ставь `"> "` (уже исправлено в конфиге) |
 | avante: `400 User location is not supported` | геоблок Google по IP — нужен выход не из РФ или план B (OpenRouter). **PROXY.md**, §1.5 и §5 |
 | avante: `404 … no longer available to new users` | устарело имя модели: `set -Ux GEMINI_MODEL "gemini-3.6-flash"` |

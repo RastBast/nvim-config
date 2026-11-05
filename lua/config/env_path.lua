@@ -101,17 +101,30 @@ function M.check()
   -- avante: нативная библиотека для чата и подсказок (см. config/avante_build.lua)
   local okB, B = pcall(require, "config.avante_build")
   if okB then
-    local dir = vim.fn.stdpath("data") .. "/lazy/avante.nvim"
+    local dir = B.plugin_dir()
     lines[#lines + 1] = " "
+    if vim.fn.has("nvim-0.12") ~= 1 then
+      lines[#lines + 1] = "avante: нужен Neovim 0.12+; плагин отключён до обновления"
+    end
     if vim.fn.isdirectory(dir) == 0 then
       lines[#lines + 1] = "avante: плагин не установлен (:Lazy sync)"
     else
-      lines[#lines + 1] = "avante " .. B.TAG .. ": " .. (B.is_built(dir) and "библиотека ЕСТЬ" or "библиотеки НЕТ, выполни :AvanteRebuild")
+      local revision, rev_err = B.revision(dir)
+      local ok, reason = B.check(dir)
+      lines[#lines + 1] = "avante " .. B.TAG .. ": " .. (ok and "библиотеки загружаются" or "библиотеки не готовы — :AvanteRebuild")
       lines[#lines + 1] = "  файл: " .. B.lib_file(dir)
+      if not ok then lines[#lines + 1] = "  причина: " .. reason end
+      if revision and revision ~= B.COMMIT then
+        lines[#lines + 1] = "  " .. B.revision_error(revision)
+      elseif not revision then
+        lines[#lines + 1] = "  " .. tostring(rev_err)
+      end
     end
   end
 
-  vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "Проверка окружения" })
+  -- INFO/WARN от vim.notify в этом конфиге фильтруются: диагностику команды
+  -- показываем через echo, иначе пользователь ничего не увидит.
+  vim.api.nvim_echo({ { "Проверка окружения\n" .. table.concat(lines, "\n"), "None" } }, true, {})
 end
 
 return M

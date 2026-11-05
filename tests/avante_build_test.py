@@ -1,18 +1,11 @@
 #!/usr/bin/env python3
-"""Тесты сборки avante (lua/config/avante_build.lua) и её подключения в avante.lua.
+"""Проверка сборки avante: версия, рабочие нативные модули и восстановление.
 
-Что проверяем:
-  * выбор архива по платформе (macOS arm64/x86_64, Linux, неизвестная ОС);
-  * ссылка на архив закреплённого тега;
-  * успех только когда файл библиотеки появился на диске (а не по коду возврата);
-  * понятные сообщения: 404, тихий сбой распаковки, нет cargo, ошибка make;
-  * тег в avante.lua совпадает с M.TAG; нет старого build.sh.
-
-Внешние команды (curl, tar, make) и файловая система подменяются заглушками,
-так что тест не требует сети, macOS и Rust.
-
-Запуск:  python3 tests/avante_build_test.py
+ФС и внешние процессы подменены: тестируются также ошибки загрузчика, принудительная
+пересборка, безопасная замена и параллельные запросы. Реальный dlopen проверяется
+отдельно в avante_native_test.py. Запуск: PYTHONPATH=... python3 tests/avante_build_test.py
 """
+import json
 import os
 import re
 import sys
@@ -30,91 +23,142 @@ def check(name, cond, extra=""):
 
 PRELUDE = r'''
 DIR = "/P/avante"
-LIB = DIR .. "/lua/avante_templates.so"
-
+STAGE = DIR .. "/lua/.avante-build-12345678901234567890"
+NAMES = {"avante_templates", "avante_tokenizers", "avante_repo_map", "avante_html2md"}
+EXPECTED = {
+  avante_templates = {"initialize", "render"},
+  avante_tokenizers = {"from_pretrained", "encode"},
+  avante_repo_map = {"stringify_definitions"},
+  avante_html2md = {"fetch_md", "html2md"},
+}
 vim.split = function(s, sep)
   local out = {}
   for part in (s .. sep):gmatch("(.-)" .. sep:gsub("%p", "%%%0")) do out[#out + 1] = part end
   return out
 end
 vim.list_slice = function(t, a, b)
-  local o = {}
-  for i = a, (b or #t) do o[#o + 1] = t[i] end
-  return o
+  local o = {}; for i = a, (b or #t) do o[#o + 1] = t[i] end; return o
 end
--- Модель главного цикла: vim.schedule откладывает функцию в очередь,
--- drain() выполняет её, как цикл событий nvim. vim.system вызывает колбэк
--- в fast-контексте (IN_FAST = true), где vim.fn запрещён (E5560).
 QUEUE, IN_FAST = {}, false
 vim.schedule = function(fn) QUEUE[#QUEUE + 1] = fn end
 function drain()
+  local n = 0
   while #QUEUE > 0 do
-    local f = table.remove(QUEUE, 1)
-    f()
+    n = n + 1; if n > 300 then error("очередь не опустела") end
+    table.remove(QUEUE, 1)()
   end
 end
 vim.wait = function(_, cond)
-  for _ = 1, 100 do
-    drain()
-    if cond() then return true end
-  end
+  for _ = 1, 100 do drain(); if cond() then return true end end
   return cond()
 end
-
-EXEC, EXISTS, CALLS, UNAME, HANDLER = {}, {}, {}, nil, nil
+EXEC, FILES, VERSIONS, GENERATION, CALLS, RENAMES, UNAME, O = {}, {}, {}, 0, {}, {}, nil, {}
 vim.fn.has = function() return 0 end
 vim.fn.executable = function(x) return EXEC[x] and 1 or 0 end
-vim.fn.tempname = function() return "/tmp/fake" end
-vim.fn.mkdir = function() return 0 end
-vim.fn.isdirectory = function() return 1 end
-vim.fn.delete = function(p) CALLS[#CALLS + 1] = "delete " .. p; return 0 end
+vim.fn.tempname = function() return "/tmp/nvim-unique/1" end
+vim.fn.sha256 = function() return "12345678901234567890abcdef" end
+vim.fn.mkdir = function(path)
+  if O.mkdir_error or (O.stage_error and path:find('.avante-build-', 1, true)) then error('permission denied') end
+  if O.mkdir_zero then return 0 end
+  return 1
+end
+vim.fn.delete = function(p, flags)
+  CALLS[#CALLS + 1] = "delete " .. p .. " " .. tostring(flags)
+  for name in pairs(FILES) do if name:sub(1, #p + 1) == p .. "/" then FILES[name] = nil end end
+  return 0
+end
 local FNS = vim.fn
 vim.fn = setmetatable({}, {
   __index = function(_, k)
-    if IN_FAST then error("E5560: vim.fn." .. tostring(k) .. " вызван в fast-контексте") end
+    if IN_FAST then error("E5560: vim.fn." .. tostring(k) .. " в fast-контексте") end
     return FNS[k]
   end,
   __newindex = function(_, k, v) FNS[k] = v end,
 })
 vim.uv.os_uname = function() return UNAME end
-vim.uv.fs_stat = function(p) if EXISTS[p] then return {} end return nil end
+vim.uv.fs_stat = function(p) if FILES[p] then return { type = "file", ino = VERSIONS[p], size = 1, mtime = {sec=VERSIONS[p], nsec=0} } end return nil end
+vim.uv.fs_copyfile = function(from, to)
+  if O.copy_fail then return nil, "copy failed" end
+  if not FILES[from] then return nil, "missing source" end
+  FILES[to], VERSIONS[to] = FILES[from], VERSIONS[from]
+  CALLS[#CALLS + 1] = "copy " .. from .. " " .. to
+  return true
+end
+vim.uv.fs_rename = function(from, to)
+  RENAMES[#RENAMES + 1] = {from, to}
+  if O.rename_fail then return nil, "permission denied" end
+  if not FILES[from] then return nil, "missing source" end
+  FILES[to], FILES[from] = FILES[from], nil
+  VERSIONS[to], VERSIONS[from] = VERSIONS[from], nil
+  return true
+end
+package.loadlib = function(path, symbol)
+  local name = path:match("/(avante_[%w_]+)%.so$")
+  local state = FILES[path]
+  if state == "bad" then return nil, "wrong architecture" end
+  if not state or not name or symbol ~= "luaopen_" .. name then return nil, "missing symbol" end
+  return function()
+    if state == "throws" then error("broken library initializer") end
+    local result = {}
+    for _, export in ipairs(EXPECTED[name]) do result[export] = function() end end
+    if state == "api" then result[EXPECTED[name][1]] = nil end
+    return result
+  end
+end
+local function make_files(base, kind, missing)
+  GENERATION = GENERATION + 1
+  for _, name in ipairs(NAMES) do
+    if name ~= missing then
+      local path = base .. "/" .. name .. ".so"
+      FILES[path], VERSIONS[path] = kind or "valid", GENERATION
+    end
+  end
+end
 vim.system = function(cmd, opts, cb)
   CALLS[#CALLS + 1] = table.concat(cmd, " ")
-  local r = HANDLER(cmd, opts)
-  local prev = IN_FAST
-  IN_FAST = true
-  cb({ code = r.code or 0, stderr = r.stderr or "", stdout = "" })
-  IN_FAST = prev
+  local name = cmd[1]
+  local r
+  if name == "git" then
+    r = { code = O.git_code or 0, stdout = (O.revision or B.COMMIT) .. "\n", stderr = O.git_error or "" }
+    return { wait = function() return r end }
+  elseif name == "curl" then
+    r = { code = O.curl_code or 0, stderr = O.curl_err or "", stdout = "" }
+  elseif name == "tar" then
+    if O.tar_produces then make_files(STAGE, O.tar_kind, O.tar_missing) end
+    r = { code = O.tar_code or 0, stderr = O.tar_err or "", stdout = "" }
+  elseif name == "make" then
+    if O.make_produces then make_files(DIR .. "/lua", O.make_kind, O.make_missing) end
+    r = { code = O.make_code or 0, stderr = O.make_err or "", stdout = O.make_out or "" }
+  else
+    error("unexpected process " .. name)
+  end
+  local prev = IN_FAST; IN_FAST = true; cb(r); IN_FAST = prev
   return { wait = function() return r end }
 end
-
 B = require("config.avante_build")
 
-function SETUP(o)
-  CALLS, EXISTS, EXEC = {}, {}, {}
+function RESET(o)
+  O, CALLS, FILES, VERSIONS, GENERATION, EXEC, RENAMES, QUEUE = o, {}, {}, {}, 0, {}, {}, {}
   for _, c in ipairs(o.exec or {}) do EXEC[c] = true end
-  UNAME = o.uname
-  if o.built then EXISTS[LIB] = true end
-  HANDLER = function(cmd)
-    local name = cmd[1]
-    if name == "curl" then
-      return { code = o.curl_code or 0, stderr = o.curl_err or "" }
-    elseif name == "tar" then
-      if o.tar_produces then EXISTS[LIB] = true end
-      return { code = o.tar_code or 0, stderr = o.tar_err or "" }
-    elseif name == "make" then
-      if o.make_produces then EXISTS[LIB] = true end
-      return { code = o.make_code or 0, stderr = o.make_err or "" }
-    end
-    return { code = 0 }
-  end
+  UNAME = o.uname or {sysname="Darwin", machine="arm64"}
+  if o.built then make_files(DIR .. "/lua", o.built_kind, o.missing) end
   RES_OK, RES_MSG = nil, nil
-  B.build(DIR, function(ok, msg) RES_OK, RES_MSG = ok, msg end)
+end
+function SETUP(o)
+  RESET(o)
+  B.build(DIR, function(ok, msg) RES_OK, RES_MSG = ok, msg end, {force = o.force})
   drain()
 end
+function count_command(name)
+  local n = 0
+  for _, call in ipairs(CALLS) do if call:match("^" .. name .. " ") or call == name then n = n + 1 end end
+  return n
+end
+function find_command(name)
+  for _, call in ipairs(CALLS) do if call:match("^" .. name .. " ") or call == name then return call end end
+  return ""
+end
 '''
-
-MAC_ARM = 'uname={sysname="Darwin", machine="arm64"}'
 
 
 def main():
@@ -124,10 +168,9 @@ def main():
         rt.execute(fh.read())
     rt.execute(PRELUDE)
 
-    def run(setup_lua):
-        rt.execute(setup_lua)
+    def run(s):
+        rt.execute(s)
 
-    # ------------------------------------------------------- выбор архива ---
     cases = [
         ("Darwin", "arm64", "avante_lib-darwin-aarch64-luajit.tar.gz"),
         ("Darwin", "x86_64", "avante_lib-darwin-x86_64-luajit.tar.gz"),
@@ -136,110 +179,144 @@ def main():
     ]
     for osn, mach, want in cases:
         got = rt.eval(f"B.artifact('{osn}', '{mach}')")
-        check(f"архив для {osn}/{mach}", got == want, str(got))
+        check(f"архив {osn}/{mach}", got == want, str(got))
     check("неизвестная ОС → nil", rt.eval("B.artifact('Windows_NT', 'AMD64')") is None)
+    url = rt.eval("B.url('avante_lib-darwin-aarch64-luajit.tar.gz')")
+    check("ссылка на закреплённый релиз", url.endswith("/v0.4.8/avante_lib-darwin-aarch64-luajit.tar.gz"), url)
 
-    url = rt.eval("B.url('avante_lib-darwin-aarch64-luajit.tar.gz', 'v0.4.8')")
-    check("ссылка на релиз закреплённого тега",
-          url == "https://github.com/avante-corp/avante.nvim/releases/download/v0.4.8/avante_lib-darwin-aarch64-luajit.tar.gz",
-          str(url))
+    # Наличие файла недостаточно: должен загрузиться каждый модуль и его API.
+    run("RESET{built=true, exec={'git'}}")
+    check("четыре рабочие библиотеки признаны готовыми", rt.eval("B.is_built(DIR)") is True)
+    run("RESET{built=true, built_kind='bad', exec={'git'}}")
+    check("файлы есть, но неподходящая архитектура → не готовы",
+          rt.eval("B.is_built(DIR)") is False and "wrong architecture" in rt.eval("select(2, B.check(DIR))"))
+    run("RESET{built=true, built_kind='api', exec={'git'}}")
+    check("неверный API библиотеки → не готовы",
+          rt.eval("B.is_built(DIR)") is False and "нет функции" in rt.eval("select(2, B.check(DIR))"))
+    run("RESET{built=true, exec={'git'}, missing='avante_repo_map'}")
+    check("частичный комплект библиотек не считается готовым", rt.eval("B.is_built(DIR)") is False)
+    run("RESET{built=true, built_kind='throws', exec={'git'}}")
+    check("ошибка инициализатора ловится", "broken library initializer" in rt.eval("select(2, B.check(DIR))"))
 
-    # ---------------------------------------------------- успешные пути ---
-    run(f"SETUP{{ exec={{'curl','tar'}}, {MAC_ARM}, tar_produces=true }}")
-    check("Mac arm64: сборка успешна, когда файл появился", rt.eval("RES_OK") is True, str(rt.eval("RES_MSG")))
-    check("Mac arm64: первым curl с тегом v0.4.8",
-          "releases/download/v0.4.8/avante_lib-darwin-aarch64-luajit.tar.gz" in rt.eval("CALLS[1]"),
-          str(rt.eval("CALLS[1]")))
-    check("Mac arm64: curl с --fail (404 не сохраняется как архив)",
-          str(rt.eval("CALLS[1]")).startswith("curl -fsSL -o "))
-    check("Mac arm64: tar распаковывает в lua/ плагина",
-          str(rt.eval("CALLS[2]")).startswith("tar -xzf ") and str(rt.eval("CALLS[2]")).endswith("-C /P/avante/lua"),
-          str(rt.eval("CALLS[2]")))
-    check("Mac arm64: make не запускается, когда готовый архив подошёл",
-          rt.eval("#CALLS") == 3 or all("make" not in c for c in [rt.eval(f"CALLS[{i}]") for i in range(1, rt.eval("#CALLS") + 1)]))
+    run("SETUP{exec={'git','curl','tar'}, tar_produces=true}")
+    check("Mac arm64: успех после загрузки и проверки", rt.eval("RES_OK") is True, str(rt.eval("RES_MSG")))
+    check("архив скачивается по тегу и с таймаутом",
+          "v0.4.8/avante_lib-darwin-aarch64-luajit.tar.gz" in rt.eval("find_command('curl')")
+          and "--max-time 180" in rt.eval("find_command('curl')"))
+    check("распаковка не поверх используемых библиотек",
+          rt.eval("find_command('tar')").endswith("-C " + rt.eval("STAGE")))
+    check("все четыре файла заменяются через rename", rt.eval("#RENAMES") == 4)
+    check("временный каталог очищен", rt.eval("count_command('delete')") == 1)
+    check("make при успешном архиве не запущен", rt.eval("count_command('make')") == 0)
 
-    run(f"SETUP{{ built=true, exec={{}}, {MAC_ARM} }}")
-    check("уже собрано: без единой команды", rt.eval("RES_OK") is True and rt.eval("#CALLS") == 0)
+    run("SETUP{built=true, exec={'git'}}")
+    check("уже исправно: загрузки нет", rt.eval("RES_OK") is True and rt.eval("count_command('curl')") == 0)
+    run("SETUP{built=true, exec={'git','curl','tar'}, tar_produces=true, force=true}")
+    check("принудительная сборка не пропускается при существующем файле",
+          rt.eval("RES_OK") is True and rt.eval("count_command('curl')") == 1 and rt.eval("#RENAMES") == 4)
+    run("SETUP{built=true, built_kind='bad', exec={'git','curl','tar'}, tar_produces=true}")
+    check("повреждённые библиотеки реально заменяются", rt.eval("RES_OK") is True and rt.eval("#RENAMES") == 4)
 
-    run("SETUP{ exec={'curl','tar'}, uname={sysname='Darwin', machine='x86_64'}, tar_produces=true }")
-    check("Mac Intel: архив x86_64",
-          "darwin-x86_64-luajit" in str(rt.eval("CALLS[1]")), str(rt.eval("CALLS[1]")))
+    run("SETUP{exec={'git','curl','tar'}, revision='deadbeef'}")
+    check("другой checkout: не скачивать несовместимые бинарники",
+          rt.eval("RES_OK") is False and rt.eval("count_command('curl')") == 0
+          and ":Lazy update avante.nvim" in rt.eval("RES_MSG"))
+    run("SETUP{exec={'curl','tar'}, tar_produces=true}")
+    check("нет git: понятная причина, бинарники не скачиваются без проверки версии",
+          rt.eval("RES_OK") is False and "git не найден" in rt.eval("RES_MSG") and rt.eval("count_command('curl')") == 0)
+    run("SETUP{exec={'git','curl','tar'}, git_code=128, git_error='not a git repository'}")
+    check("ошибка чтения HEAD не маскируется", rt.eval("RES_OK") is False and "not a git repository" in rt.eval("RES_MSG"))
 
-    run("SETUP{ exec={'curl','tar'}, uname={sysname='Linux', machine='x86_64'}, tar_produces=true }")
-    check("Linux x86_64: сборка успешна", rt.eval("RES_OK") is True)
+    run("SETUP{exec={'git','curl','tar'}, curl_code=22, curl_err='HTTP 404'}")
+    msg = rt.eval("RES_MSG")
+    check("ошибка скачивания: причина curl и подсказка про Rust",
+          rt.eval("RES_OK") is False and "HTTP 404" in msg and "brew install rust" in msg, msg)
+    run("SETUP{exec={'git','curl','tar'}, tar_produces=true, tar_missing='avante_templates'}")
+    check("частичный архив не объявляется успешным",
+          rt.eval("RES_OK") is False and "avante_templates" in rt.eval("RES_MSG") and rt.eval("#RENAMES") == 0)
+    run("SETUP{exec={'git','curl','tar'}, tar_produces=true, tar_kind='bad'}")
+    check("нерабочий архив не заменяет имеющиеся библиотеки",
+          rt.eval("RES_OK") is False and "wrong architecture" in rt.eval("RES_MSG") and rt.eval("#RENAMES") == 0)
+    run("SETUP{exec={'git','curl','tar'}, tar_produces=true, rename_fail=true}")
+    check("ошибка замены содержит причину и не объявляется успехом",
+          rt.eval("RES_OK") is False and "permission denied" in rt.eval("RES_MSG"))
+    run("SETUP{exec={'git','curl','tar'}, mkdir_error=true}")
+    check("ошибка создания каталога завершает сборку, а не оставляет её висеть",
+          rt.eval("RES_OK") is False and "permission denied" in rt.eval("RES_MSG"))
+    run("SETUP{exec={'git','curl','tar'}, mkdir_zero=true}")
+    check("неуспех mkdir с кодом 0 тоже показывается", rt.eval("RES_OK") is False and "создать каталог" in rt.eval("RES_MSG"))
+    run("SETUP{exec={'git','curl','tar'}, stage_error=true}")
+    check("ошибка staging-каталога явно показана", rt.eval("RES_OK") is False and "permission denied" in rt.eval("RES_MSG"))
+    run("SETUP{exec={'git','curl','tar','make','cargo'}, curl_code=6, make_produces=true}")
+    check("нет сети + cargo: запасной make работает", rt.eval("RES_OK") is True and rt.eval("count_command('make')") == 1)
+    run("SETUP{exec={'git','curl','tar','make','cargo'}, tar_produces=false, make_code=2, make_err='linker failed'}")
+    check("ошибка make: сохраняется и причина fallback, и stderr",
+          rt.eval("RES_OK") is False and "linker failed" in rt.eval("RES_MSG") and "Архив" in rt.eval("RES_MSG"))
+    run("SETUP{exec={'git','make','cargo'}, make_produces=true}")
+    check("нет curl: сразу make", rt.eval("RES_OK") is True and rt.eval("count_command('curl')") == 0)
+    check("результат make проверяется в отдельном каталоге, без кэша загруженных библиотек",
+          rt.eval("count_command('copy')") == 4)
+    run("SETUP{built=true, force=true, exec={'git','make','cargo'}, make_produces=false}")
+    check("make с кодом 0 не маскирует старые библиотеки, если ничего не пересобрал",
+          rt.eval("RES_OK") is False and "make не обновил" in rt.eval("RES_MSG"))
+    run("SETUP{built=true, force=true, exec={'git','make','cargo'}, make_produces=true, make_kind='bad'}")
+    check("испорченный результат make не принимается из-за кэшированной старой библиотеки",
+          rt.eval("RES_OK") is False and "wrong architecture" in rt.eval("RES_MSG"))
+    run("SETUP{exec={'git','make','cargo'}, make_produces=true, copy_fail=true}")
+    check("ошибка проверки копии make не скрывается", rt.eval("RES_OK") is False and "copy failed" in rt.eval("RES_MSG"))
 
-    # ------------------------------------------------- отказы и сообщения ---
-    run(f"SETUP{{ exec={{'curl','tar'}}, {MAC_ARM}, curl_code=22 }}")
-    msg = str(rt.eval("RES_MSG"))
-    check("404 / нет архива: сборка не объявлена успешной", rt.eval("RES_OK") is False)
-    check("404: сообщение называет тег и «не скачалась»",
-          "не скачалась" in msg and "v0.4.8" in msg, msg)
-    check("404 без cargo: подсказка про Rust (brew install rust)", "brew install rust" in msg, msg)
-    check("404 без cargo: make не вызывался", all("make" not in str(rt.eval(f"CALLS[{i}]")) for i in range(1, rt.eval("#CALLS") + 1)))
+    run("""
+      RESET{exec={'git','curl','tar'}, tar_produces=true}
+      RESULTS = {}
+      B.build(DIR, function(ok) RESULTS[#RESULTS+1] = ok end)
+      B.build(DIR, function(ok) RESULTS[#RESULTS+1] = ok end, {force=true})
+      drain()
+    """)
+    check("одновременные запросы используют одну сборку и оба завершаются",
+          rt.eval("count_command('curl')") == 1 and rt.eval("#RESULTS") == 2
+          and rt.eval("RESULTS[1] and RESULTS[2]") is True)
+    run("RESET{exec={'git','curl','tar'}, tar_produces=true}; BR_OK, BR_MSG = B.build_blocking(DIR, 1000)")
+    check("build_blocking возвращает результат lazy.nvim", rt.eval("BR_OK") is True, str(rt.eval("BR_MSG")))
 
-    run(f"SETUP{{ exec={{'curl','tar'}}, {MAC_ARM}, tar_produces=false }}")
-    msg = str(rt.eval("RES_MSG"))
-    check("ТИХИЙ СБОЙ: архив распакован, файла нет → не успех (как «No latest tag» в build.sh)",
-          rt.eval("RES_OK") is False, msg)
-    check("тихий сбой: сообщение называет отсутствующую библиотеку",
-          "avante_templates" in msg, msg)
+    # Проверка обычного require отдельно от прямого dlopen.
+    run("""
+      RESET{built=true, exec={'git'}}
+      package.loaded.avante_templates = nil
+      package.preload.avante_templates = function() return {initialize=function() end, render=function() end} end
+      REQ_OK, REQ_MSG = B.runtime_check(DIR)
+    """)
+    check("runtime_check проверяет настоящий require", rt.eval("REQ_OK") is True)
+    run("""
+      package.loaded.avante_templates = nil
+      package.preload.avante_templates = function() error('runtime path problem') end
+      REQ_OK, REQ_MSG = B.runtime_check(DIR)
+    """)
+    check("ошибка require не скрывается наличием файла", rt.eval("REQ_OK") is False and "runtime path problem" in rt.eval("REQ_MSG"))
+    run("""
+      package.loaded.avante_templates = nil
+      RESETS = {}
+      vim.loader = {reset=function(path) RESETS[#RESETS+1] = 'nvim:' .. path end}
+      package.loaded['lazy.core.cache'] = {reset=function(path) RESETS[#RESETS+1] = 'lazy:' .. path end}
+      package.preload.avante_templates = function()
+        assert(#RESETS == 2, 'stale module index')
+        return {initialize=function() end, render=function() end}
+      end
+      REQ_OK = B.runtime_check(DIR)
+    """)
+    check("перед require сбрасываются индексы lazy и vim.loader только для каталога плагина",
+          rt.eval("REQ_OK") is True and rt.eval("RESETS[1]") == "lazy:/P/avante" and rt.eval("RESETS[2]") == "nvim:/P/avante")
 
-    run(f"SETUP{{ exec={{'curl','tar','make','cargo'}}, {MAC_ARM}, tar_produces=false, make_produces=true }}")
-    check("тихий сбой + cargo: запасной make собирает и это успех",
-          rt.eval("RES_OK") is True, str(rt.eval("RES_MSG")))
-    check("тихий сбой + cargo: make запущен после распаковки",
-          any(str(rt.eval(f"CALLS[{i}]")) == "make" for i in range(1, rt.eval("#CALLS") + 1)))
-
-    run(f"SETUP{{ exec={{'curl','tar','make','cargo'}}, {MAC_ARM}, curl_code=6, make_produces=true }}")
-    check("нет сети + cargo: make собирает",
-          rt.eval("RES_OK") is True, str(rt.eval("RES_MSG")))
-
-    run(f"SETUP{{ exec={{'curl','tar','make','cargo'}}, {MAC_ARM}, tar_produces=false, make_code=2, make_err='error: linker failed\\nfoo' }}")
-    msg = str(rt.eval("RES_MSG"))
-    check("make упал: ошибка, код и хвост stderr в сообщении",
-          rt.eval("RES_OK") is False and "код 2" in msg and "linker failed" in msg, msg)
-
-    run(f"SETUP{{ exec={{'make','cargo'}}, {MAC_ARM}, make_produces=true }}")
-    check("нет curl: сразу make (без попытки скачать)",
-          rt.eval("RES_OK") is True and all("curl" not in str(rt.eval(f"CALLS[{i}]")) for i in range(1, rt.eval("#CALLS") + 1)),
-          str(rt.eval("RES_MSG")))
-
-    run("SETUP{ exec={'curl','tar','make','cargo'}, uname={sysname='Windows_NT', machine='AMD64'}, make_produces=true }")
-    check("неизвестная платформа: make, без curl",
-          rt.eval("RES_OK") is True and all("curl" not in str(rt.eval(f"CALLS[{i}]")) for i in range(1, rt.eval("#CALLS") + 1)),
-          str(rt.eval("RES_MSG")))
-
-    run(f"SETUP{{ exec={{}}, {MAC_ARM} }}")
-    check("ничего нет (ни curl, ни make): понятная ошибка, без падения",
-          rt.eval("RES_OK") is False and "brew install rust" in str(rt.eval("RES_MSG")))
-
-    # -------------------------------------------- синхронная обёртка (lazy) ---
-    run(f"SETUP{{ exec={{'curl','tar'}}, {MAC_ARM}, tar_produces=true }}")
-    rt.execute("BR_OK, BR_MSG = B.build_blocking(DIR, 1000)")
-    check("build_blocking возвращает результат для хука lazy.nvim", rt.eval("BR_OK") is True)
-
-    # ---------------------------------------------------- подключение ---
     av = open(os.path.join(_lua.ROOT, "lua", "plugins", "avante.lua"), encoding="utf-8").read()
     bm = open(os.path.join(_lua.ROOT, "lua", "config", "avante_build.lua"), encoding="utf-8").read()
-    m = re.search(r'tag\s*=\s*"(v[\d.]+)"', av)
-    spec_tag = m.group(1) if m else None
-    m2 = re.search(r'M\.TAG\s*=\s*"(v[\d.]+)"', bm)
-    check("avante.lua: тег закреплён (tag = \"v…\")", spec_tag is not None, str(spec_tag))
-    check("avante.lua и avante_build.lua: один и тот же тег",
-          spec_tag is not None and m2 is not None and spec_tag == m2.group(1), f"{spec_tag} vs {m2 and m2.group(1)}")
-    check("avante.lua: version = false (не \"*\")", "version = false" in av and 'version = "*"' not in av)
-    check("avante.lua: build использует build_blocking", "build_blocking(plugin.dir)" in av)
-    check("avante.lua: build.sh больше не вызывается (только в комментарии)",
-          '"./build.sh"' not in av and '"bash"' not in av)
-    check("avante.lua: старого голого make в build нет", 'vim.system({ "make" }' not in av)
-    check("avante.lua: :AvanteRebuild зарегистрирована",
-          'nvim_create_user_command("AvanteRebuild"' in av)
-    check("avante.lua: команда AvanteRebuild в ленивом cmd", '"AvanteRebuild"' in av)
-    check("avante.lua: проверка библиотеки через B.is_built",
-          "B.is_built(plugin_dir())" in av)
-    check("avante_build.lua: нет тавтологий (or true)", "or true" not in bm)
-    check("avante_build.lua: vim.system вызывается только через sys() (колбэк уходит в главный цикл)",
-          bm.count("vim.system(") == 1 and "vim.schedule(function()" in bm)
+    lock = json.load(open(os.path.join(_lua.ROOT, "lazy-lock.json"), encoding="utf-8"))
+    spec_tag = re.search(r'tag\s*=\s*"(v[\d.]+)"', av)
+    check("tag, модуль сборки и lock указывают одну версию",
+          spec_tag is not None and spec_tag.group(1) == rt.eval("B.TAG")
+          and lock["avante.nvim"]["commit"] == rt.eval("B.COMMIT"))
+    check("build hook принудительно обновляет бинарники", "build_blocking(plugin.dir)" in av and "{ force = true }" in bm)
+    check("runtime подключён и команды доступны через lazy",
+          'require("config.avante_runtime").setup(plugin, opts)' in av and '"AvanteRebuild"' in av and '"AvanteStatus"' in av)
+    check("avante v0.4.8 не загружается на nvim < 0.12", 'vim.fn.has("nvim-0.12") == 1' in av)
 
     failed = sum(1 for _, ok in checks if not ok)
     print(f"\nпроверок: {len(checks)}, провалов: {failed}")

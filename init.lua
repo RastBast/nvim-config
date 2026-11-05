@@ -124,6 +124,9 @@ require("lazy").setup("plugins", {
     },
   },
 })
+-- lazy не вызывает spec.init у отключённого cond=false плагина; предупреждаем
+-- о минимальной версии Avante отдельно, не прерывая запуск остального конфига.
+require("config.avante_runtime").warn_unsupported()
 
 -- ========================================================================== --
 --                         ПРИМЕНЕНИЕ ТЕМЫ И ФИЛЬТРЫ                          --
@@ -139,6 +142,8 @@ require("config.themes").setup()
 
 -- Markdown: live-превью в браузере (<leader>mL, :MdPreview)
 require("config.md_preview").setup()
+-- Прототип конструктора архитектуры (Mermaid, <leader>mA / :ArchMenu)
+require("config.architecture").setup()
 
 -- Фильтр всплывающих уведомлений (пропускаем только КРАСНЫЕ ОШИБКИ)
 do

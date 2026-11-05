@@ -44,7 +44,8 @@ return {
         --  ✈️  TG — ОТДЕЛ TELEGRAM (консольный tele внутри nvim)
         -------------------------------------------------------------
         -- Сами клавиши ставит lua/config/telegram.lua; здесь только подписи.
-        { "<leader>m", group = "TG ✈ Telegram (tele)", icon = "✈" },
+        { "<leader>m", group = "Telegram · Markdown · архитектура", icon = "✈" },
+        { "<leader>mA", desc = "📐 Схема архитектуры: меню" },
         { "<leader>mm", desc = "🗕 tele: маленькое окно (float)" },
         { "<leader>mf", desc = "🖥 tele: на весь экран" },
         { "<leader>mp", desc = "▐ tele: боковой панелью" },

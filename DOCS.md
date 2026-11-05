@@ -1,8 +1,8 @@
 # RastBast/nvim-config — ПОЛНАЯ ДОКУМЕНТАЦИЯ
 
-> Ветка: `arena/a58e587f-nvim-config`. Обновлено: **2026-10-28**.
-> Целевой Neovim: **0.11+** (конфиг использует `vim.lsp.config` / `vim.lsp.enable`). Для treesitter-unit (`iu`/`au`) нужен Neovim **0.12+**.
-> Что проверено и как — §22. Живой запуск nvim в sandbox не выполнялся: поведение проверяется на Mac.
+> Обновлено: **2026-11-05**.
+> Целевой Neovim: **0.11+** (конфиг использует `vim.lsp.config` / `vim.lsp.enable`). Для Avante и treesitter-unit (`iu`/`au`) нужен Neovim **0.12+**.
+> Что проверено и как — §22. Отдельные сценарии Avante и схем архитектуры проверены в headless Neovim; полный запуск конфига на Mac требует отдельной проверки.
 > Навигация: по технологиям — §27 (Go §28, БД §29, Redis §30, Docker §31, Kubernetes §32, Kafka §33, Protobuf §34, HTTP §35, Git §36, терминал и TUI §37, переводы §38, ИИ §39, мессенджеры §40). Все клавиши — §44 и §6, все команды — §25, плагины — §26. Новое: игры — §41, питомцы и картинки — §42, история правок, выравнивание и sudo — §43.
 
 ---
@@ -79,7 +79,7 @@ HTTP-запросов** с упором на то, чтобы всё работ�
 
 | Компонент | Зачем |
 |---|---|
-| Neovim **0.10+** (лучше свежий stable) | API `vim.lsp`, treesitter main |
+| Neovim **0.11+**; для Avante **0.12+** | API `vim.lsp`, treesitter и Avante |
 | `git` | lazy клонирует плагины |
 | `magick` (ImageMagick), необязательно | Картинки jpg/gif/webp в `snacks.image`; PNG работает без него. macOS: `brew install imagemagick` |
 | `gcc`/`clang` | сборка treesitter-парсеров |
@@ -255,7 +255,7 @@ lua/
 | `<leader>Hy` | **Группа:** 💬 Чаты (терминал) | which-key |
 | `<leader>j` | **Группа:** 🧾 JSON | which-key |
 | `<leader>k` | **Группа:** ⌨️ Показ нажатий | which-key |
-| `<leader>m` | **Группа:** TG ✈ Telegram (tele) | which-key |
+| `<leader>m` | **Группа:** Telegram · Markdown · архитектура | which-key |
 | `<leader>n` | **Группа:** 📓 Черновики и подсветка | which-key |
 | `<leader>o` | **Группа:** 💎 Obsidian | which-key |
 | `<leader>P` | **Группа:** 🧊 Protobuf (buf) | which-key |
@@ -446,6 +446,7 @@ lua/
 | `<leader>jx` | 🔍 Список ключей JSON | `json-pro` |
 | `<leader>kk` | ⌨️ Показ нажатий: вкл/выкл | `keyshow` |
 | `<leader>M` | 🦹 Super Mode | `hydra` |
+| `<leader>mA` | 📐 Схема архитектуры: меню (прототип) | `architecture.lua` |
 | `<leader>m?` | 📋 шпаргалка по telegram-мосту | `which-key` |
 | `<leader>mb` | 🔔 гудок вкл/выкл | `which-key` |
 | `<leader>mc` | 🎯 выбрать чат и сесть на него | `which-key` |
@@ -739,7 +740,7 @@ lua/
 | `<leader>d` + буква | Docker (`dc` lazydocker, `dp` ps, `di` images, `dn` сети); `<leader>d` один — диагностика строки (LSP) |
 | `<leader>f` | Поиск telescope/fzf-стиль (`ff/fg/fb/fr/fh/fk/fc/fd`) |
 | `<leader>g` | Go-быстрые (`gb/gl/gt/gm/gv`) и `gg` lazygit |
-| `<leader>m` | **Отдел TG** в which-key: Telegram через консольный `tele` (§23) — `mm/mf/mp` окна, `mi/mt` чтение, `mr/mq` ответ. Раньше тут же сидел `MaximizerToggle`, из-за чего нажатие `<leader>m` молча разворачивало окно; клавиша переехала на `<leader>Hum` |
+| `<leader>m` | Группа Telegram / Markdown / архитектура: `mm/mf/mp` — окна `tele`, `mi/mt` — чтение, `mr/mq` — ответ; `mA` — меню схемы. `MaximizerToggle` переехал на `<leader>Hum` |
 | `<C-\>` | Открыть/скрыть терминал из любого места |
 
 which-key всплывает по `<leader>` автоматически; `<leader>Hfk` и `<leader>fk` —
@@ -1579,6 +1580,9 @@ require("config.streak").setup({
 | `:AiProvider [id]` | Выбрать ИИ-провайдера (без аргумента — меню). Действует на `K`, `:AiAsk`; чат — после перезапуска | `ai_api.lua` |
 | `:AiStatus` | Какие ИИ настроены: только имена переменных, значения ключей не показываются | `ai_api.lua` |
 | `:AiAsk [вопрос]` | Вопрос выбранному ИИ, ответ в окне (без аргумента — ввод строки) | `ai_api.lua` |
+| `:ArchMenu`, `:ArchNew [файл]`, `:ArchInsert` | Меню схемы; новый Markdown-файл; добавить схему в существующий Markdown | `architecture.lua` |
+| `:ArchNode`, `:ArchLink`, `:ArchPreview` | Добавить компонент, направленную связь или открыть графическое превью | `architecture.lua` |
+| `:AvanteStatus`, `:AvanteRebuild` | Диагностика и принудительная сборка библиотек Avante | `avante_runtime.lua` |
 | `:GoIde` | Меню Go IDE (то же, что `<leader>gi`) | `go_ide.lua` |
 | `:DiagRu` | Русские подписи ошибок LSP на лету (on \| off \| toggle) | `diag_ru.lua` |
 | `:EnvCheck` | — | `init.lua` |
@@ -1649,7 +1653,7 @@ require("config.streak").setup({
 |---|---|---|---|
 | `stevearc/aerial.nvim` | Структура файла (символы) в боковой панели; группа <leader>a | aerial.lua | да |
 | `goolord/alpha-nvim` | Стартовый экран при запуске без файла | alpha.lua | да |
-| `avante-corp/avante.nvim` | AI-ассистент (avante): вопросы по коду, ИИ-подсказки; группа <leader>A | avante.lua | **нет** |
+| `avante-corp/avante.nvim` | AI-ассистент (avante): вопросы по коду, ИИ-подсказки; группа <leader>A | avante.lua | да (`v0.4.8`) |
 | `akinsho/bufferline.nvim` | Вкладки открытых буферов сверху; Tab / Shift-Tab переключают | bufferline.lua | да |
 | `eandrju/cellular-automaton.nvim` | Развлекательные эффекты: :Matrix и :Flex | matrix.lua | да |
 | `hrsh7th/cmp-buffer` | Источник автодополнения из слов буфера | completions.lua | да |
@@ -1763,11 +1767,11 @@ require("config.streak").setup({
 | `folke/which-key.nvim` | Всплывающие подсказки клавиш после префикса | which-key.lua | да |
 | `folke/zen-mode.nvim` | Режим «дзен» (<leader>z) | zen.lua | да |
 
-Всего репозиториев в спецификациях: **110**. В `lazy-lock.json` записей: **91**.
+Всего репозиториев в спецификациях: **110**. В `lazy-lock.json` записей: **101** (включая закреплённый avante).
 | `mbbill/undotree` | История правок: дерево undo (<leader>v) | `undotree.lua` | да |
 | `nvim-mini/mini.align` | Выравнивание по символу (<leader>=) | `mini-align.lua` | да |
 
-**Не закреплены в lazy-lock.json** (22): `avante-corp/avante.nvim`, `hrsh7th/cmp-cmdline`, `sindrets/diffview.nvim`, `willothy/flatten.nvim`, `rafamadriz/friendly-snippets`, `akinsho/git-conflict.nvim`, `folke/lazydev.nvim`, `onsails/lspkind.nvim`, `Bilal2453/luvit-meta`, `ColinKennedy/mega.cmdparse`, `ColinKennedy/mega.logging`, `nvim-mini/mini.ai`, `nvim-mini/mini.surround`, `catppuccin/nvim`, `kevinhwang91/nvim-bqf`, `RishabhRD/nvim-cheat.sh`, `kosayoda/nvim-lightbulb`, `mfussenegger/nvim-lint`, `chrisgrieser/nvim-spider`, `RishabhRD/popfix`, `Wansmer/treesj`, `mg979/vim-visual-multi`.
+**Не закреплены в lazy-lock.json** (21): `hrsh7th/cmp-cmdline`, `sindrets/diffview.nvim`, `willothy/flatten.nvim`, `rafamadriz/friendly-snippets`, `akinsho/git-conflict.nvim`, `folke/lazydev.nvim`, `onsails/lspkind.nvim`, `Bilal2453/luvit-meta`, `ColinKennedy/mega.cmdparse`, `ColinKennedy/mega.logging`, `nvim-mini/mini.ai`, `nvim-mini/mini.surround`, `catppuccin/nvim`, `kevinhwang91/nvim-bqf`, `RishabhRD/nvim-cheat.sh`, `kosayoda/nvim-lightbulb`, `mfussenegger/nvim-lint`, `chrisgrieser/nvim-spider`, `RishabhRD/popfix`, `Wansmer/treesj`, `mg979/vim-visual-multi`.
 
 Что с этим делать на Mac: открыть `nvim`, выполнить `:Lazy sync` и затем `:Lazy restore`/коммит обновлённого `lazy-lock.json`. Пока lock не обновлён, новые плагины ставятся самой свежей версией и могут отличаться у разных машин.
 
@@ -2668,6 +2672,7 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 | `<leader>Pg` | n | buf generate (codegen) | Protobuf: генерирует код по buf.gen.yaml. |
 | `<leader>tt` | n | Перевести слово (ru) | Переводит слово под курсором на русский (plugin translate.nvim). |
 | `<leader>te` | n | Перевести на английский | Переводит слово или выделение на английский. |
+| `<leader>mA` | n | Архитектура: меню схемы | Прототип: компоненты и связи в Markdown/Mermaid, визуальное превью в браузере; сохранить через `:w`. |
 | `<leader>mm` | n | tele: маленькое окно (float) | Telegram-мост: показывает окно tele плавающим, маленьким. |
 | `<leader>mf` | n | tele: на весь экран | Telegram-мост: окно на весь экран. |
 | `<leader>mp` | n | tele: боковой панелью | Telegram-мост: окно сбоку, как панель. |
@@ -3086,6 +3091,28 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 * Если `<leader>mv` выдаёт `E117: Unknown function: mkdp#util#install` — плагин ещё не собран: `:Lazy build markdown-preview.nvim`, затем перезапуск nvim. Для предпросмотра без сборки используйте `<leader>mL`.
 * Список продолжается при `Enter` в списке (`auto_insert_bullets`).
 
+### Прототип: схема архитектуры и связей
+
+`<leader>mA` или `:ArchMenu` открывает меню. Это **первый прототип**: компоненты и стрелки добавляются через меню Neovim, а схема отображается в браузере; перетаскивания блоков мышью пока нет.
+
+1. `:ArchNew` спросит имя файла (по умолчанию `architecture.md`); можно также указать путь: `:ArchNew docs/architecture.md` (каталог должен существовать). Создаётся несохранённый буфер с примером. Существующий файл или буфер **не перезаписывается**.
+2. `:ArchNode` — ввести имя компонента; `:ArchLink` — выбрать источник, получателя и необязательную подпись стрелки. В меню те же действия. Для уже открытого Markdown-файла `:ArchInsert` добавляет схему в конец, не стирая текст.
+3. `:ArchPreview` открывает визуальный граф через **markdown-preview.nvim** (`<leader>mv` тоже работает). Требуются Node.js/npm и сборка плагина; при проблемах — `:Lazy build markdown-preview.nvim`. Встроенный python-просмотр `:MdPreview` показывает Mermaid как код, не как схему.
+4. Сохрани через `:w`. Пока файл не сохранён, изменения остаются только в буфере; превью получает текущий текст. Схема — обычный Markdown/Mermaid, её можно хранить в Git и править вручную.
+
+Пример содержимого внутри блока:
+
+```mermaid
+graph LR
+  N1["Клиент"]
+  N2["API"]
+  N3["База данных"]
+  N1 -->|"HTTP"| N2
+  N2 -->|"SQL"| N3
+```
+
+Меню работает внутри одного блока, отмеченного `<!-- nvim-architecture:start -->` и `<!-- nvim-architecture:end -->`, и выбирает узлы вида `N1["Имя"]`. Не удаляй эти маркеры, если хочешь продолжать пользоваться меню. Прототип не сканирует проект, не создаёт исходный код и ничего не отправляет AI; переходы к файлам, импорт зависимостей и полноценный редактор мышью можно обсудить отдельно.
+
 ### Halloween: оверлей, окно и эффекты в терминале
 
 | Клавиша / команда | Что делает |
@@ -3101,20 +3128,20 @@ set -Ux DEEPL_API_KEY "..."     # fish; ключ не записывается �
 
 ### avante: `missing avante_templates` — что это и как починить
 
-* **Что значит:** нативные библиотеки avante не собраны (файла `lua/avante_templates.so` в каталоге плагина нет). Без них не работают чат, inline-подсказки и `:AvanteAsk`.
-* **Что сделано в конфиге (2026-10-28):**
-  * **Версия закреплена на теге `v0.4.8`** (`tag = "v0.4.8"` в `lua/plugins/avante.lua`). Готовые бинарники релиза собраны под этот код; `main` новее на 34 коммита и с ними несовместим.
-  * **Сборка** — `lua/config/avante_build.lua`: скачивает готовую библиотеку для тега (`curl` + `tar`, без git и cargo). Если не вышло — запасной `make`, но он требует cargo.
-  * **Успех = файл есть на диске.** Раньше `build.sh` без git тихо печатал «No latest tag» и завершался с кодом 0, то есть «собрано», хотя файла не было.
-  * **Одно понятное сообщение** с причиной вместо потока ошибок в `:messages`.
-* **Что сделать на Mac:**
-  1. Обновить конфиг (`git pull`), перезапустить nvim.
-  2. `:Lazy sync` — lazy переключит avante на тег `v0.4.8`.
-  3. `:AvanteRebuild` — скачает библиотеки (нужны интернет, curl и tar; они есть в macOS).
-  4. Перезапустить nvim и открыть чат (`<leader>Aa`).
-* **Если сообщение «не скачалась»:** проверь доступ к GitHub из сети. Тогда поставь Rust (`brew install rust`) и повтори `:AvanteRebuild`: сборка пойдёт из исходников через `make`.
-* **Команда `:AvanteBuild`** — встроенная в avante, использует свой `build.sh` и может тихо падать без git. Для починки используй `:AvanteRebuild`.
-* **Обновить avante позже:** поменять `tag` в `lua/plugins/avante.lua` и `M.TAG` в `lua/config/avante_build.lua` на один и тот же новый тег, затем `:Lazy sync` и `:AvanteRebuild`.
+Эта ошибка означает, что Avante не смог **загрузить** нативный модуль `avante_templates`. Файл может отсутствовать, быть повреждённым или собранным для другой архитектуры; само наличие `.so` не гарантирует его работоспособность. Все три сообщения из `ModeChanged`/`WinEnter`/`vim.schedule` могут быть следствием одной проблемы.
+
+**После обновления конфига:**
+
+1. Проверь `nvim --version`: Avante `v0.4.8` требует **Neovim 0.12+**. На более старом Neovim конфиг отключает именно Avante (сам плагин иначе пытается закрыть редактор).
+2. В Neovim выполни `:Lazy update avante.nvim`, дождись завершения и **перезапусти Neovim**. Это приведёт код к закреплённому тегу; перезапуск нужен, чтобы не смешать старые Lua-модули с новыми библиотеками.
+3. Проверь `:AvanteStatus` или `:EnvCheck`. Если библиотеки ещё не готовы, выполни `:AvanteRebuild` и дождись уведомления. Если команда обновила уже загруженные библиотеки, ещё раз перезапусти Neovim.
+4. Открой чат через `<leader>Aa` или `:AvanteAsk`.
+
+**Как работает исправление.** Код и бинарники привязаны к `v0.4.8` и его коммиту в `lazy-lock.json`. При отсутствии или повреждении библиотек конфиг проверяет локальный Git-commit, скачивает архив нужной платформы через `curl` + `tar` и проверяет динамическую загрузку и API всех четырёх модулей. Затем он обновляет индекс модулей lazy.nvim/vim.loader и отдельно проверяет `require('avante_templates')`, чтобы библиотека, установленная в фоне, стала видна без перезапуска. Архив распаковывается во временный каталог, а библиотеки заменяются через `rename`, а не перезаписываются поверх загруженного `.so`. Запасная сборка `make` проверяется по свежим копиям, не по кэшу уже загруженных библиотек. Пока идёт сборка или она не удалась, чат и автоподсказки не запускаются; вместо traceback показывается состояние. `:AvanteRebuild` **всегда** пробует пересборку заново, даже если файл уже существует.
+
+**Если не скачалось:** `:AvanteStatus` покажет ошибку и путь к плагину, `:EnvCheck` — доступность `git`, `curl` и `tar`. Проверь доступ к GitHub и адресам, на которые он перенаправляет скачивание релиза. Резервный `make` требует Rust/cargo, компилятор и доступ к зависимостям Rust (на macOS Rust можно установить через `brew install rust`). Повтори `:AvanteRebuild`. Встроенная `:AvanteBuild` использует сборочный скрипт самого плагина; для диагностики этого конфига предпочтительна `:AvanteRebuild`.
+
+При последующем обновлении Avante нужно согласовать новый тег и его коммит в `lua/plugins/avante.lua`, `lua/config/avante_build.lua` и `lazy-lock.json`, а также перепроверить имена и API библиотек в тестах.
 
 ### Питомцы: что изменилось
 

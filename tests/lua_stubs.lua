@@ -58,6 +58,10 @@ vim.api = {
   nvim_get_current_win = function() return 1 end,
   nvim_win_get_width = function() return 120 end,
   nvim_create_user_command = function(name, fn) CMDS[name] = fn end,
+  nvim_echo = function(chunks)
+    local msg = {}; for _, chunk in ipairs(chunks) do msg[#msg + 1] = chunk[1] end
+    NOTES[#NOTES + 1] = { msg = table.concat(msg), via = "echo" }
+  end,
   nvim_replace_termcodes = function(s) return s end,
   nvim_create_augroup = function(name) return name end,
   nvim_create_autocmd = function(ev, opts) AUTOCMDS[#AUTOCMDS + 1] = { ev = ev, opts = opts } end,

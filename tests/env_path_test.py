@@ -99,26 +99,38 @@ def main():
     check("сообщение направляет на :EnvCheck", ":EnvCheck" in rt.eval("NOTES[1].msg"))
 
     # ------------------------------------------------ :EnvCheck: блок avante ---
-    AVDIR = "/tmp/nvim_tests_state/lazy/avante.nvim"
-    AVLIB = AVDIR + "/lua/avante_templates.so"
-    rt.execute("EXEC = { git = true }")
-    rt.execute("NOTES = {}")
-    rt.execute(f"EXISTING = {{}}")
+    AVDIR = "/tmp/custom-lazy/avante.nvim"
+    rt.execute("""
+      EXEC = { git = true }; NOTES = {}; EXISTING = {}; AV_READY = false; AV_REV = 'correct'
+      vim.fn.has = function(x) return x == 'nvim-0.12' and 1 or 0 end
+      package.loaded['config.avante_build'] = {
+        TAG = 'v0.4.8', COMMIT = 'correct',
+        plugin_dir = function() return '/tmp/custom-lazy/avante.nvim' end,
+        lib_file = function(d) return d .. '/lua/avante_templates.so' end,
+        check = function() return AV_READY, AV_READY and 'ok' or 'wrong architecture' end,
+        revision = function() return AV_REV end,
+        revision_error = function() return ':Lazy update avante.nvim' end,
+      }
+    """)
     rt.execute("ep.check()")
     check(":EnvCheck: плагин avante не установлен — так и пишет",
           "плагин не установлен" in rt.eval("NOTES[#NOTES].msg"), rt.eval("NOTES[#NOTES].msg"))
     rt.execute(f"EXISTING = {{ ['{AVDIR}'] = true }}")
-    rt.execute("NOTES = {}")
-    rt.execute("ep.check()")
+    rt.execute("NOTES = {}; ep.check()")
     msg = rt.eval("NOTES[#NOTES].msg")
-    check(":EnvCheck: библиотеки нет — подсказка :AvanteRebuild и путь файла",
-          "библиотеки НЕТ, выполни :AvanteRebuild" in msg and "avante_templates.so" in msg, msg)
-    check(":EnvCheck: показывает закреплённый тег", "avante v0.4.8" in msg, msg)
-    rt.execute(f"vim.uv.fs_stat = function(p) if p == '{AVLIB}' then return {{}} end return nil end")
-    rt.execute("NOTES = {}")
-    rt.execute("ep.check()")
-    check(":EnvCheck: библиотека есть — так и пишет",
-          "библиотека ЕСТЬ" in rt.eval("NOTES[#NOTES].msg"), rt.eval("NOTES[#NOTES].msg"))
+    check(":EnvCheck: ошибка загрузки и подсказка :AvanteRebuild",
+          "библиотеки не готовы" in msg and ":AvanteRebuild" in msg and "wrong architecture" in msg, msg)
+    check(":EnvCheck: показывает тег и фактический каталог",
+          "avante v0.4.8" in msg and AVDIR in msg and "avante_templates.so" in msg, msg)
+    rt.execute("AV_READY = true; NOTES = {}; ep.check()")
+    check(":EnvCheck: рабочие библиотеки загружаются",
+          "библиотеки загружаются" in rt.eval("NOTES[#NOTES].msg"), rt.eval("NOTES[#NOTES].msg"))
+    rt.execute("AV_REV = 'wrong'; NOTES = {}; ep.check()")
+    check(":EnvCheck: неправильная версия предлагает Lazy update",
+          ":Lazy update avante.nvim" in rt.eval("NOTES[#NOTES].msg"), rt.eval("NOTES[#NOTES].msg"))
+    rt.execute("vim.fn.has = function() return 0 end; NOTES = {}; ep.check()")
+    check(":EnvCheck: предупреждает о Neovim ниже 0.12",
+          "нужен Neovim 0.12+" in rt.eval("NOTES[#NOTES].msg"), rt.eval("NOTES[#NOTES].msg"))
 
     # ----------------------------------------------- автопроверка lazy.nvim ---
     init = open(os.path.join(_lua.ROOT, "init.lua"), encoding="utf-8").read()

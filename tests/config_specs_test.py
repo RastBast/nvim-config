@@ -153,6 +153,8 @@ def main():
     # -------------------------------------------- live-превью (python3) ---
     init_src = read("init.lua")
     check("init.lua: md_preview.setup() вызывается", 'require("config.md_preview").setup()' in init_src)
+    check("init.lua: предупреждение Avante о версии не зависит от отключённого плагина",
+          'require("config.avante_runtime").warn_unsupported()' in init_src)
     mdp = read("lua/config/md_preview.lua")
     check("md_preview: клавиша <leader>mL", '"<leader>mL"' in mdp)
     check("md_preview: команды :MdPreview / :MdPreviewStop / :MdPreviewStatus",
@@ -174,8 +176,11 @@ def main():
 
     # --------------------------------------------------------------- avante ---
     av = read("lua/plugins/avante.lua")
-    check("avante: команда :AvanteRebuild", 'nvim_create_user_command("AvanteRebuild"' in av)
-    check("avante: авто-сборка при отсутствии библиотек (B.is_built)", "B.is_built(plugin_dir())" in av and "rebuild({ silent = true })" in av)
+    runtime = read("lua/config/avante_runtime.lua")
+    check("avante: команды :AvanteRebuild и :AvanteStatus",
+          all(f'nvim_create_user_command("{c}"' in runtime for c in ("AvanteRebuild", "AvanteStatus")))
+    check("avante: setup только после runtime_check; авто-сборка при отсутствии библиотек",
+          "B.runtime_check(dir)" in runtime and "rebuild(false)" in runtime and "pcall(avante.setup, opts)" in runtime)
 
     # ------------------------------------------------------- lazy-lock / справка ---
     lock = read("lazy-lock.json")

@@ -23,6 +23,10 @@
     "branch": "main",
     "commit": "6c6a89d5b068b5251c8bdf0dd57bb921bcfeeb09"
   },
+  "avante.nvim": {
+    "branch": "main",
+    "commit": "079d964ea88bff4953996ee26d31314df5dc757f"
+  },
   "bufdelete.nvim": {
     "branch": "master",
     "commit": "f6bcea78afb3060b198125256f897040538bcb81"

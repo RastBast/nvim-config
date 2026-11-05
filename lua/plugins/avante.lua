@@ -28,14 +28,12 @@
 -- поэтому там нельзя ставить эмодзи — будет «E239: Invalid sign text»
 -- и весь setup() упадёт (avante init.lua:288).
 --
--- Сборка (ИСПРАВЛЕНО: «missing avante_templates» = native-библиотеки не собраны):
---   Логика в lua/config/avante_build.lua: готовые библиотеки ЗАКРЕПЛЁННОГО тега
---   скачиваются из релиза GitHub (curl + tar, cargo не нужен). Если не вышло —
---   запасной вариант make (нужен cargo: brew install rust).
---   Успех = файл lua/avante_templates.so появился на диске.
---   Вручную: :AvanteRebuild (рекомендуется). Не :AvanteBuild: это встроенная
---   команда avante, она использует свой build.sh, который тихо падает без git.
---   Переустановка с нуля: :Lazy build avante.nvim, затем перезапуск nvim.
+-- Сборка: lua/config/avante_build.lua проверяет checkout и загрузку всех
+-- нативных библиотек. Нет/повреждены — в фоне скачивает сборку закреплённого
+-- тега (curl + tar), при неудаче пробует make с Rust. Чат и автоподсказки
+-- включаются только после проверки require('avante_templates').
+-- Диагностика: :AvanteStatus / :EnvCheck; повторная сборка: :AvanteRebuild.
+-- После обновления кода через :Lazy update avante.nvim перезапусти Neovim.
 --
 -- Все схемы опций сверены с исходниками avante-corp/avante.nvim (бывш. yetone) (2026-09):
 --   providers.gemini            lua/avante/config.lua:499
@@ -46,26 +44,27 @@ return {
   {
     "avante-corp/avante.nvim",
     event = "VeryLazy",
+    -- plugin/avante.lua этого релиза сам делает :quit на Neovim < 0.12.
+    -- Не загружаем его там, чтобы старый редактор не закрылся неожиданно.
+    cond = function() return vim.fn.has("nvim-0.12") == 1 end,
     version = false, -- НИКОГДА не "*" — плагин ломается на тегах
-    -- ЗАКРЕПЛЕНО на теге v0.4.8: готовые бинарники релиза собраны под этот код.
-    -- Lua с main (новее на 34 коммита) с бинарниками v0.4.8 не совместим.
-    -- Обновление: поменять tag здесь И M.TAG в lua/config/avante_build.lua,
-    -- затем :Lazy sync и :AvanteRebuild.
+    -- Тег, коммит в avante_build.lua и lazy-lock.json должны совпадать.
     tag = "v0.4.8",
-    -- Сборка: готовые библиотеки для тега (curl+tar, без git и cargo), запасной
-    -- вариант — make (нужен cargo). Логика и сообщения — в config/avante_build.lua
+    -- Готовые библиотеки: git проверяет версию кода, curl+tar скачивают релиз;
+    -- запасной вариант — make с cargo. Подробности в config/avante_build.lua.
     build = function(plugin)
       local ok, msg = require("config.avante_build").build_blocking(plugin.dir)
       if ok then
         vim.notify("avante: " .. msg, vim.log.levels.INFO)
       else
-        vim.notify("❌ avante не собрался: " .. msg, vim.log.levels.ERROR)
+        -- lazy.nvim должен отметить задачу сборки как ошибку, а не как успех.
+        error("avante не собрался: " .. msg, 0)
       end
     end,
     cmd = {
       "AvanteAsk", "AvanteChat", "AvanteChatNew", "AvanteEdit",
       "AvanteFocus", "AvanteRefresh", "AvanteStop", "AvanteHistory",
-      "AvanteBuild", "AvanteRebuild", "AvanteSwitchProvider",
+      "AvanteBuild", "AvanteRebuild", "AvanteStatus", "AvanteSwitchProvider",
     },
     dependencies = {
       "nvim-lua/plenary.nvim",
@@ -230,64 +229,8 @@ return {
         },
       },
     },
-    config = function(_, opts)
-      require("avante").setup(opts)
-
-      -- «Объясни выделенный код / ошибку» по-русски в сайдбаре.
-      -- Выдели код (или встань на строку с ошибкой) и нажми <leader>Ax.
-      vim.keymap.set({ "n", "v" }, "<leader>Ax", function()
-        vim.cmd("AvanteAsk Объясни по-русски этот код или ошибку под курсором: что происходит, почему и как исправить")
-      end, { desc = "🤖 Объяснить код/ошибку (Gemini)" })
-
-      -- ================================================================== --
-      -- ЛЕЧЕНИЕ «missing avante_templates» (2026-10-28)
-      -- ------------------------------------------------------------------ --
-      -- Ошибка из трейсбека пользователя: avante/llm.lua:290 → path.lua:312
-      -- «Make sure to build avante (missing avante_templates)». Возникает,
-      -- когда плагин уже лежал в lazy/ ДО того, как в спеке появился
-      -- build = "make": lazy собирает только при установке/обновлении, и
-      -- собранный .so просто отсутствовал. Теперь:
-      --   * на старте проверяем avante.path.get_templates_dir() — он сам
-      --     бросает ошибку, если сборки нет;
-      --   * нет сборки → тихо запускаем `make` в каталоге плагина (тот же
-      --     рецепт, что и у build: пребуилты через curl+tar, cargo не нужен);
-      --   * :AvanteRebuild — пересобрать вручную в любой момент.
-      -- ================================================================== --
-      local B = require("config.avante_build")
-
-      -- Главный признак — файл библиотеки на диске (не код возврата сборки).
-      local function plugin_dir()
-        return vim.fn.stdpath("data") .. "/lazy/avante.nvim"
-      end
-
-      local function rebuild(opts)
-        local dir = plugin_dir()
-        if vim.fn.isdirectory(dir) == 0 then
-          vim.notify("avante не установлен — выполни :Lazy sync", vim.log.levels.WARN)
-          return
-        end
-        if not (opts and opts.silent) then
-          vim.notify("🔧 avante: собираю библиотеки для " .. B.TAG .. "…", vim.log.levels.INFO)
-        end
-        B.build(dir, function(ok, msg)
-          if ok then
-            vim.notify("✅ avante готов: " .. msg .. ". Перезапусти nvim, если чат ещё не работает.", vim.log.levels.INFO)
-          else
-            vim.notify("❌ avante не собрался:\n" .. msg, vim.log.levels.ERROR, { title = "avante" })
-          end
-        end)
-      end
-
-      vim.api.nvim_create_user_command("AvanteRebuild", function()
-        rebuild()
-      end, { desc = "🔧 Скачать/пересобрать библиотеки avante для закреплённого тега" })
-
-      -- Если библиотек нет — один раз пробуем сами при старте (тихо, без спама).
-      if not B.is_built(plugin_dir()) then
-        vim.schedule(function()
-          rebuild({ silent = true })
-        end)
-      end
+    config = function(plugin, opts)
+      require("config.avante_runtime").setup(plugin, opts)
     end,
   },
 }
