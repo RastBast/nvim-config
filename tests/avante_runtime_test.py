@@ -37,7 +37,13 @@ function RESET(o)
   MAPS, NOTES, CMDS, LAST_CMD = {}, {}, {}, nil
   BUILDS, PENDING, SETUP_COUNT, ASK_COUNT, TOGGLE_COUNT, EDIT_COUNT, HISTORY_COUNT = 0, nil, 0, 0, 0, 0, 0
   RUNTIME_OK, REV, CHECK_REASON = o.ready or false, o.revision or "abc123", o.reason or "missing avante_templates"
+  GUARD_OK, NATIVE_OK = not o.guard_error, not o.native_error
   if o.no_git then REV = nil end
+  package.loaded["config.avante_repo_map"] = {
+    invalid_cache_count = 0,
+    install = function() if not GUARD_OK then error('cache guard error') end end,
+    native_ready = function() return NATIVE_OK, NATIVE_OK and nil or 'repo map not ready' end,
+  }
   B = {
     TAG="v0.4.8", COMMIT="abc123",
     plugin_dir=function() return "/fallback" end,
@@ -47,7 +53,7 @@ function RESET(o)
     check=function() return RUNTIME_OK, RUNTIME_OK and "все библиотеки загружаются" or CHECK_REASON end,
     runtime_check=function() return RUNTIME_OK, RUNTIME_OK and "готово" or CHECK_REASON end,
     build=function(dir, callback, options)
-      BUILDS = BUILDS + 1; PENDING = callback; BUILD_DIR = dir; BUILD_FORCE = options.force
+      BUILDS = BUILDS + 1; PENDING = callback; BUILD_DIR = dir; BUILD_FORCE = options.force; BUILD_SOURCE = options.source
     end,
   }
   AV = {
@@ -174,6 +180,18 @@ def main():
     run("RESET{ready=false}; MAP('n','<leader>Aa').desc='user changed during build'; RUNTIME_OK=true; COMPLETE(true)")
     check("чужая замена временного маппинга не удаляется", rt.eval("MAP('n','<leader>Aa').desc") == "user changed during build")
 
+    run("RESET{ready=true}; API.build({source=true})")
+    check(":AvanteBuild source=true идёт через управляемую сборку и проверку версии",
+          rt.eval("BUILDS") == 1 and rt.eval("BUILD_FORCE") is True and rt.eval("BUILD_SOURCE") is True)
+    run("RESET{ready=true}; API.build({source=false})")
+    check(":AvanteBuild без source не использует upstream build.sh с другим тегом",
+          rt.eval("BUILDS") == 1 and rt.eval("BUILD_SOURCE") is False)
+    run("RESET{ready=true, guard_error=true}; CMDS.AvanteAsk()")
+    check("при ошибке защиты кеша setup и чат заблокированы",
+          rt.eval("SETUP_COUNT") == 0 and rt.eval("ASK_COUNT") == 0 and "cache guard error" in rt.eval("LAST_NOTE()"))
+    run("RESET{ready=true, native_error=true}; CMDS.AvanteAsk()")
+    check("если внутренний repo_map не загрузился, setup и чат заблокированы",
+          rt.eval("SETUP_COUNT") == 0 and rt.eval("ASK_COUNT") == 0 and "repo map not ready" in rt.eval("LAST_NOTE()"))
     run("RESET{ready=false}; RUNTIME_OK=false; COMPLETE(true)")
     check("скачивание без работающего require не включает avante", rt.eval("SETUP_COUNT") == 0 and "не удалось загрузить" in rt.eval("LAST_NOTE()"))
     run("RESET{ready=true, setup_error=true}")

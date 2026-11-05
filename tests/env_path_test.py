@@ -49,7 +49,7 @@ def main():
     with open(os.path.join(_lua.ROOT, "tests", "lua_stubs.lua"), encoding="utf-8") as fh:
         rt.execute(fh.read())
     rt.execute(PRELUDE)
-    rt.execute("ep = require('config.env_path')")
+    rt.execute("vim.env.HOME='/Users/test'; vim.env.XDG_STATE_HOME='/custom/state'; ep = require('config.env_path')")
 
     # ---------------------------------------------------- дописывание PATH ---
     rt.execute("EXISTING = { ['/opt/homebrew/bin'] = true, ['/usr/bin'] = true, ['/bin'] = true }")
@@ -72,6 +72,16 @@ def main():
     rt.execute("ep.setup()")
     check("несуществующие каталоги не добавляются",
           rt.eval("vim.env.PATH") == "/usr/bin")
+
+    rt.execute("""
+      EXISTING = { ['/custom/state/nix/profile/bin'] = true, ['/Users/test/.nix-profile/bin'] = true,
+                   ['/nix/var/nix/profiles/default/bin'] = true, ['/Users/test/.cargo/bin'] = true }
+      vim.env.PATH='/custom/bin'; ep.setup()
+    """)
+    check("GUI PATH видит существующие профили Nix и cargo, не меняя приоритет пользовательского PATH",
+          all(p in rt.eval("vim.env.PATH") for p in ("/custom/state/nix/profile/bin", "/Users/test/.nix-profile/bin",
+              "/nix/var/nix/profiles/default/bin", "/Users/test/.cargo/bin"))
+          and rt.eval("vim.env.PATH").startswith("/custom/bin:"))
 
     rt.execute("EXISTING = { ['/opt/homebrew/bin'] = true }")
     rt.execute("vim.env.PATH = '/usr/bin'")
@@ -115,6 +125,8 @@ def main():
     rt.execute("ep.check()")
     check(":EnvCheck: плагин avante не установлен — так и пишет",
           "плагин не установлен" in rt.eval("NOTES[#NOTES].msg"), rt.eval("NOTES[#NOTES].msg"))
+    check(":EnvCheck: отдельно показаны nil, nix и cargo",
+          all(x in rt.eval("NOTES[#NOTES].msg") for x in ("nil:", "nix:", "cargo:", "nil_ls")))
     rt.execute(f"EXISTING = {{ ['{AVDIR}'] = true }}")
     rt.execute("NOTES = {}; ep.check()")
     msg = rt.eval("NOTES[#NOTES].msg")

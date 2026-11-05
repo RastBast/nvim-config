@@ -58,6 +58,11 @@ function M.setup(plugin, opts)
     end
   end
 
+  -- RepoMap вызывается также напрямую из :AvanteShowRepoMap, в обход api.
+  -- Заодно обрабатываем старые повреждённые *.repo_map.json до первого чата.
+  local cache_guard = require("config.avante_repo_map")
+  local guard_ok, guard_err = pcall(cache_guard.install, function() return ready end, notify_status)
+
   -- На время сборки привычные клавиши сообщают статус. Чужие существующие
   -- маппинги не перезаписываются и при удалении проверяем их desc ещё раз.
   local function hold_map(mode, lhs)
@@ -105,8 +110,12 @@ function M.setup(plugin, opts)
     if not revision and startup_revision then return fail(err) end
 
     local ok, reason = B.runtime_check(dir)
+    if ok then
+      local called, available, detail = pcall(cache_guard.native_ready)
+      ok, reason = called and available, called and detail or tostring(available)
+    end
     if not ok then
-      return fail("Библиотеки не удалось загрузить: " .. reason
+      return fail("Библиотеки не удалось загрузить: " .. tostring(reason)
         .. "\nПерезапусти Neovim и проверь :AvanteStatus; при необходимости выполни :AvanteRebuild.")
     end
     release_maps()
@@ -123,7 +132,7 @@ function M.setup(plugin, opts)
     end, { desc = "🤖 Объяснить код/ошибку (Gemini)" })
   end
 
-  local function rebuild(force)
+  local function rebuild(force, source)
     if building then
       return show("avante: сборка уже выполняется; дождись результата.", "WarningMsg")
     end
@@ -148,8 +157,13 @@ function M.setup(plugin, opts)
       end
       activate()
       if ready then show("✅ avante: " .. message .. ". Чат готов к работе.") end
-    end, { force = force })
+    end, { force = force, source = source })
   end
+
+  -- Upstream :AvanteBuild без source=true скачивает ПОСЛЕДНИЙ тег через
+  -- build.sh, даже если Lua-код закреплён на v0.4.8. Используем общий путь
+  -- с проверкой версии, не допуская несовместимых бинарников и гонки сборок.
+  api.build = function(options) rebuild(true, options and options.source == true) end
 
   vim.api.nvim_create_user_command("AvanteRebuild", function() rebuild(true) end, {
     desc = "Пересобрать нативные библиотеки avante (всегда заново)",
@@ -161,11 +175,19 @@ function M.setup(plugin, opts)
     local ok, reason = B.check(dir)
     lines[#lines + 1] = (ok and "библиотеки: " or "библиотеки не готовы: ") .. reason
     if ready then lines[#lines + 1] = "Проверка в текущем процессе; после замены библиотек нужен перезапуск." end
+    if cache_guard.invalid_cache_count > 0 then
+      lines[#lines + 1] = "Повреждённых карт репозитория проигнорировано: " .. cache_guard.invalid_cache_count
+    end
     if last_error then lines[#lines + 1] = last_error end
     if restart_required then lines[#lines + 1] = "Перезапусти Neovim." end
     show(table.concat(lines, "\n"))
   end, { desc = "Проверить версию и загрузку библиотек avante" })
 
+  if not guard_ok then
+    hold_maps()
+    return fail("Не удалось включить защиту карты репозитория: " .. tostring(guard_err)
+      .. "\nПроверь версию :Lazy update avante.nvim и перезапусти Neovim.")
+  end
   if startup_revision and startup_revision ~= B.COMMIT then
     hold_maps()
     return fail(B.revision_error(startup_revision))

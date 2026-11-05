@@ -89,7 +89,8 @@ done
                 fh.write(content)
             os.chmod(path, 0o755)
 
-        cases = [("archive", False, False), ("fail", True, False), ("make", True, True)]
+        cases = [("archive", False, False), ("fail", True, False), ("make", True, True),
+                 ("require-fail", False, False)]
         if os.environ.get("AVANTE_TEST_LAZY"):
             cases.extend([("lazy", False, False), ("unsupported", False, False)])
         else:
@@ -108,6 +109,7 @@ done
                 "AVANTE_TEST_LIBRARY": lib,
                 "AVANTE_TEST_FAIL": "1" if fail else "0",
                 "AVANTE_TEST_SOURCE_BUILD": "1" if source_build else "0",
+                "AVANTE_TEST_REQUIRE_FAIL": "1" if case == "require-fail" else "0",
                 "AVANTE_TEST_USE_LAZY": "1" if case in ("lazy", "unsupported") else "0",
                 "AVANTE_TEST_UNSUPPORTED": "1" if case == "unsupported" else "0",
                 "AVANTE_TEST_TMP": tmp,

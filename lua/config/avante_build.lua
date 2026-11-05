@@ -82,14 +82,13 @@ function M.is_built(dir)
   return ok
 end
 
---- Проверяем также обычный require, который использует сам avante.path.
+--- Проверяем именно тот require, которым пользуются все части Avante.
+--- Одного dlopen недостаточно: lazy/vim.loader или package.path могут мешать
+--- поиску одного из модулей, даже когда файлы всех библиотек существуют.
 --- Вызывать после добавления плагина в runtimepath lazy.nvim.
 function M.runtime_check(dir)
   local ok, reason = M.check(dir)
   if not ok then return false, reason end
-  -- При первом неуспешном require vim.loader / lazy.nvim могли запомнить,
-  -- что модуля в этом runtimepath нет. После фоновой установки обновляем
-  -- индекс только каталога плагина, не выгружая уже открытые библиотеки.
   local lazy_cache = package.loaded["lazy.core.cache"]
   if type(lazy_cache) == "table" and type(lazy_cache.reset) == "function" then
     pcall(lazy_cache.reset, dir)
@@ -97,12 +96,28 @@ function M.runtime_check(dir)
   if vim.loader and vim.loader ~= lazy_cache and type(vim.loader.reset) == "function" then
     pcall(vim.loader.reset, dir)
   end
-  local loaded, module = pcall(require, M.MAIN_LIB)
-  if not loaded then return false, "require('avante_templates'): " .. tostring(module) end
-  if type(module) ~= "table" or type(module.initialize) ~= "function" or type(module.render) ~= "function" then
-    return false, "require('avante_templates') вернул несовместимый модуль"
+  for _, lib in ipairs(LIBRARIES) do
+    -- LuaJIT оставляет нетабличный sentinel после неудачной загрузки; без
+    -- очистки повторный require выдаёт «loop or previous error» даже после
+    -- установки исправной библиотеки. Успешные таблицы не выгружаем.
+    if package.loaded[lib.name] ~= nil and type(package.loaded[lib.name]) ~= "table" then
+      package.loaded[lib.name] = nil
+    end
+    local loaded, module = pcall(require, lib.name)
+    if not loaded then
+      package.loaded[lib.name] = nil
+      return false, "require('" .. lib.name .. "'): " .. tostring(module)
+    end
+    if type(module) ~= "table" then
+      return false, "require('" .. lib.name .. "') вернул несовместимый модуль"
+    end
+    for _, name in ipairs(lib.exports) do
+      if type(module[name]) ~= "function" then
+        return false, "require('" .. lib.name .. "'): нет функции " .. name
+      end
+    end
   end
-  return true, "avante_templates доступен через require"
+  return true, "все библиотеки доступны через require"
 end
 
 local function has(cmd)
@@ -250,6 +265,10 @@ function M.build(dir, on_done, opts)
       end
     end)
   end
+
+  -- :AvanteBuild source=true должен собирать закреплённый checkout через make,
+  -- а не обходить наши проверки вызовом upstream build.sh с последним тегом.
+  if opts and opts.source then return try_make("Запрошена сборка из исходников.") end
 
   local uname = vim.uv.os_uname()
   local artifact = M.artifact(uname.sysname, uname.machine)

@@ -23,11 +23,18 @@
 local M = {}
 
 -- Каталоги по порядку проверки. Несуществующие пропускаются (isdirectory).
+local home = vim.env.HOME or vim.fn.expand("~")
+local state_home = vim.env.XDG_STATE_HOME
+if not state_home or state_home == "" then state_home = home .. "/.local/state" end
 M.dirs = {
   "/opt/homebrew/bin",  -- Homebrew, Apple Silicon (M1/M2/M3/M4)
   "/opt/homebrew/sbin",
   "/usr/local/bin",     -- Homebrew на Intel и ручной install
   "/usr/local/sbin",
+  state_home .. "/nix/profile/bin", -- современный nix profile
+  home .. "/.nix-profile/bin",     -- прежний пользовательский профиль Nix
+  "/nix/var/nix/profiles/default/bin",
+  home .. "/.cargo/bin",           -- Rust/cargo при запуске nvim из GUI
   vim.fn.stdpath("data") .. "/mason/bin", -- LSP/DAP/format, поставленные mason
   "/usr/bin",
   "/bin",
@@ -92,6 +99,11 @@ function M.check()
       lines[#lines + 1] = tool .. ": " .. (p ~= "" and p or "не найден")
     end
   end
+  for _, tool in ipairs({ "nil", "nix", "cargo" }) do
+    local p = vim.fn.exepath(tool)
+    lines[#lines + 1] = tool .. ": " .. (p ~= "" and p or "не найден")
+  end
+  lines[#lines + 1] = "Nix LSP (nil_ls): устанавливается отдельно; подробности — DOCS.md §18."
   lines[#lines + 1] = " "
   lines[#lines + 1] = "PATH = " .. (vim.env.PATH or "(пусто)")
   if M.added and #M.added > 0 then

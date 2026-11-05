@@ -97,6 +97,23 @@ return {
       end
       vim.lsp.enable(servers)
 
+      -- nil_ls ставится отдельно: Mason package `nil` компилируется cargo.
+      -- Сообщаем только при первом открытии Nix-файла, если бинарника нет;
+      -- другие языки и повторное открытие файлов не засоряют уведомлениями.
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("UserNixLspHint", { clear = true }),
+        pattern = "nix",
+        once = true,
+        callback = function()
+          if vim.fn.executable("nil") == 1 then return end
+          vim.schedule(function()
+            if vim.fn.executable("nil") == 1 then return end
+            vim.api.nvim_echo({ { "Nix LSP: бинарник nil не найден. Установи Nix, затем "
+              .. "nix profile install nixpkgs#nil; проверь :EnvCheck. Подробнее: DOCS.md §18.", "WarningMsg" } }, true, {})
+          end)
+        end,
+      })
+
       -- Клавиши включаются при подключении сервера (а не глобально)
       vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("UserLspKeymaps", { clear = true }),

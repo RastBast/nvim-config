@@ -236,19 +236,22 @@ Groq — **обязательный** провайдер в этом конфи�
 | Плагин «Failed: checkout…» | `:Lazy restore <имя>` или `rm -rf ~/.local/share/nvim/lazy/<имя>` + `:Lazy sync` |
 | Переводы приходят английскими | нет curl/сети до translate.googleapis.com — конфиг молча работает по-английски, кеш греется при появлении сети |
 | Ошибка `RestAPI/proto is not in std` | это твой проект: импорт должен начинаться с имени модуля из `go.mod` |
-| avante: `missing avante_templates` | Нужен Neovim 0.12+. Выполни `:Lazy update avante.nvim`, перезапусти nvim; проверь `:AvanteStatus` и при необходимости выполни `:AvanteRebuild`. Подробности — DOCS.md, раздел 45 |
+| Mason: `failed to install nil_ls` | Автоустановка отключена: `nil` требует отдельной установки. Если работаешь с Nix, выполни `nix profile install nixpkgs#nil`, перезапусти Neovim и проверь `:EnvCheck` / `:LspInfo`. Подробности конкретного сбоя — `:MasonLog`, инструкция — DOCS.md §18 |
+| avante: `missing avante_templates`, `avante_repo_map`, `next(... userdata)` | Нужен Neovim 0.12+. Выполни `:Lazy update avante.nvim`, перезапусти nvim; проверь `:AvanteStatus` и при необходимости выполни `:AvanteRebuild`. Повреждённый кеш карты будет перестроен после восстановления библиотек. Подробности — DOCS.md, раздел 45 |
 | avante: `E239: Invalid sign text` при загрузке | в `windows.input.prefix` стоял эмодзи: текст знака не может быть шире 2 ячеек. Ставь `"> "` (уже исправлено в конфиге) |
 | avante: `400 User location is not supported` | геоблок Google по IP — нужен выход не из РФ или план B (OpenRouter). **PROXY.md**, §1.5 и §5 |
 | avante: `404 … no longer available to new users` | устарело имя модели: `set -Ux GEMINI_MODEL "gemini-3.6-flash"` |
 
+**Посмотреть ошибки:** `<leader>xe` — последние 10, `<leader>xl` — весь журнал Noice за текущий сеанс; `q` закрывает окно. Это ошибки выполнения Neovim и ERROR-уведомления после запуска Noice, не диагностики LSP и не постоянный файл. `<leader>xx` — диагностики кода в Trouble. Ранние сообщения: `:messages`; журнал установки: `:MasonLog`. Подробности и ограничения — DOCS.md §18.
+
 ### 6.1. `:EnvCheck` — что видит nvim
 
-Команда печатает пути к `git`/`curl`/`tar` и `PATH` текущего nvim. Если `git:
+Команда печатает пути к `git`/`curl`/`tar`, `nil`/`nix`/`cargo` и `PATH` текущего nvim. Если `git:
 НЕ НАЙДЕН` — плагины обновляться не будут, пока это не починишь. Модуль
 `lua/config/env_path.lua` подключается в `init.lua` первым (до установки
 lazy.nvim, чей bootstrap тоже зовёт git) и дописывает в конец `PATH`
-существующие каталоги: `/opt/homebrew/bin`, `/usr/local/bin`,
-`~/.local/share/nvim/mason/bin` и системные. Твой `PATH` остаётся
+существующие каталоги: `/opt/homebrew/bin`, `/usr/local/bin`, профили Nix,
+`~/.cargo/bin`, `~/.local/share/nvim/mason/bin` и системные. Твой `PATH` остаётся
 приоритетнее — ничего не перезаписывается.
 
 ### 6.2. `./tools/check_config.sh` — проверить конфиг до запуска

@@ -2,12 +2,29 @@ return {
   {
     'folke/noice.nvim',
     event = 'VeryLazy',
+    keys = {
+      { '<leader>xe', function() require('config.error_history').last() end, desc = 'Последние 10 ошибок Neovim' },
+      { '<leader>xl', function() require('config.error_history').log() end, desc = 'Журнал ошибок Neovim' },
+    },
     dependencies = {
       'MunifTanjim/nui.nvim',
       'rcarriga/nvim-notify',
     },
     config = function()
       require('noice').setup({
+        -- Noice хранит типизированные ошибки этого сеанса: и vim.notify(ERROR),
+        -- и ошибки самого Neovim. count выбирает последние по времени;
+        -- reverse здесь не нужен, иначе Noice выберет самые старые десять.
+        commands = {
+          errors10 = {
+            view = 'split', opts = { enter = true, format = 'details' },
+            filter = { error = true }, filter_opts = { count = 10 },
+          },
+          errorlog = {
+            view = 'split', opts = { enter = true, format = 'details' },
+            filter = { error = true },
+          },
+        },
         lsp = {
           -- ВАЖНО: hover выключен. По умолчанию noice подменяет vim.lsp.buf.hover
           -- на свою функцию и показывает подсказку в своём окне, мимо

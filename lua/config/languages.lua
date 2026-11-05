@@ -10,9 +10,9 @@
 --   ft         filetype Neovim (LaTeX = "tex", C# = "cs" в lspconfig, Terraform = "terraform")
 --   parser     парсер nvim-treesitter (ставится автоматически)
 --   lsp        LSP-серверы, которые ставит Mason
---   toolchain  LSP, которому нужен системный тулчейн (Dart SDK, Xcode, R, Julia,
---              OCaml/opam, Haskell/ghcup, .NET, Groovy). Включается, если бинарник
---              уже есть в PATH; Mason такие серверы НЕ ставит (иначе ошибка при старте).
+--   toolchain  LSP, устанавливаемый отдельно (Dart SDK, Xcode, R, Julia,
+--              OCaml/opam, Haskell/ghcup, .NET, Groovy, Nix). Mason его не ставит;
+--              для работы нужный бинарник должен быть доступен в PATH Neovim.
 --   fmt        форматтеры conform. Если бинарника нет — conform молча откатывается
 --              на LSP-форматирование (lsp_format = "fallback"), ничего не ломается.
 --
@@ -59,7 +59,10 @@ M.list = {
   { ft = "r", parser = "r", toolchain = { "r_language_server" }, fmt = { "styler" } },
   { ft = "julia", parser = "julia", toolchain = { "julials" }, fmt = { "runic" } },
   { ft = "terraform", parser = "terraform", lsp = { "terraformls" }, fmt = { "terraform_fmt" } },
-  { ft = "nix", parser = "nix", lsp = { "nil_ls" }, fmt = { "nixfmt" } },
+  -- Mason package nil собирается cargo из исходников; не запускаем сборку
+  -- автоматически на каждой установке конфига. nil_ls остаётся включённым,
+  -- если установленный отдельно исполняемый файл `nil` доступен в PATH.
+  { ft = "nix", parser = "nix", toolchain = { "nil_ls" }, fmt = { "nixfmt" } },
   { ft = "vue", parser = "vue", lsp = { "vue_ls" }, fmt = { "prettier" } },
   { ft = "svelte", parser = "svelte", lsp = { "svelte" }, fmt = { "prettier" } },
   { ft = "graphql", parser = "graphql", lsp = { "graphql" }, fmt = { "prettier" } },

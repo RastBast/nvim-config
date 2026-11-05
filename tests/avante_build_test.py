@@ -146,7 +146,7 @@ function RESET(o)
 end
 function SETUP(o)
   RESET(o)
-  B.build(DIR, function(ok, msg) RES_OK, RES_MSG = ok, msg end, {force = o.force})
+  B.build(DIR, function(ok, msg) RES_OK, RES_MSG = ok, msg end, {force = o.force, source = o.source})
   drain()
 end
 function count_command(name)
@@ -254,6 +254,9 @@ def main():
           rt.eval("RES_OK") is False and "linker failed" in rt.eval("RES_MSG") and "Архив" in rt.eval("RES_MSG"))
     run("SETUP{exec={'git','make','cargo'}, make_produces=true}")
     check("нет curl: сразу make", rt.eval("RES_OK") is True and rt.eval("count_command('curl')") == 0)
+    run("SETUP{exec={'git','curl','tar','make','cargo'}, source=true, force=true, make_produces=true}")
+    check("source=true использует make, а не скачивание другого тега",
+          rt.eval("RES_OK") is True and rt.eval("count_command('make')") == 1 and rt.eval("count_command('curl')") == 0)
     check("результат make проверяется в отдельном каталоге, без кэша загруженных библиотек",
           rt.eval("count_command('copy')") == 4)
     run("SETUP{built=true, force=true, exec={'git','make','cargo'}, make_produces=false}")
@@ -281,8 +284,14 @@ def main():
     # Проверка обычного require отдельно от прямого dlopen.
     run("""
       RESET{built=true, exec={'git'}}
-      package.loaded.avante_templates = nil
-      package.preload.avante_templates = function() return {initialize=function() end, render=function() end} end
+      for _, name in ipairs(NAMES) do
+        package.loaded[name] = nil
+        package.preload[name] = function()
+          local module = {}
+          for _, export in ipairs(EXPECTED[name]) do module[export] = function() end end
+          return module
+        end
+      end
       REQ_OK, REQ_MSG = B.runtime_check(DIR)
     """)
     check("runtime_check проверяет настоящий require", rt.eval("REQ_OK") is True)
@@ -293,6 +302,32 @@ def main():
     """)
     check("ошибка require не скрывается наличием файла", rt.eval("REQ_OK") is False and "runtime path problem" in rt.eval("REQ_MSG"))
     run("""
+      package.loaded.avante_templates = nil
+      package.preload.avante_templates = function() return {initialize=function() end, render=function() end} end
+      package.loaded.avante_repo_map = nil
+      package.preload.avante_repo_map = function() error('repo map search failed') end
+      REQ_OK, REQ_MSG = B.runtime_check(DIR)
+    """)
+    check("файлы есть, но require avante_repo_map упал: плагин не готов",
+          rt.eval("REQ_OK") is False and "avante_repo_map" in rt.eval("REQ_MSG") and "repo map search failed" in rt.eval("REQ_MSG"))
+    check("ошибка require не оставляет sentinel LuaJIT в package.loaded", rt.eval("package.loaded.avante_repo_map == nil"))
+    run("""
+      -- Ошибка могла возникнуть до нашего запуска, в другом компоненте.
+      pcall(require, 'avante_repo_map')
+      package.preload.avante_repo_map = function() return {stringify_definitions=function() end} end
+      REQ_OK, REQ_MSG = B.runtime_check(DIR)
+    """)
+    check("устаревший sentinel после чужой ошибки удаляется и require восстанавливается", rt.eval("REQ_OK") is True)
+    run("""
+      package.loaded.avante_repo_map = nil
+      package.preload.avante_repo_map = function() return {} end
+      REQ_OK, REQ_MSG = B.runtime_check(DIR)
+    """)
+    check("require avante_repo_map с неверным API не принимается",
+          rt.eval("REQ_OK") is False and "stringify_definitions" in rt.eval("REQ_MSG"))
+    run("""
+      package.loaded.avante_repo_map = nil
+      package.preload.avante_repo_map = function() return {stringify_definitions=function() end} end
       package.loaded.avante_templates = nil
       RESETS = {}
       vim.loader = {reset=function(path) RESETS[#RESETS+1] = 'nvim:' .. path end}
