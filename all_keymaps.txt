@@ -1,9 +1,7 @@
 СПИСОК ГОРЯЧИХ КЛАВИШ — RastBast/nvim-config
-Обновлено: 2026-10-28. Собрано из lua/config/keydocs/ (справка <leader>?), db_menu.lua и зеркал <leader>HU… из tui_tools.lua.
-Тот же список с описаниями — в DOCS.md, §44. <leader> = пробел.
+Базовый список: 2026-10-28; меню архитектуры добавлено 2026-11-06. Источники: lua/config/keydocs/ (справка <leader>?), db_menu.lua и зеркала <leader>HU… из tui_tools.lua.
+Подробные описания — в DOCS.md, §44. <leader> = пробел.
 ==============================================================================
-
-Всего записей: 425 (справка: 389, базы данных <leader>D…: 36)
 
 <C-h>                  n      Окно слева
 <C-j>                  n      Окно снизу
@@ -116,6 +114,7 @@ q                      n      Quit (в Super Mode)
 <leader>Pg             n      buf generate (codegen)
 <leader>tt             n      Перевести слово (ru)
 <leader>te             n      Перевести на английский
+<leader>mA             n      Архитектура: редактор и локальный анализ проекта
 <leader>mm             n      tele: маленькое окно (float)
 <leader>mf             n      tele: на весь экран
 <leader>mp             n      tele: боковой панелью

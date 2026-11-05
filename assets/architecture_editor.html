@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Архитектура · редактор</title>
+<style>
+:root { color-scheme: dark; font: 14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#0b1020; color:#e5eaf4; }
+* { box-sizing:border-box; }
+body { margin:0; min-width:320px; }
+header { min-height:68px; display:flex; align-items:center; justify-content:space-between; gap:18px; padding:13px 22px; background:#11182a; border-bottom:1px solid #29354d; }
+header h1 { margin:0; font-size:18px; letter-spacing:-.02em; }
+header p { margin:2px 0 0; color:#9daec8; font-size:12px; }
+.badge { font-size:12px; color:#a5f3cf; border:1px solid #245a4b; background:#12352c; border-radius:99px; padding:5px 10px; white-space:nowrap; }
+main { display:grid; grid-template-columns:280px minmax(0,1fr); height:calc(100vh - 68px); }
+aside { overflow:auto; padding:18px; background:#11182a; border-right:1px solid #29354d; }
+aside h2 { margin:0 0 12px; font-size:13px; color:#b8c8dd; text-transform:uppercase; letter-spacing:.08em; }
+aside h3 { margin:18px 0 8px; font-size:13px; }
+label { display:block; margin:10px 0 4px; font-size:12px; color:#aabbd1; }
+input,select,button { font:inherit; color:inherit; }
+input,select { width:100%; background:#0d1526; border:1px solid #34435d; border-radius:7px; padding:8px 9px; outline:none; }
+input:focus,select:focus,button:focus-visible { outline:2px solid #8ba8ff; outline-offset:2px; }
+button { cursor:pointer; border:1px solid #354661; background:#1b2940; border-radius:7px; padding:8px 11px; }
+button:hover { background:#263b59; }
+button:disabled { opacity:.42; cursor:not-allowed; }
+button.primary { color:#10172b; background:#b9c9ff; border-color:#b9c9ff; font-weight:700; }
+button.primary:hover { background:#d0d9ff; }
+button.danger { color:#ffb7bd; border-color:#68404d; }
+.actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
+.actions button { flex:1 1 auto; }
+.divider { border-top:1px solid #29354d; margin:18px 0; }
+.hint { color:#93a4bd; font-size:12px; line-height:1.5; }
+#status { min-height:42px; color:#a8bad1; margin-top:12px; font-size:12px; overflow-wrap:anywhere; }
+#status.error { color:#ffb0b8; }
+.workspace { display:flex; min-width:0; flex-direction:column; }
+.toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 14px; background:#10192a; border-bottom:1px solid #29354d; }
+.toolbar .hint { margin-left:auto; }
+#viewport { flex:1; overflow:auto; position:relative; background:#0b1020; }
+#canvas { position:relative; width:1400px; min-height:760px; background-image:radial-gradient(#293650 1px, transparent 1px); background-size:14px 30px; }
+svg { position:absolute; inset:0; overflow:visible; pointer-events:none; }
+.edge { fill:none; stroke:#8197bc; stroke-width:2; }
+.edge-label { fill:#b7c7dc; font-size:12px; paint-order:stroke; stroke:#0b1020; stroke-width:4px; stroke-linejoin:round; }
+.node { position:absolute; width:196px; height:72px; padding:10px 14px; text-align:left; touch-action:none; user-select:none; background:#17263e; border:1px solid #52688d; box-shadow:0 10px 24px #0005; border-radius:12px; overflow:hidden; }
+.node.selected { border:2px solid #a9bfff; box-shadow:0 0 0 3px #91aaff25,0 10px 24px #0005; }
+.node.linking { outline:2px dashed #85e4ba; outline-offset:4px; }
+.node .type { display:block; color:#9fb2d0; font-size:10px; text-transform:uppercase; letter-spacing:.1em; }
+.node .name { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; max-height:2.4em; overflow:hidden; margin-top:4px; font-weight:650; overflow-wrap:anywhere; line-height:1.2; }
+.node.actor { background:#19384b; border-color:#4889a7; }
+.node.storage { background:#243548; border-color:#68a9c1; }
+.node.queue { background:#3b2d4d; border-color:#ab83c1; }
+.node.external { background:#373127; border-color:#aa9875; }
+.node.module { background:#263b31; border-color:#73a98b; }
+#empty { position:absolute; left:32px; top:32px; color:#aabbd0; }
+@media (max-width:760px) { header { align-items:flex-start; } main { height:auto; display:flex; flex-direction:column; } aside { border-right:0; border-bottom:1px solid #29354d; max-height:45vh; } #viewport { min-height:65vh; } }
+</style>
+</head>
+<body>
+<header><div><h1 id="title">Архитектура</h1><p>Редактор связан с текущим буфером Neovim</p></div><span class="badge">● только localhost</span></header>
+<main>
+<aside>
+  <h2>Компоненты</h2>
+  <label for="new-label">Название нового блока</label><input id="new-label" maxlength="120" placeholder="Например, Сервис заказов">
+  <label for="new-kind">Тип блока</label>
+  <select id="new-kind"><option value="service">Сервис</option><option value="actor">Пользователь / клиент</option><option value="storage">Хранилище</option><option value="queue">Очередь</option><option value="external">Внешняя система</option><option value="module">Модуль проекта</option></select>
+  <div class="actions"><button class="primary" id="add">+ Добавить блок</button></div>
+  <div class="divider"></div>
+  <h2>Выбранный блок</h2><div id="selection" class="hint">Нажми на блок в схеме.</div>
+  <label for="edit-label">Название</label><input id="edit-label" maxlength="120" disabled>
+  <label for="edit-kind">Тип</label><select id="edit-kind" disabled><option value="service">Сервис</option><option value="actor">Пользователь / клиент</option><option value="storage">Хранилище</option><option value="queue">Очередь</option><option value="external">Внешняя система</option><option value="module">Модуль проекта</option></select>
+  <div class="actions"><button id="rename" disabled>Переименовать</button><button id="connect" disabled>Соединить →</button></div>
+  <div class="actions"><button class="danger" id="remove" disabled>Удалить блок</button></div>
+  <label for="edge-list">Связи</label><select id="edge-list"></select><div class="actions"><button id="unlink">Удалить связь</button></div>
+  <div class="divider"></div>
+  <div class="hint">Мышь: перетаскивай блоки; «Соединить» → нажми второй блок. Клавиатура: Tab выбирает, стрелки двигают, Enter меняет имя, C соединяет, Delete удаляет, Ctrl/⌘ Z отменяет.</div>
+  <div id="status" role="status" aria-live="polite">Подключаюсь к Neovim…</div>
+</aside>
+<section class="workspace" aria-label="Полотно архитектуры">
+  <div class="toolbar"><button id="save" class="primary">Сохранить JSON</button><button id="undo" title="Ctrl/⌘ Z">↶ Отменить</button><button id="redo" title="Ctrl/⌘ Shift Z">↷ Повторить</button><button id="layout">Авторасстановка</button><span id="file" class="hint"></span></div>
+  <div id="viewport" tabindex="0"><div id="canvas"><svg id="edges" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg><div id="empty">Схема пуста. Добавь первый блок слева.</div></div></div>
+</section>
+</main>
+<script>
+'use strict';
+(() => {
+  const $ = id => document.getElementById(id);
+  const canvas = $('canvas'), svg = $('edges'), status = $('status');
+  const SX = 14, SY = 30, W = 196, H = 72, MAX_X = 72, MAX_Y = 70;
+  const typeNames = { actor:'Пользователь', service:'Сервис', storage:'Хранилище', queue:'Очередь', external:'Внешняя система', module:'Модуль' };
+  let current = null, selected = null, linking = null, drag = null, busy = false;
+  const api = new URL('.', window.location.href);
+  function message(text, error) { status.textContent = text; status.className = error ? 'error' : ''; }
+  function clamp(n, max) { return Math.max(0, Math.min(max, Math.round(n))); }
+  function chosen() { return current && current.model.nodes.find(n => n.id === selected); }
+  function svgEl(name, attrs) { const el = document.createElementNS('http://www.w3.org/2000/svg', name); for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, String(v)); return el; }
+  async function refresh() {
+    if (drag || busy) return;
+    try {
+      const response = await fetch(new URL('state', api), { cache:'no-store' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'нет схемы');
+      const changed = !current || current.rev !== data.rev || current.modified !== data.modified || current.file !== data.file;
+      current = data;
+      if (changed) render();
+      if (status.textContent.startsWith('Подключаюсь') || status.textContent.startsWith('Нет связи')) message('Связь с Neovim установлена.');
+    } catch (err) { message('Нет связи с Neovim: ' + err.message, true); }
+  }
+  async function action(value, expected) {
+    if (!current || busy) return false;
+    busy = true;
+    try {
+      const response = await fetch(new URL('action', api), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({rev:expected === undefined ? current.rev : expected, action:value}) });
+      const data = await response.json();
+      if (!response.ok) {
+        if (data.current) current = data.current;
+        throw new Error(data.error || 'не удалось изменить схему');
+      }
+      current = data; render();
+      return true;
+    } catch (err) { message(err.message, true); render(); return false; }
+    finally { busy = false; }
+  }
+  function renderEdges(nodes) {
+    svg.replaceChildren();
+    const defs = svgEl('defs', {}), marker = svgEl('marker', {id:'arrow', viewBox:'0 0 10 10', refX:9, refY:5, markerWidth:7, markerHeight:7, orient:'auto-start-reverse'});
+    marker.append(svgEl('path', {d:'M 0 0 L 10 5 L 0 10 z', fill:'#8197bc'})); defs.append(marker); svg.append(defs);
+    const byId = new Map(nodes.map(n => [n.id,n]));
+    for (const e of current.model.edges) {
+      const a = byId.get(e.from), b = byId.get(e.to); if (!a || !b) continue;
+      const right = b.x >= a.x;
+      const x1 = a.x * SX + (right ? W : 0), x2 = b.x * SX + (right ? 0 : W), y1 = a.y * SY + H/2, y2 = b.y * SY + H/2;
+      const bend = Math.max(35, Math.abs(x2-x1)/2), d = `M ${x1} ${y1} C ${x1+(right?bend:-bend)} ${y1}, ${x2-(right?bend:-bend)} ${y2}, ${x2} ${y2}`;
+      svg.append(svgEl('path', {d, class:'edge', 'marker-end':'url(#arrow)'}));
+      if (e.label) { const text = svgEl('text', {x:(x1+x2)/2, y:(y1+y2)/2-7, 'text-anchor':'middle', class:'edge-label'}); text.textContent = e.label; svg.append(text); }
+    }
+  }
+  function onPointerDown(event, node, element) {
+    if (event.button !== 0 || busy) return;
+    event.preventDefault();
+    if (linking && linking !== node.id) {
+      // Диалог после pointerup, чтобы модальное окно не перехватило отпускание мыши.
+      selected = node.id; drag = {id:node.id, linkFrom:linking};
+      element.setPointerCapture(event.pointerId); element.focus();
+      return;
+    }
+    selected = node.id; linking = null;
+    drag = {id:node.id, x:node.x, y:node.y, startX:event.clientX, startY:event.clientY, nextX:node.x, nextY:node.y, rev:current.rev, moved:false};
+    element.setPointerCapture(event.pointerId); renderSide();
+    for (const el of canvas.querySelectorAll('.node')) el.classList.toggle('selected', el.dataset.id === selected);
+    element.focus();
+  }
+  function onPointerMove(event, element) {
+    if (!drag || drag.id !== element.dataset.id || drag.linkFrom) return;
+    const dx = event.clientX - drag.startX, dy = event.clientY - drag.startY;
+    if (Math.abs(dx)+Math.abs(dy) > 3) drag.moved = true;
+    drag.nextX = clamp(drag.x + dx/SX, MAX_X); drag.nextY = clamp(drag.y + dy/SY, MAX_Y);
+    element.style.left = (drag.nextX * SX) + 'px'; element.style.top = (drag.nextY * SY) + 'px';
+    const nodes = current.model.nodes.map(n => n.id === drag.id ? {...n, x:drag.nextX, y:drag.nextY} : n);
+    renderEdges(nodes);
+  }
+  function onPointerUp(event, element) {
+    if (!drag || drag.id !== element.dataset.id) return;
+    const finished = drag; drag = null;
+    if (finished.linkFrom) {
+      linking = null;
+      const label = window.prompt('Подпись связи (можно оставить пустой):', '');
+      if (label !== null) action({op:'link', from:finished.linkFrom, to:finished.id, label}).then(ok => { if (ok) message('Связь добавлена. Сохрани изменения.'); });
+      else render();
+    } else if (finished.moved && (finished.x !== finished.nextX || finished.y !== finished.nextY)) {
+      action({op:'move', id:finished.id, x:finished.nextX, y:finished.nextY}, finished.rev).then(ok => { if (ok) message('Блок перемещён. Сохрани изменения.'); });
+    } else render();
+  }
+  function renderSide() {
+    const n = chosen();
+    $('selection').textContent = n ? `${n.label} · ${n.id}${n.path ? ' · ' + n.path : ''}` : 'Нажми на блок в схеме.';
+    for (const id of ['edit-label','edit-kind','rename','connect','remove']) $(id).disabled = !n;
+    if (n) {
+      if (document.activeElement !== $('edit-label')) $('edit-label').value = n.label;
+      if (document.activeElement !== $('edit-kind')) $('edit-kind').value = n.kind;
+    } else $('edit-label').value = '';
+    $('connect').textContent = linking ? 'Отмена соединения' : 'Соединить →';
+    const list = $('edge-list'), old = list.value; list.replaceChildren();
+    if (!current) return;
+    const names = new Map(current.model.nodes.map(item => [item.id,item.label]));
+    for (const edge of current.model.edges) { const option = document.createElement('option'); option.value = edge.id; option.textContent = `${names.get(edge.from)} → ${names.get(edge.to)}${edge.label ? ' · ' + edge.label : ''}`; list.append(option); }
+    if ([...list.options].some(o => o.value === old)) list.value = old;
+    $('unlink').disabled = list.options.length === 0;
+  }
+  function render() {
+    if (!current) return;
+    if (!current.model.nodes.some(n => n.id === selected)) selected = current.model.nodes.length ? current.model.nodes[0].id : null;
+    $('title').textContent = current.model.title;
+    $('file').textContent = (current.file || 'Без имени') + (current.modified ? ' · не сохранено' : ' · сохранено');
+    const focusedNode = document.activeElement && document.activeElement.classList.contains('node') ? document.activeElement.dataset.id : null;
+    for (const el of canvas.querySelectorAll('.node')) el.remove();
+    $('empty').hidden = current.model.nodes.length > 0;
+    const maxY = Math.max(20, ...current.model.nodes.map(n => n.y+5));
+    canvas.style.height = (maxY * SY) + 'px'; svg.setAttribute('width', '1400'); svg.setAttribute('height', String(maxY*SY));
+    renderEdges(current.model.nodes);
+    for (const node of current.model.nodes) {
+      const el = document.createElement('button'); el.type='button'; el.dataset.id=node.id;
+      el.className = 'node ' + node.kind + (node.id === selected ? ' selected' : '') + (node.id === linking ? ' linking' : '');
+      el.style.left = (node.x * SX) + 'px'; el.style.top = (node.y * SY) + 'px';
+      el.setAttribute('aria-label', `${typeNames[node.kind]}: ${node.label}`); el.title = node.label;
+      const type = document.createElement('span'); type.className='type'; type.textContent=typeNames[node.kind] || node.kind;
+      const name = document.createElement('span'); name.className='name'; name.textContent=node.label; el.append(type,name);
+      el.addEventListener('pointerdown', event => onPointerDown(event,node,el));
+      el.addEventListener('pointermove', event => onPointerMove(event,el));
+      el.addEventListener('pointerup', event => onPointerUp(event,el));
+      el.addEventListener('pointercancel', () => { drag=null; render(); });
+      el.addEventListener('focus', () => {
+        selected=node.id;
+        for (const other of canvas.querySelectorAll('.node')) other.classList.toggle('selected', other.dataset.id === selected);
+        renderSide();
+      });
+      canvas.append(el);
+      if (focusedNode === node.id) el.focus({preventScroll:true});
+    }
+    renderSide();
+  }
+  $('add').addEventListener('click', async () => {
+    if (!current) return;
+    const label = $('new-label').value.trim();
+    if (!label) return message('Введи название блока.', true);
+    if (await action({op:'add', label, kind:$('new-kind').value})) {
+      selected = current.model.nodes[current.model.nodes.length-1].id; $('new-label').value=''; render(); message('Блок добавлен. Сохрани изменения.');
+    }
+  });
+  $('rename').addEventListener('click', async () => { const n=chosen(); if (n && await action({op:'rename',id:n.id,label:$('edit-label').value})) message('Название обновлено.'); });
+  $('edit-kind').addEventListener('change', async () => { const n=chosen(); if (n && await action({op:'kind',id:n.id,kind:$('edit-kind').value})) message('Тип обновлён.'); });
+  $('connect').addEventListener('click', () => { if (!chosen()) return; linking = linking ? null : selected; render(); message(linking ? 'Нажми второй блок, чтобы создать связь.' : 'Соединение отменено.'); });
+  $('remove').addEventListener('click', async () => { const n=chosen(); if (n && window.confirm(`Удалить «${n.label}» и связанные стрелки?`) && await action({op:'delete',id:n.id})) message('Блок удалён.'); });
+  $('unlink').addEventListener('click', async () => { const id=$('edge-list').value; if (id && await action({op:'unlink',id})) message('Связь удалена.'); });
+  $('layout').addEventListener('click', async () => { if (await action({op:'layout'})) message('Блоки расставлены.'); });
+  $('undo').addEventListener('click', async () => { if (await action({op:'undo'})) message('Последнее изменение отменено.'); });
+  $('redo').addEventListener('click', async () => { if (await action({op:'redo'})) message('Изменение повторено.'); });
+  $('save').addEventListener('click', async () => { if (await action({op:'save'})) message('JSON сохранён через Neovim.'); });
+  $('new-label').addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); $('add').click(); } });
+  $('edit-label').addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); $('rename').click(); } });
+  document.addEventListener('keydown', event => {
+    if (!current || event.target.matches('input,select,textarea')) return;
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+      event.preventDefault(); $(event.shiftKey ? 'redo' : 'undo').click(); return;
+    }
+    const n = chosen();
+    if (event.key === 'Escape') { linking=null; render(); message('Соединение отменено.'); return; }
+    if (!n) return;
+    const shifts = { ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,-1], ArrowDown:[0,1] };
+    if (shifts[event.key]) { event.preventDefault(); const [dx,dy]=shifts[event.key]; action({op:'move',id:n.id,x:clamp(n.x+dx,MAX_X),y:clamp(n.y+dy,MAX_Y)}); }
+    else if (event.key.toLowerCase() === 'c') { event.preventDefault(); $('connect').click(); }
+    else if (event.key === 'Delete') { event.preventDefault(); $('remove').click(); }
+    else if (event.key === 'Enter' && event.target.classList.contains('node')) {
+      event.preventDefault();
+      if (linking && linking !== n.id) {
+        const from = linking; linking = null;
+        const label = window.prompt('Подпись связи (можно оставить пустой):', '');
+        if (label !== null) action({op:'link', from, to:n.id, label}).then(ok => { if (ok) message('Связь добавлена. Сохрани изменения.'); });
+        else render();
+      } else { $('edit-label').focus(); $('edit-label').select(); }
+    }
+  });
+  refresh(); setInterval(refresh, 800);
+})();
+</script>
+</body>
+</html>

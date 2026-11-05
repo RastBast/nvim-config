@@ -215,7 +215,11 @@ end
 
 function M.menu()
   local choices = {
-    { name = "Создать файл схемы", run = M.new },
+    { name = "Интерактивная схема в Neovim", run = function() require("config.architecture_board").open() end },
+    { name = "Новая интерактивная схема по шаблону", run = function() require("config.architecture_board").new_template() end },
+    { name = "Редактор схемы в браузере", run = function() require("config.architecture_server").open() end },
+    { name = "Построить схему по импортам проекта (локально)", run = function() require("config.architecture_scan").choose() end },
+    { name = "Создать файл Mermaid-схемы", run = M.new },
     { name = "Добавить схему в текущий Markdown", run = M.insert },
     { name = "Добавить компонент", run = M.add_node },
     { name = "Соединить компоненты", run = M.add_link },

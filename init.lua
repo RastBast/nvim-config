@@ -142,8 +142,9 @@ require("config.themes").setup()
 
 -- Markdown: live-превью в браузере (<leader>mL, :MdPreview)
 require("config.md_preview").setup()
--- Прототип конструктора архитектуры (Mermaid, <leader>mA / :ArchMenu)
+-- Конструктор архитектуры: Mermaid и интерактивная схема (<leader>mA / :ArchMenu)
 require("config.architecture").setup()
+require("config.architecture_board").setup()
 
 -- Фильтр всплывающих уведомлений (пропускаем только КРАСНЫЕ ОШИБКИ)
 do

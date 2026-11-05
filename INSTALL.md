@@ -1,6 +1,6 @@
 # УСТАНОВКА КОНФИГА С НУЛЯ — ПОЛНАЯ ИНСТРУКЦИЯ
 
-Ветка: `arena/01a05448-nvim-config`. macOS (homebrew) и Linux.
+Ветка: `arena/6144f4fc-nvim-config`. macOS (homebrew) и Linux.
 
 ## 0. Требования
 
@@ -23,6 +23,8 @@
 `grpcurl` для gRPC из терминала: https://github.com/fullstorydev/grpcurl.
 
 Проверка версии: `nvim --version` → первая строка ≥ 0.11; для чата Avante — ≥ 0.12.
+
+Редактор архитектуры в Neovim и браузере не требует Node.js или отдельного плагина; браузер должен работать на той же машине, что Neovim. Для графического превью экспортированного Mermaid в Markdown нужен Node.js и собранный `markdown-preview.nvim`. Подробные клавиши, ограничения сканирования и безопасность — в `DOCS.md`, раздел «Архитектура».
 
 ## 1. Алacritty: шрифт с иконками
 
@@ -82,7 +84,7 @@ Option работал как Alt (иначе `<A-…>` в nvim не сработ
 [ -d ~/.config/nvim ] && mv ~/.config/nvim ~/.config/nvim.backup.$(date +%F)
 
 # клонировать ИМЕННО ветку с фиксами
-git clone -b arena/01a05448-nvim-config \
+git clone -b arena/6144f4fc-nvim-config \
   https://github.com/RastBast/nvim-config ~/.config/nvim
 ```
 
@@ -110,23 +112,18 @@ nvim
 
 ## 4. Если конфиг УЖЕ лежал локально (обновление)
 
-Вариант А (git):
+Обновление через git:
 
 ```bash
 cd ~/.config/nvim
+git status --short    # сначала проверь локальные изменения
 git fetch origin
-git merge origin/arena/01a05448-nvim-config   # HEAD станет как на remote
+git merge origin/arena/6144f4fc-nvim-config   # возможны конфликты, их нужно решить
 ```
 
-Вариант Б (один скрипт, если git-состояние messy):
+Если есть важные локальные изменения, сначала сделай резервную копию конфига и разбери их: не перезаписывай файлы автоматически. Старый `APPLY_UPDATE.sh` относится к прежним функциям и **не устанавливает** этот редактор архитектуры.
 
-```bash
-curl -fsSL -o /tmp/APPLY_UPDATE.sh \
-  https://raw.githubusercontent.com/RastBast/nvim-config/arena/01a05448-nvim-config/APPLY_UPDATE.sh
-bash /tmp/APPLY_UPDATE.sh
-```
-
-После любого варианта — **полный перезапуск Neovim**.
+После обновления — **полный перезапуск Neovim**.
 
 Локальное состояние (не часть репозитория, при обновлении не трогается и не
 трогается `git reset`): `~/.local/share/nvim/streak.json` — 🔥 огонёк за
@@ -193,7 +190,8 @@ Groq — **обязательный** провайдер в этом конфи�
 | Перевод по словам с грамматикой | выдели английский текст → `K` (или `<leader>Kw` для слова) |
 | Быстрый вопрос любому ИИ | `<leader>Aq` (ответ откроется в окне) |
 | Чат-агент, объяснить код, inline | `<leader>Aa`, `<leader>Ax` (avante); `<leader>Hat` (CodeCompanion) |
-| Схема архитектуры (прототип) | `<leader>mA` или `:ArchMenu`: компоненты и связи через меню, граф в браузере; сохранить `:w` |
+| Схема архитектуры | `:ArchBoardNew` → выбрать шаблон и новый `.arch.json`; двигать мышью или клавишами, сохранить `s` / `:ArchSave`, открыть браузер `b` / `:ArchBrowser` |
+| Схема по проекту | `:ArchScan` → указать каталог → подтвердить результат и имя нового JSON; анализ локальный и приблизительный |
 
 Перевод `K` и `:AiAsk` переключаются сразу. Чат CodeCompanion и avante
 читают провайдера при запуске Neovim — после смены `AI_PROVIDER`

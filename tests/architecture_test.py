@@ -172,7 +172,7 @@ def main():
     run("PREVIEW_FAIL=true; A.preview()")
     check("отсутствие превью даёт инструкцию", ":Lazy build markdown-preview.nvim" in rt.eval("LAST_NOTE()"))
     run("RESET(); A.menu()")
-    check("в меню пять действий", rt.eval("#SELECT.items") == 5)
+    check("в меню есть интерактивная схема, локальный анализ и Mermaid", rt.eval("#SELECT.items") == 9)
 
     failed = sum(1 for _, ok in checks if not ok)
     print(f"\nпроверок: {len(checks)}, провалов: {failed}")

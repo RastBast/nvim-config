@@ -16,7 +16,8 @@ mermaid.initialize({ startOnLoad: false });
   const source = fs.readFileSync(process.argv[2], 'utf8');
   await mermaid.parse(source);
   const rendered = await mermaid.render('arch-smoke', source);
-  if (!rendered.svg.includes('<svg') || !rendered.svg.includes('Клиент') || !rendered.svg.includes('Auth')) {
+  const expected = process.argv.length > 3 ? process.argv.slice(3) : ['Клиент', 'Auth'];
+  if (!rendered.svg.includes('<svg') || !expected.every(text => rendered.svg.includes(text))) {
     throw new Error('Mermaid не создал ожидаемую SVG-схему');
   }
   console.log('OK   Mermaid: разбор и SVG с экранированными подписями (jsdom)');
