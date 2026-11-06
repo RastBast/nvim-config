@@ -238,11 +238,12 @@ Groq — **обязательный** провайдер в этом конфи�
 | Ошибка `RestAPI/proto is not in std` | это твой проект: импорт должен начинаться с имени модуля из `go.mod` |
 | Mason: `failed to install nil_ls` | Автоустановка отключена: `nil` требует отдельной установки. Если работаешь с Nix, выполни `nix profile install nixpkgs#nil`, перезапусти Neovim и проверь `:EnvCheck` / `:LspInfo`. Подробности конкретного сбоя — `:MasonLog`, инструкция — DOCS.md §18 |
 | avante: `missing avante_templates`, `avante_repo_map`, `next(... userdata)` | Нужен Neovim 0.12+. Выполни `:Lazy update avante.nvim`, перезапусти nvim; проверь `:AvanteStatus` и при необходимости выполни `:AvanteRebuild`. Повреждённый кеш карты будет перестроен после восстановления библиотек. Подробности — DOCS.md, раздел 45 |
+| `E492` для `:AvanteStatus` или не видны клавиши ошибок | Проверь `:echo stdpath('config')`, `:echo $MYVIMRC` и `:version`: возможно, запущен другой или старый конфиг. Обнови именно эту копию и перезапусти Neovim. Клавиши работают в обычном режиме, `<leader>` — пробел. |
 | avante: `E239: Invalid sign text` при загрузке | в `windows.input.prefix` стоял эмодзи: текст знака не может быть шире 2 ячеек. Ставь `"> "` (уже исправлено в конфиге) |
 | avante: `400 User location is not supported` | геоблок Google по IP — нужен выход не из РФ или план B (OpenRouter). **PROXY.md**, §1.5 и §5 |
 | avante: `404 … no longer available to new users` | устарело имя модели: `set -Ux GEMINI_MODEL "gemini-3.6-flash"` |
 
-**Посмотреть ошибки:** `<leader>xe` — последние 10, `<leader>xl` — весь журнал Noice за текущий сеанс; `q` закрывает окно. Это ошибки выполнения Neovim и ERROR-уведомления после запуска Noice, не диагностики LSP и не постоянный файл. `<leader>xx` — диагностики кода в Trouble. Ранние сообщения: `:messages`; журнал установки: `:MasonLog`. Подробности и ограничения — DOCS.md §18.
+**Посмотреть ошибки:** в обычном режиме `<leader>` — пробел. `<leader>xe` / `<leader>Hxe` или `:ErrorLast10` — последние 10 ошибок; `<leader>xl` / `<leader>Hxg` или `:ErrorLog` — журнал. `q` закрывает окно. Noice показывает ошибки и ERROR-уведомления после своего запуска, не диагностики LSP и не постоянный файл. Если Noice недоступен, показывается `:messages`: последние 10 сообщений или вся история. Если в работающем Noice ещё нет ошибок, показывается его общая история; в запасных режимах среди записей могут быть и не ошибки. `<leader>xx` — диагностики кода в Trouble; журнал установки — `:MasonLog`. Подробности и ограничения — DOCS.md §18.
 
 ### 6.1. `:EnvCheck` — что видит nvim
 

@@ -165,11 +165,14 @@ function M.setup(plugin, opts)
   -- с проверкой версии, не допуская несовместимых бинарников и гонки сборок.
   api.build = function(options) rebuild(true, options and options.source == true) end
 
-  vim.api.nvim_create_user_command("AvanteRebuild", function() rebuild(true) end, {
-    desc = "Пересобрать нативные библиотеки avante (всегда заново)",
-  })
-  vim.api.nvim_create_user_command("AvanteStatus", function()
-    local lines = { "avante " .. B.TAG .. ": " .. state, "каталог: " .. dir, "файл: " .. B.lib_file(dir) }
+  local function status()
+    local version = vim.version()
+    local lines = {
+      "avante " .. B.TAG .. ": " .. state,
+      ("Neovim: %d.%d.%d"):format(version.major, version.minor, version.patch),
+      "конфиг: " .. vim.fn.stdpath("config"), "init: " .. (vim.env.MYVIMRC or "неизвестен"),
+      "каталог: " .. dir, "файл: " .. B.lib_file(dir),
+    }
     local revision, err = B.revision(dir)
     lines[#lines + 1] = revision and ("commit: " .. revision) or (err or "версия неизвестна")
     local ok, reason = B.check(dir)
@@ -181,7 +184,10 @@ function M.setup(plugin, opts)
     if last_error then lines[#lines + 1] = last_error end
     if restart_required then lines[#lines + 1] = "Перезапусти Neovim." end
     show(table.concat(lines, "\n"))
-  end, { desc = "Проверить версию и загрузку библиотек avante" })
+  end
+  -- Команды существуют независимо от наличия плагина. Когда runtime готов,
+  -- подключаем расширенную диагностику и реальную пересборку к этим командам.
+  require("config.avante_commands").bind(status, function() rebuild(true) end)
 
   if not guard_ok then
     hold_maps()

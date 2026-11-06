@@ -18,6 +18,11 @@ vim.api.nvim_create_user_command("RuCheck", function() require("config.ru_util")
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
+-- Диагностика доступна даже до загрузки lazy и если Avante отключён на старом
+-- Neovim. История ошибок и её клавиши тоже не зависят от запуска Noice.
+require("config.avante_commands").setup()
+require("config.error_history").setup()
+
 local opt = vim.opt
 
 -- Интерфейс

@@ -42,8 +42,13 @@ end
 -- Учитываем нестандартный root lazy.nvim, если он уже загружен.
 function M.plugin_dir()
   local lazy = package.loaded["lazy.core.config"]
-  local plugin = type(lazy) == "table" and lazy.plugins and lazy.plugins["avante.nvim"]
-  return plugin and plugin.dir or (vim.fn.stdpath("data") .. "/lazy/avante.nvim")
+  local plugin = type(lazy) == "table" and (
+    (lazy.plugins and lazy.plugins["avante.nvim"])
+    or (lazy.spec and lazy.spec.disabled and lazy.spec.disabled["avante.nvim"])
+  )
+  if plugin and plugin.dir then return plugin.dir end
+  local root = type(lazy) == "table" and lazy.options and lazy.options.root
+  return (root or (vim.fn.stdpath("data") .. "/lazy")) .. "/avante.nvim"
 end
 
 local function check_libs(lua_dir)

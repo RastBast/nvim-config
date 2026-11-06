@@ -39,9 +39,15 @@ if vim.env.AVANTE_TEST_REQUIRE_FAIL == "1" then
   -- Файлы загрузятся через dlopen, но обычный require repo_map сломан.
   package.preload.avante_repo_map = function() error("synthetic repo_map require failure") end
 end
+require("config.avante_commands").setup()
+assert(vim.fn.exists(":AvanteStatus") == 2 and vim.fn.exists(":AvanteRebuild") == 2, "команды отсутствуют до lazy")
 local spec = dofile(root .. "/lua/plugins/avante.lua")[1]
 spec.opts.behaviour.auto_suggestions = false -- тест не отправляет сетевых запросов к AI
 if vim.env.AVANTE_TEST_USE_LAZY == "1" then
+  if vim.env.AVANTE_TEST_UNSUPPORTED ~= "1" then
+    vim.cmd.AvanteStatus()
+    assert(message_contains("не зарегистрирован в lazy.nvim"), "нет диагностики до lazy.setup")
+  end
   vim.go.loadplugins = true -- -u NONE отключает плагины по умолчанию
   vim.opt.rtp:prepend(vim.env.AVANTE_TEST_LAZY)
   spec.dir, spec.name = plugin, "avante.nvim"
@@ -64,11 +70,21 @@ if vim.env.AVANTE_TEST_UNSUPPORTED == "1" then
   -- должно прийти из init.lua / отдельного помощника, а не от плагина.
   require("config.avante_runtime").warn_unsupported()
   assert(vim.wait(1000, function() return message_contains("требует Neovim 0.12+") end, 10), "нет предупреждения о версии")
+  assert(vim.fn.exists(":AvanteStatus") == 2 and vim.fn.exists(":AvanteRebuild") == 2, "команды исчезли при cond=false")
+  vim.cmd.AvanteStatus()
+  vim.cmd.AvanteRebuild()
+  assert(message_contains("для Avante v0.4.8 нужен Neovim 0.12+"), "команды не объясняют ограничение")
   assert(not package.loaded.avante and vim.fn.exists(":AvanteAsk") == 0, "Avante загрузился на неподдерживаемой версии")
-  print("OK   реальный Neovim: старую версию предупреждаем, Avante отключён без выхода")
+  print("OK   реальный Neovim: команды доступны при cond=false, Avante не загружен и не закрывает редактор")
   return vim.cmd("qa!")
 end
-assert(vim.fn.exists(":AvanteStatus") == 2, "нет :AvanteStatus")
+assert(vim.fn.exists(":AvanteStatus") == 2 and vim.fn.exists(":AvanteRebuild") == 2, "нет bootstrap-команд")
+if vim.env.AVANTE_TEST_USE_LAZY == "1" then
+  assert(not package.loaded.avante, "Avante загружен до вызова команды")
+  vim.cmd.AvanteStatus()
+  assert(type(package.loaded["config.avante_commands"].handlers.status) == "function", "команда не загрузила runtime")
+  assert(message_contains("каталог: " .. plugin), "runtime-статус не содержит настоящий каталог")
+end
 local original_windows = #vim.api.nvim_list_wins()
 vim.cmd.AvanteAsk()
 assert(#vim.api.nvim_list_wins() == original_windows, "чат открылся до завершения сборки")

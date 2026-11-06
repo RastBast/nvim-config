@@ -32,6 +32,7 @@ vim.keymap.set = function(modes, lhs, rhs, opts)
 end
 vim.keymap.del = function(mode, lhs) MAPS[key(mode, lhs)] = nil end
 vim.cmd = function(s) LAST_CMD = s end
+vim.version = function() return {major=0, minor=12, patch=0} end
 
 function RESET(o)
   MAPS, NOTES, CMDS, LAST_CMD = {}, {}, {}, nil
@@ -78,6 +79,8 @@ function RESET(o)
   package.loaded["avante"] = AV
   package.loaded["avante.api"] = API
   package.loaded["config.avante_runtime"] = nil
+  package.loaded["config.avante_commands"] = nil
+  require("config.avante_commands").setup()
   OPTS = { mappings = {
     ask="<leader>Aa", new_ask="<leader>An", zen_mode="<leader>Az",
     edit="<leader>Ae", toggle={default="<leader>At"},

@@ -2,10 +2,6 @@ return {
   {
     'folke/noice.nvim',
     event = 'VeryLazy',
-    keys = {
-      { '<leader>xe', function() require('config.error_history').last() end, desc = 'Последние 10 ошибок Neovim' },
-      { '<leader>xl', function() require('config.error_history').log() end, desc = 'Журнал ошибок Neovim' },
-    },
     dependencies = {
       'MunifTanjim/nui.nvim',
       'rcarriga/nvim-notify',

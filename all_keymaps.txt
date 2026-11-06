@@ -294,8 +294,10 @@ ge                     n      Умное ge (подсловами)
 <leader>to             n      Лог ошибки теста
 <leader>ua             n      Анимации вкл/выкл
 <leader>xx             n      Диагностика проекта (Trouble)
-<leader>xe             n      Последние 10 ошибок Neovim (Noice)
-<leader>xl             n      Журнал ошибок Neovim за сеанс (Noice)
+<leader>xe             n      Последние 10 ошибок Neovim (:ErrorLast10)
+<leader>xl             n      Журнал ошибок Neovim за сеанс (:ErrorLog)
+<leader>Hxe            n      Последние 10 ошибок Neovim в главном меню
+<leader>Hxg            n      Журнал ошибок Neovim в главном меню
 <leader>z              n      Дзен-режим
 <leader>nh             n      Убрать подсветку поиска
 <leader>Aa             n      ИИ: чат о коде

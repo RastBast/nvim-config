@@ -33,6 +33,8 @@ SUITES = [
     ("ошибки: последние десять и журнал Noice", "error_history_test.py"),
     ("ошибки: настоящий Neovim UI и Noice (опционально)", "error_history_nvim_smoke.py"),
     ("avante: сборка и восстановление библиотек", "avante_build_test.py"),
+    ("avante: независимые команды диагностики", "avante_commands_test.py"),
+    ("avante: команды в настоящем Neovim и lazy (опционально)", "avante_commands_nvim_smoke.py"),
     ("avante: защита чата во время сборки", "avante_runtime_test.py"),
     ("avante: восстановление повреждённого кеша карты", "avante_repo_map_test.py"),
     ("avante: реальный LuaJIT dlopen и require", "avante_native_test.py"),

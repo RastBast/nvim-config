@@ -349,8 +349,11 @@ def main():
           spec_tag is not None and spec_tag.group(1) == rt.eval("B.TAG")
           and lock["avante.nvim"]["commit"] == rt.eval("B.COMMIT"))
     check("build hook принудительно обновляет бинарники", "build_blocking(plugin.dir)" in av and "{ force = true }" in bm)
-    check("runtime подключён и команды доступны через lazy",
-          'require("config.avante_runtime").setup(plugin, opts)' in av and '"AvanteRebuild"' in av and '"AvanteStatus"' in av)
+    bootstrap = open(os.path.join(_lua.ROOT, "lua", "config", "avante_commands.lua"), encoding="utf-8").read()
+    check("runtime подключён; команды принадлежат конфигу, а не lazy",
+          'require("config.avante_runtime").setup(plugin, opts)' in av
+          and '"AvanteRebuild"' not in av and '"AvanteStatus"' not in av
+          and '"AvanteRebuild"' in bootstrap and '"AvanteStatus"' in bootstrap)
     check("avante v0.4.8 не загружается на nvim < 0.12", 'vim.fn.has("nvim-0.12") == 1' in av)
 
     failed = sum(1 for _, ok in checks if not ok)

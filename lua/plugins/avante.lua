@@ -64,7 +64,7 @@ return {
     cmd = {
       "AvanteAsk", "AvanteChat", "AvanteChatNew", "AvanteEdit",
       "AvanteFocus", "AvanteRefresh", "AvanteStop", "AvanteHistory",
-      "AvanteToggle", "AvanteShowRepoMap", "AvanteBuild", "AvanteRebuild", "AvanteStatus", "AvanteSwitchProvider",
+      "AvanteToggle", "AvanteShowRepoMap", "AvanteBuild", "AvanteSwitchProvider",
     },
     dependencies = {
       "nvim-lua/plenary.nvim",

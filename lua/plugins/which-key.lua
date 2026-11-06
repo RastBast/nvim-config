@@ -215,6 +215,9 @@ return {
         --  ⚠️ Диагностика (H + x)
         -------------------------------------------------------------
         { "<leader>Hx", group = "⚠️ Диагностика" },
+        -- Сами действия зарегистрированы в config.error_history ещё до lazy.nvim.
+        { "<leader>Hxe", desc = "Последние 10 ошибок Neovim" },
+        { "<leader>Hxg", desc = "Журнал ошибок Neovim" },
         { "<leader>Hxx", "<cmd>Trouble diagnostics toggle<cr>", desc = "❗ Показать все ошибки (Trouble)" },
         { "<leader>Hxl", "<cmd>Trouble loclist toggle<cr>", desc = "📋 Location list" },
         { "<leader>Hxq", "<cmd>Trouble qflist toggle<cr>", desc = "📋 Quickfix list" },

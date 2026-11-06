@@ -177,8 +177,12 @@ def main():
     # --------------------------------------------------------------- avante ---
     av = read("lua/plugins/avante.lua")
     runtime = read("lua/config/avante_runtime.lua")
-    check("avante: команды :AvanteRebuild и :AvanteStatus",
-          all(f'nvim_create_user_command("{c}"' in runtime for c in ("AvanteRebuild", "AvanteStatus")))
+    commands = read("lua/config/avante_commands.lua")
+    check("avante: команды зарегистрированы в конфиге до загрузки lazy",
+          all(f'nvim_create_user_command("{c}"' in commands for c in ("AvanteRebuild", "AvanteStatus"))
+          and 'require("config.avante_commands").setup()' in init_src
+          and 'require("config.avante_commands").bind(' in runtime
+          and '"AvanteRebuild",' not in av and '"AvanteStatus",' not in av)
     check("avante: setup только после runtime_check; авто-сборка при отсутствии библиотек",
           "B.runtime_check(dir)" in runtime and "rebuild(false)" in runtime and "pcall(avante.setup, opts)" in runtime)
 
