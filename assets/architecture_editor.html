@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ArchWeb — Визуальная архитектура и связи</title>
+  <title>ArchWeb — Визуальная C4-архитектура и связи</title>
   <style>
     :root {
       --bg: #0f141d;
@@ -52,12 +52,12 @@
       padding: 5px 10px;
       font-size: 14px;
       font-weight: 600;
-      width: 260px;
+      width: 220px;
     }
     .toolbar {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       flex-wrap: wrap;
     }
     button, select {
@@ -65,13 +65,14 @@
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 7px;
-      padding: 6px 11px;
-      font-size: 13px;
+      padding: 6px 10px;
+      font-size: 12.5px;
       cursor: pointer;
       transition: border-color 0.15s, background 0.15s;
     }
     button:hover, select:hover { border-color: var(--accent); }
     button.primary { background: #1d4ed8; border-color: #3b82f6; }
+    button.ai { background: #4c1d95; border-color: #8b5cf6; }
     button.danger { color: #fecaca; border-color: #7f1d1d; }
     .status-pill {
       font-size: 12px;
@@ -82,7 +83,7 @@
     }
     main {
       display: grid;
-      grid-template-columns: 1fr 340px;
+      grid-template-columns: 1fr 355px;
       height: calc(100vh - 54px);
     }
     #stage {
@@ -94,6 +95,29 @@
       cursor: grab;
     }
     #stage.panning { cursor: grabbing; }
+    #crumbs-bar {
+      position: absolute;
+      left: 14px;
+      top: 12px;
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 11px;
+      border-radius: 9px;
+      background: rgba(22, 29, 42, 0.92);
+      border: 1px solid var(--border);
+      font-size: 12.5px;
+    }
+    .crumb-btn {
+      padding: 3px 8px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+    .crumb-btn.active {
+      border-color: var(--accent);
+      color: #93c5fd;
+    }
     #world {
       position: absolute;
       left: 0;
@@ -113,8 +137,8 @@
     }
     .node-card {
       position: absolute;
-      width: 220px;
-      min-height: 82px;
+      width: 230px;
+      min-height: 86px;
       border-radius: 11px;
       padding: 10px 12px;
       background: #162032;
@@ -144,6 +168,15 @@
       font-weight: 650;
       margin-bottom: 4px;
     }
+    .c4-badge {
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(96,165,250,0.18);
+      border: 1px solid rgba(96,165,250,0.45);
+      color: #bfdbfe;
+      flex-shrink: 0;
+    }
     .node-meta {
       font-size: 11.5px;
       color: var(--muted);
@@ -151,8 +184,16 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .node-contracts {
+      margin-top: 4px;
+      font-size: 11px;
+      color: #a7f3d0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .node-path {
-      margin-top: 5px;
+      margin-top: 4px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 11px;
       color: #93c5fd;
@@ -190,7 +231,7 @@
     }
     .card h3 {
       margin: 0 0 10px 0;
-      font-size: 13px;
+      font-size: 12.5px;
       text-transform: uppercase;
       letter-spacing: 0.04em;
       color: var(--muted);
@@ -208,29 +249,29 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 6px 8px;
-      font-size: 13px;
+      font-size: 12.5px;
     }
     textarea {
-      min-height: 62px;
+      min-height: 56px;
       resize: vertical;
       font-family: inherit;
     }
     pre#mermaid-box {
       margin: 0;
-      max-height: 190px;
+      max-height: 170px;
       overflow: auto;
       padding: 8px;
       border-radius: 6px;
       background: #0b1018;
       border: 1px solid var(--border);
-      font-size: 11.5px;
+      font-size: 11px;
       color: #cbd5e1;
     }
     .edge-list {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 160px;
+      max-height: 150px;
       overflow-y: auto;
     }
     .edge-row {
@@ -255,6 +296,37 @@
       color: var(--muted);
       pointer-events: none;
     }
+    #modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(5, 8, 14, 0.75);
+      align-items: center;
+      justify-content: center;
+    }
+    #modal-box {
+      width: min(760px, 92vw);
+      max-height: 82vh;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      user-select: text;
+    }
+    #modal-body {
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-size: 13px;
+      line-height: 1.5;
+      background: #0b1018;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
   </style>
 </head>
 <body>
@@ -263,15 +335,17 @@
       <span>🏗️ ArchWeb</span>
       <input id="doc-title" type="text" placeholder="Название схемы" />
       <select id="doc-dir" title="Направление Mermaid">
-        <option value="LR">Поток: Слева → Направо (LR)</option>
-        <option value="TD">Поток: Сверху → Вниз (TD)</option>
+        <option value="LR">LR (Слева → Направо)</option>
+        <option value="TD">TD (Сверху → Вниз)</option>
       </select>
     </div>
     <div class="toolbar">
-      <button id="btn-add" class="primary">＋ Компонент</button>
+      <button id="btn-add" class="primary">＋ Узел</button>
       <button id="btn-layout">📐 Авто-слои</button>
-      <button id="btn-scan">🔍 Сканировать код</button>
-      <button id="btn-reset-view">🎯 Центрировать</button>
+      <button id="btn-scan">🔍 Скан кода + .proto/SQL</button>
+      <button id="btn-ai-draft" class="ai">✨ ИИ-схема</button>
+      <button id="btn-ai-review" class="ai">🧠 Ревью / Циклы</button>
+      <button id="btn-reset-view">🎯 Центр</button>
       <button id="btn-save">💾 Сохранить</button>
       <span id="save-state" class="status-pill">Готово</span>
     </div>
@@ -279,6 +353,7 @@
 
   <main>
     <div id="stage">
+      <div id="crumbs-bar"></div>
       <div id="world">
         <svg id="edges-layer">
           <defs>
@@ -298,7 +373,7 @@
         <div id="nodes-layer"></div>
       </div>
       <div class="hint-bar">
-        Перетаскивай карточки мышью · Тяни за синюю точку ● справа, чтобы соединить узлы · Колесо мыши — масштаб · Клик по фону — панорама
+        Перетаскивай карточки · Двойной клик по карточке — войти внутрь C4 · Синяя точка ● справа — протянуть связь · Колесо — зум
       </div>
     </div>
 
@@ -306,29 +381,36 @@
       <div class="card" id="inspector-card">
         <h3>Инспектор компонента</h3>
         <div id="no-selection" style="font-size:13px;color:var(--muted);">
-          Выбери карточку на холсте или нажми «＋ Компонент».
+          Выбери карточку на холсте или нажми «＋ Узел».
         </div>
         <div id="node-form" style="display:none;">
+          <div style="display:flex;gap:6px;margin-bottom:6px;">
+            <button id="btn-zoom-into" style="width:100%;">🔍 Провалиться внутрь C4</button>
+          </div>
           <label>Название</label>
           <input type="text" id="f-label" />
           <label>Роль в архитектуре</label>
           <select id="f-kind">
             <option value="client">🖥️ Клиент / UI</option>
-            <option value="gateway">🚪 API / Шлюз</option>
+            <option value="gateway">🚪 API / Шлюз / gRPC</option>
             <option value="service">⚙️ Сервис / Модуль</option>
-            <option value="worker">🔄 Воркер / Джоба</option>
+            <option value="worker">🔄 Воркер / Пакет</option>
             <option value="queue">📨 Очередь / Шина</option>
             <option value="cache">⚡ Кеш / In-Memory</option>
-            <option value="db">🗄️ База данных</option>
+            <option value="db">🗄️ База / Таблица</option>
             <option value="external">🌐 Внешний API</option>
           </select>
+          <label>Родительский C4-контейнер</label>
+          <select id="f-parent"></select>
           <label>Технология / стек</label>
-          <input type="text" id="f-tech" placeholder="Go, PostgreSQL, Redis…" />
+          <input type="text" id="f-tech" placeholder="Go, PostgreSQL, gRPC…" />
           <label>Путь к коду в проекте</label>
           <div style="display:flex;gap:6px;">
             <input type="text" id="f-path" placeholder="internal/orders" />
-            <button id="btn-open-nvim" title="Открыть этот путь прямо в Neovim">📂</button>
+            <button id="btn-open-nvim" title="Открыть в Neovim">📂</button>
           </div>
+          <label>Контракты (по одному на строку: RPC / HTTP / SQL)</label>
+          <textarea id="f-contracts" placeholder="POST /v1/orders&#10;rpc CreateOrder&#10;TABLE orders"></textarea>
           <label>Описание</label>
           <textarea id="f-summary" placeholder="За что отвечает модуль…"></textarea>
           <div style="margin-top:10px;display:flex;justify-content:space-between;">
@@ -338,7 +420,7 @@
       </div>
 
       <div class="card">
-        <h3>Связи (<span id="edge-count">0</span>)</h3>
+        <h3>Связи уровня (<span id="edge-count">0</span>)</h3>
         <div id="edge-list" class="edge-list"></div>
       </div>
 
@@ -352,6 +434,16 @@
     </aside>
   </main>
 
+  <div id="modal-backdrop">
+    <div id="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <strong id="modal-title">🧠 Архитектурное ревью</strong>
+        <button id="modal-close">Закрыть ✕</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
   <script>
     const ICONS = {
       client: "🖥️", gateway: "🚪", service: "⚙️", worker: "🔄",
@@ -362,9 +454,10 @@
       queue: 4, cache: 4, db: 4, external: 4
     };
 
-    let doc = { version: 1, title: "Архитектура", direction: "LR", nodes: [], edges: [] };
+    let doc = { version: 2, title: "Архитектура", direction: "LR", nodes: [], edges: [] };
+    let scopeId = "";
     let selectedId = null;
-    let pan = { x: 40, y: 40, scale: 1 };
+    let pan = { x: 40, y: 62, scale: 1 };
     let saveTimer = null;
     let connectFromId = null;
 
@@ -374,6 +467,7 @@
     const edgesGroup = document.getElementById("edges-group");
     const draftEdge = document.getElementById("draft-edge");
     const saveState = document.getElementById("save-state");
+    const crumbsBar = document.getElementById("crumbs-bar");
 
     function applyTransform() {
       world.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${pan.scale})`;
@@ -388,6 +482,70 @@
 
     function setStatus(text) {
       saveState.textContent = text;
+    }
+
+    function findNode(id) {
+      return doc.nodes.find(n => n.id === id);
+    }
+
+    function childCount(id) {
+      return doc.nodes.filter(n => (n.parent_id || "") === id).length;
+    }
+
+    function scopedView() {
+      if (scopeId && !findNode(scopeId)) scopeId = "";
+      const visible = doc.nodes.filter(n => (n.parent_id || "") === scopeId);
+      const visSet = new Set(visible.map(n => n.id));
+      const byId = new Map(doc.nodes.map(n => [n.id, n]));
+
+      function lift(id) {
+        let cur = byId.get(id);
+        const seen = new Set();
+        while (cur && !seen.has(cur.id)) {
+          if (visSet.has(cur.id)) return cur.id;
+          seen.add(cur.id);
+          cur = cur.parent_id ? byId.get(cur.parent_id) : null;
+        }
+        return null;
+      }
+
+      const projected = [];
+      const pairIdx = new Map();
+      doc.edges.forEach((e, realIndex) => {
+        const a = lift(e.from);
+        const b = lift(e.to);
+        if (!a || !b || a === b) return;
+        const key = `${a}->${b}:${e.kind || "sync"}`;
+        if (!pairIdx.has(key)) {
+          pairIdx.set(key, projected.length);
+          projected.push({
+            from: a,
+            to: b,
+            label: e.label || "",
+            kind: e.kind || "sync",
+            realIndex,
+            rolledUp: a !== e.from || b !== e.to
+          });
+        } else {
+          const ex = projected[pairIdx.get(key)];
+          if (e.label && !ex.label.includes(e.label) && ex.label.length < 36) {
+            ex.label = ex.label ? `${ex.label}, ${e.label}` : e.label;
+          }
+        }
+      });
+
+      const crumbs = [{ id: "", label: "🌐 Вся система" }];
+      const stack = [];
+      let cur = scopeId ? byId.get(scopeId) : null;
+      const guard = new Set();
+      while (cur && !guard.has(cur.id)) {
+        guard.add(cur.id);
+        stack.unshift({ id: cur.id, label: `${ICONS[cur.kind] || "⚙️"} ${cur.label}` });
+        cur = cur.parent_id ? byId.get(cur.parent_id) : null;
+      }
+      crumbs.push(...stack);
+
+      return { visible, edges: projected, crumbs };
     }
 
     function scheduleSave() {
@@ -416,20 +574,38 @@
       }
     }
 
-    function findNode(id) {
-      return doc.nodes.find(n => n.id === id);
+    function renderCrumbs(crumbs) {
+      crumbsBar.innerHTML = "<span style='color:var(--muted);font-size:12px;'>C4:</span>";
+      crumbs.forEach((c, idx) => {
+        if (idx > 0) {
+          const sep = document.createElement("span");
+          sep.style.color = "var(--muted)";
+          sep.textContent = "›";
+          crumbsBar.appendChild(sep);
+        }
+        const btn = document.createElement("button");
+        btn.className = "crumb-btn" + (c.id === scopeId ? " active" : "");
+        btn.textContent = c.label;
+        btn.onclick = () => {
+          scopeId = c.id;
+          const v = scopedView();
+          selectedId = v.visible[0] ? v.visible[0].id : null;
+          renderAll();
+        };
+        crumbsBar.appendChild(btn);
+      });
     }
 
-    function renderEdges() {
+    function renderEdges(view) {
       edgesGroup.innerHTML = "";
-      doc.edges.forEach((e, idx) => {
+      view.edges.forEach(e => {
         const a = findNode(e.from);
         const b = findNode(e.to);
         if (!a || !b) return;
-        const x1 = (a.x || 0) + 220;
-        const y1 = (a.y || 0) + 41;
+        const x1 = (a.x || 0) + 230;
+        const y1 = (a.y || 0) + 43;
         const x2 = (b.x || 0);
-        const y2 = (b.y || 0) + 41;
+        const y2 = (b.y || 0) + 43;
         const dx = Math.max(60, Math.abs(x2 - x1) * 0.45);
         const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
 
@@ -440,7 +616,7 @@
         path.setAttribute("fill", "none");
         path.setAttribute("stroke", color);
         path.setAttribute("stroke-width", kind === "data" ? "3" : "2.2");
-        if (kind === "async") path.setAttribute("stroke-dasharray", "6,5");
+        if (kind === "async" || e.rolledUp) path.setAttribute("stroke-dasharray", e.rolledUp ? "4,4" : "6,5");
         path.setAttribute("marker-end", `url(#arrow-${kind})`);
         edgesGroup.appendChild(path);
 
@@ -458,25 +634,27 @@
         }
       });
 
-      document.getElementById("edge-count").textContent = String(doc.edges.length);
+      document.getElementById("edge-count").textContent = String(view.edges.length);
       const list = document.getElementById("edge-list");
       list.innerHTML = "";
-      doc.edges.forEach((e, idx) => {
+      view.edges.forEach(e => {
         const row = document.createElement("div");
         row.className = "edge-row";
         const arrow = e.kind === "async" ? "╌╌▶" : (e.kind === "data" ? "══▶" : "──▶");
         const text = document.createElement("span");
-        text.textContent = `${e.from} ${arrow} ${e.to}${e.label ? " [" + e.label + "]" : ""}`;
-        const del = document.createElement("button");
-        del.textContent = "✕";
-        del.style.padding = "2px 6px";
-        del.onclick = () => {
-          doc.edges.splice(idx, 1);
-          renderAll();
-          scheduleSave();
-        };
+        text.textContent = `${e.from} ${arrow} ${e.to}${e.label ? " [" + e.label + "]" : ""}${e.rolledUp ? " (C4)" : ""}`;
         row.appendChild(text);
-        row.appendChild(del);
+        if (!e.rolledUp && typeof e.realIndex === "number") {
+          const del = document.createElement("button");
+          del.textContent = "✕";
+          del.style.padding = "2px 6px";
+          del.onclick = () => {
+            doc.edges.splice(e.realIndex, 1);
+            renderAll();
+            scheduleSave();
+          };
+          row.appendChild(del);
+        }
         list.appendChild(row);
       });
     }
@@ -492,16 +670,33 @@
       }
       empty.style.display = "none";
       form.style.display = "block";
+      const kids = childCount(n.id);
+      document.getElementById("btn-zoom-into").textContent = kids > 0
+        ? `🔍 Войти внутрь C4 (${kids} эл.)`
+        : "🔍 Войти внутрь C4 (добавить подмодули)";
       document.getElementById("f-label").value = n.label || "";
       document.getElementById("f-kind").value = n.kind || "service";
       document.getElementById("f-tech").value = n.tech || "";
       document.getElementById("f-path").value = n.path || "";
+      document.getElementById("f-contracts").value = Array.isArray(n.contracts) ? n.contracts.join("\n") : "";
       document.getElementById("f-summary").value = n.summary || "";
+
+      const parentSel = document.getElementById("f-parent");
+      parentSel.innerHTML = '<option value="">🌐 Верхний уровень (Вся система)</option>';
+      doc.nodes.forEach(cand => {
+        if (cand.id !== n.id) {
+          const opt = document.createElement("option");
+          opt.value = cand.id;
+          opt.textContent = `${ICONS[cand.kind] || "⚙️"} ${cand.label} (${cand.id})`;
+          parentSel.appendChild(opt);
+        }
+      });
+      parentSel.value = n.parent_id || "";
     }
 
-    function renderNodes() {
+    function renderNodes(view) {
       nodesLayer.innerHTML = "";
-      doc.nodes.forEach(n => {
+      view.visible.forEach(n => {
         const card = document.createElement("div");
         card.className = "node-card" + (n.id === selectedId ? " selected" : "");
         card.dataset.id = n.id;
@@ -511,7 +706,21 @@
 
         const head = document.createElement("div");
         head.className = "node-head";
-        head.textContent = `${ICONS[n.kind] || "⚙️"} ${n.label}`;
+        const titleSpan = document.createElement("span");
+        titleSpan.style.overflow = "hidden";
+        titleSpan.style.textOverflow = "ellipsis";
+        titleSpan.style.whiteSpace = "nowrap";
+        titleSpan.textContent = `${ICONS[n.kind] || "⚙️"} ${n.label}`;
+        head.appendChild(titleSpan);
+
+        const kids = childCount(n.id);
+        if (kids > 0) {
+          const badge = document.createElement("span");
+          badge.className = "c4-badge";
+          badge.textContent = `⊞${kids}`;
+          badge.title = "Двойной клик — провалиться внутрь C4";
+          head.appendChild(badge);
+        }
 
         const meta = document.createElement("div");
         meta.className = "node-meta";
@@ -519,6 +728,12 @@
 
         card.appendChild(head);
         card.appendChild(meta);
+        if (Array.isArray(n.contracts) && n.contracts.length > 0) {
+          const c = document.createElement("div");
+          c.className = "node-contracts";
+          c.textContent = "📜 " + n.contracts.slice(0, 2).join(" · ");
+          card.appendChild(c);
+        }
         if (n.path) {
           const p = document.createElement("div");
           p.className = "node-path";
@@ -534,6 +749,14 @@
           connectFromId = n.id;
         });
         card.appendChild(port);
+
+        card.addEventListener("dblclick", ev => {
+          ev.stopPropagation();
+          scopeId = n.id;
+          const nextView = scopedView();
+          selectedId = nextView.visible[0] ? nextView.visible[0].id : null;
+          renderAll();
+        });
 
         card.addEventListener("mousedown", ev => {
           if (ev.target === port) return;
@@ -554,7 +777,7 @@
             n.y = Math.round(origY + (me.clientY - startY) / pan.scale);
             card.style.left = n.x + "px";
             card.style.top = n.y + "px";
-            renderEdges();
+            renderEdges(scopedView());
           }
           function onUp() {
             window.removeEventListener("mousemove", onMove);
@@ -571,8 +794,8 @@
             const from = connectFromId;
             connectFromId = null;
             draftEdge.setAttribute("d", "");
-            const label = window.prompt("Подпись связи (например HTTP, gRPC, SQL, Kafka):", "") || "";
-            const kind = window.prompt("Тип связи: sync (обычная) / async (событие) / data (БД):", "sync") || "sync";
+            const label = window.prompt("Подпись связи (HTTP, gRPC, SQL, Kafka):", "") || "";
+            const kind = window.prompt("Тип связи: sync (вызов) / async (событие) / data (БД):", "sync") || "sync";
             doc.edges.push({ from, to: n.id, label, kind: ["sync","async","data"].includes(kind) ? kind : "sync" });
             renderAll();
             scheduleSave();
@@ -586,8 +809,10 @@
     function renderAll() {
       document.getElementById("doc-title").value = doc.title || "";
       document.getElementById("doc-dir").value = doc.direction || "LR";
-      renderNodes();
-      renderEdges();
+      const view = scopedView();
+      renderCrumbs(view.crumbs);
+      renderNodes(view);
+      renderEdges(view);
       renderInspector();
     }
 
@@ -617,8 +842,8 @@
       const rect = stage.getBoundingClientRect();
       const mx = (ev.clientX - rect.left - pan.x) / pan.scale;
       const my = (ev.clientY - rect.top - pan.y) / pan.scale;
-      const x1 = (src.x || 0) + 220;
-      const y1 = (src.y || 0) + 41;
+      const x1 = (src.x || 0) + 230;
+      const y1 = (src.y || 0) + 43;
       draftEdge.setAttribute("d", `M ${x1} ${y1} L ${mx} ${my}`);
     });
 
@@ -650,19 +875,47 @@
         const n = findNode(selectedId);
         if (!n) return;
         n[field] = ev.target.value;
-        renderNodes();
-        renderEdges();
+        renderAll();
         scheduleSave();
       });
     });
 
+    document.getElementById("f-parent").addEventListener("change", ev => {
+      const n = findNode(selectedId);
+      if (!n) return;
+      n.parent_id = ev.target.value || "";
+      renderAll();
+      scheduleSave();
+    });
+
+    document.getElementById("f-contracts").addEventListener("input", ev => {
+      const n = findNode(selectedId);
+      if (!n) return;
+      n.contracts = ev.target.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      renderNodes(scopedView());
+      scheduleSave();
+    });
+
+    document.getElementById("btn-zoom-into").onclick = () => {
+      if (!selectedId) return;
+      scopeId = selectedId;
+      const v = scopedView();
+      selectedId = v.visible[0] ? v.visible[0].id : null;
+      renderAll();
+    };
+
     document.getElementById("btn-add").onclick = () => {
-      const label = window.prompt("Название компонента:", "Новый сервис");
+      const label = window.prompt("Название компонента (на текущем C4-уровне):", "Новый сервис");
       if (!label) return;
       let id = slug(label);
       let idx = 2;
       while (findNode(id)) { id = slug(label) + "_" + idx++; }
-      const n = { id, label, kind: "service", x: 380, y: 120 + (doc.nodes.length % 5) * 110, path: "", tech: "", summary: "" };
+      const visibleCount = scopedView().visible.length;
+      const n = {
+        id, label, kind: "service", parent_id: scopeId || "",
+        x: 380, y: 100 + (visibleCount % 5) * 120,
+        path: "", tech: "", summary: "", contracts: []
+      };
       doc.nodes.push(n);
       selectedId = n.id;
       renderAll();
@@ -671,34 +924,94 @@
 
     document.getElementById("btn-delete-node").onclick = () => {
       if (!selectedId) return;
-      doc.nodes = doc.nodes.filter(n => n.id !== selectedId);
-      doc.edges = doc.edges.filter(e => e.from !== selectedId && e.to !== selectedId);
-      selectedId = doc.nodes[0] ? doc.nodes[0].id : null;
+      const doomed = new Set([selectedId]);
+      let changed = true;
+      while (changed) {
+        changed = false;
+        doc.nodes.forEach(n => {
+          if (n.parent_id && doomed.has(n.parent_id) && !doomed.has(n.id)) {
+            doomed.add(n.id);
+            changed = true;
+          }
+        });
+      }
+      doc.nodes = doc.nodes.filter(n => !doomed.has(n.id));
+      doc.edges = doc.edges.filter(e => !doomed.has(e.from) && !doomed.has(e.to));
+      const v = scopedView();
+      selectedId = v.visible[0] ? v.visible[0].id : null;
       renderAll();
       scheduleSave();
     };
 
     document.getElementById("btn-layout").onclick = () => {
       const buckets = { 1: [], 2: [], 3: [], 4: [] };
-      doc.nodes.forEach(n => buckets[TIERS[n.kind] || 3].push(n));
+      scopedView().visible.forEach(n => buckets[TIERS[n.kind] || 3].push(n));
       const xs = { 1: 80, 2: 360, 3: 650, 4: 960 };
       [1, 2, 3, 4].forEach(t => {
-        buckets[t].forEach((n, i) => { n.x = xs[t]; n.y = 80 + i * 125; });
+        buckets[t].forEach((n, i) => { n.x = xs[t]; n.y = 80 + i * 128; });
       });
       renderAll();
       scheduleSave();
     };
 
     document.getElementById("btn-scan").onclick = async () => {
-      setStatus("Сканирование кода…");
+      setStatus("Сканирование кода, .proto и SQL…");
       const res = await fetch("/api/scan", { method: "POST" });
       const data = await res.json();
       if (data.ok) {
         doc = data.doc;
-        selectedId = doc.nodes[0] ? doc.nodes[0].id : null;
+        scopeId = "";
+        const v = scopedView();
+        selectedId = v.visible[0] ? v.visible[0].id : null;
         document.getElementById("mermaid-box").textContent = data.mermaid || "";
         renderAll();
-        setStatus("Код отсканирован ✓");
+        setStatus("Код и контракты отсканированы ✓");
+      }
+    };
+
+    document.getElementById("btn-ai-draft").onclick = async () => {
+      const prompt = window.prompt("✨ Опиши архитектуру или доработку схемы для ИИ:");
+      if (!prompt) return;
+      setStatus("ИИ проектирует схему…");
+      const res = await fetch("/api/ai-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+      });
+      const data = await res.json();
+      if (data.ok && data.doc) {
+        doc = data.doc;
+        scopeId = "";
+        const v = scopedView();
+        selectedId = v.visible[0] ? v.visible[0].id : null;
+        document.getElementById("mermaid-box").textContent = data.mermaid || "";
+        renderAll();
+        setStatus("Схема создана ИИ ✓");
+      } else {
+        setStatus("Ошибка ИИ");
+        alert(data.error || "Не удалось построить схему через ИИ (проверь :AiStatus)");
+      }
+    };
+
+    function showModal(title, text) {
+      document.getElementById("modal-title").textContent = title;
+      document.getElementById("modal-body").textContent = text;
+      document.getElementById("modal-backdrop").style.display = "flex";
+    }
+    document.getElementById("modal-close").onclick = () => {
+      document.getElementById("modal-backdrop").style.display = "none";
+    };
+
+    document.getElementById("btn-ai-review").onclick = async () => {
+      setStatus("Анализ циклов и ИИ-ревью…");
+      const res = await fetch("/api/ai-review", { method: "POST" });
+      const data = await res.json();
+      if (data.ok) {
+        setStatus("Ревью готово ✓");
+        showModal("🧠 Архитектурный аудит и ревью", data.report || "");
+      } else {
+        setStatus("Ошибка ревью");
+        alert(data.error || "Ошибка ревью");
       }
     };
 
@@ -716,7 +1029,7 @@
     };
 
     document.getElementById("btn-reset-view").onclick = () => {
-      pan = { x: 40, y: 40, scale: 1 };
+      pan = { x: 40, y: 62, scale: 1 };
       applyTransform();
     };
     document.getElementById("btn-save").onclick = saveNow;
@@ -731,7 +1044,8 @@
       const data = await res.json();
       if (data.ok && data.doc) {
         doc = data.doc;
-        selectedId = doc.nodes[0] ? doc.nodes[0].id : null;
+        const v = scopedView();
+        selectedId = v.visible[0] ? v.visible[0].id : null;
         document.getElementById("mermaid-box").textContent = data.mermaid || "";
         renderAll();
       }

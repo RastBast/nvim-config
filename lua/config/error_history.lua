@@ -5,15 +5,16 @@
 --   1) <leader>xe  (и <leader>Hxe, :ErrorLast10) — последние 10 ошибок Neovim
 --   2) <leader>xj  (и <leader>xg, <leader>Hxj, :ErrorLog) — полный журнал ошибок
 --
--- ВНИМАНИЕ: <leader>xl НЕ трогаем — она занята Trouble Location List!
+-- Дополнительно:
+--   * Внутри окна ошибок:
+--       Enter / gf — прыгнуть прямо на файл:строку из стектрейса под курсором!
+--       a          — разобрать ошибку под курсором через ИИ (config.ai_api)
+--       Tab        — переключить 10 ошибок ↔ полный журнал
+--       y          — скопировать ошибки в системный буфер +
+--       c          — очистить журнал сеанса
+--   * В Lualine (lua/plugins/lualine.lua): компактный счётчик ❗N (скрыт при 0).
 --
--- Откуда собираются ошибки (только в памяти текущего сеанса, на диск не пишем):
---   * перехват vim.notify с уровнем ERROR (Mason, Avante, плагины, LSP);
---   * отслеживание v:errmsg (нативные ошибки команд E492, E5108 и т.п.);
---   * история ошибок Noice (noice.message.manager с фильтром { error = true }),
---     которая ловит стектрейсы автокоманд ModeChanged / WinEnter / vim.schedule;
---   * разбор :messages (когда Noice ещё не загружен или отключён), со склейкой
---     многострочного stack traceback в одну запись ошибки.
+-- ВНИМАНИЕ: <leader>xl НЕ трогаем — она занята Trouble Location List!
 local M = {
   entries = {},
   max_entries = 500,
@@ -22,7 +23,10 @@ local M = {
 
 local win_id = nil
 local buf_id = nil
+local prev_win_id = nil
 local current_mode = "last10" -- "last10" | "log"
+local line_to_entry = {}
+local shown_entries = {}
 
 local function now_hms()
   local ok, s = pcall(os.date, "%H:%M:%S")
@@ -83,6 +87,29 @@ function M.capture_errmsg()
   end
 end
 
+--- Быстрый подсчёт ошибок для строки состояния Lualine (без тяжёлого :messages).
+function M.count()
+  M.capture_errmsg()
+  local n = #M.entries
+  local manager = package.loaded["noice.message.manager"]
+  if type(manager) == "table" and type(manager.get) == "function" then
+    local ok, list = pcall(manager.get, { error = true }, { history = true })
+    if ok and type(list) == "table" and #list > n then
+      n = #list
+    end
+  end
+  return n
+end
+
+--- Компонент для Lualine: пустая строка при 0 ошибок, иначе «❗N».
+function M.component()
+  local c = M.count()
+  if c <= 0 then
+    return ""
+  end
+  return "❗" .. tostring(c)
+end
+
 local function is_noice_running()
   local cfg = package.loaded["noice.config"]
   if type(cfg) == "table" and type(cfg.is_running) == "function" then
@@ -140,7 +167,7 @@ local function is_error_start(line)
     or line:match("^Error ")
     or line:match("^Lua callback:")
     or line:match("^vim%.schedule callback:")
-    or line:match("^%[mason") and line:lower():find("fail", 1, true) ~= nil
+    or (line:match("^%[mason") and line:lower():find("fail", 1, true) ~= nil)
     or line:find("Failed to ", 1, true) ~= nil
     or line:find("stack traceback:", 1, true) ~= nil
 end
@@ -224,7 +251,6 @@ function M.collect()
       return
     end
     if seen[clean] then
-      -- Если запись уже попала из нашего перехватчика, повтор из Noice/:messages не дублируем
       return
     end
     seen[clean] = true
@@ -249,19 +275,113 @@ function M.collect()
   return combined
 end
 
+--- Найти реальный файл на диске, даже если Neovim сократил начало пути через `...`.
+local function resolve_candidate_path(raw_path)
+  if type(raw_path) ~= "string" or raw_path == "" then
+    return nil
+  end
+  local p = vim.trim(raw_path)
+  p = p:gsub("^['\"`(]+", ""):gsub("['\"`):,]+$", "")
+  if p:sub(1, 2) == "~/" and vim.env and vim.env.HOME then
+    p = vim.env.HOME .. p:sub(2)
+  end
+  if vim.fn.filereadable and vim.fn.filereadable(p) == 1 then
+    return p
+  end
+
+  local cwd = (vim.fn.getcwd and vim.fn.getcwd()) or ""
+  if cwd ~= "" and vim.fn.filereadable and vim.fn.filereadable(cwd .. "/" .. p) == 1 then
+    return cwd .. "/" .. p
+  end
+
+  -- Обработка путей, обрезанных Neovim спереди: `...avante.nvim/lua/avante/repo_map.lua`
+  local stripped = p:gsub("^%.%.%.+/?", "")
+  local bases = {}
+  if vim.fn.stdpath then
+    local cfg = vim.fn.stdpath("config")
+    local data = vim.fn.stdpath("data")
+    if type(cfg) == "string" and cfg ~= "" then bases[#bases + 1] = cfg end
+    if type(data) == "string" and data ~= "" then
+      bases[#bases + 1] = data .. "/lazy"
+      bases[#bases + 1] = data
+    end
+  end
+  if cwd ~= "" then
+    bases[#bases + 1] = cwd
+  end
+
+  for _, base in ipairs(bases) do
+    local direct = base .. "/" .. stripped
+    if vim.fn.filereadable and vim.fn.filereadable(direct) == 1 then
+      return direct
+    end
+    -- Иногда обрезана середина имени папки: `...nte.nvim/lua/avante/repo_map.lua`
+    local sub_after_slash = stripped:match("^[^/]+/(.+)$")
+    if sub_after_slash and vim.uv and type(vim.uv.fs_scandir) == "function" then
+      local h = vim.uv.fs_scandir(base)
+      if h then
+        while true do
+          local name, typ = vim.uv.fs_scandir_next(h)
+          if not name then break end
+          if typ == nil or typ == "directory" then
+            local cand = base .. "/" .. name .. "/" .. sub_after_slash
+            if vim.fn.filereadable and vim.fn.filereadable(cand) == 1 then
+              return cand
+            end
+          end
+        end
+      end
+    end
+  end
+
+  return p
+end
+
+--- Извлечь { path, line, col } из строки ошибки или полного текста стектрейса
+--- (Lua, Go, Python, TypeScript/JS, Rust).
+function M.parse_location(text)
+  if type(text) ~= "string" or text == "" then
+    return nil
+  end
+
+  -- Python: File "path/to/app.py", line 42
+  local py_file, py_line = text:match('File "([^"]+)", line (%d+)')
+  if py_file and py_line then
+    return {
+      path = resolve_candidate_path(py_file),
+      line = tonumber(py_line) or 1,
+      col = 1,
+    }
+  end
+
+  -- Стандартный формат Lua / Go / TS / Rust: [optional ...]path/file.ext:112[:15]
+  for cand, lnum, col in text:gmatch("([%.~/%w_%-%+]+%.[%a%d_]+):(%d+):?(%d*)") do
+    if not cand:match("^https?$") then
+      local resolved = resolve_candidate_path(cand)
+      if resolved then
+        return {
+          path = resolved,
+          line = tonumber(lnum) or 1,
+          col = tonumber(col) or 1,
+        }
+      end
+    end
+  end
+
+  return nil
+end
+
 local function format_view(mode)
   local all = M.collect()
   local total = #all
   local shown = {}
 
   if mode == "last10" then
-    -- Показываем последние 10 ошибок (самая свежая — сверху #1, чтобы видеть сразу!)
     local from = math.max(1, total - 9)
     for i = total, from, -1 do
       shown[#shown + 1] = { idx = total - i + 1, real_num = i, item = all[i] }
     end
   else
-    -- Полный журнал сеанса (от самой новой к старым, со сквозной нумерацией)
     for i = total, 1, -1 do
       shown[#shown + 1] = { idx = total - i + 1, real_num = i, item = all[i] }
     end
@@ -273,11 +393,12 @@ local function format_view(mode)
 
   local lines = {
     title,
-    "Клавиши: q/Esc закрыть · Tab переключить (10 ↔ Все) · y скопировать всё · c очистить · r обновить",
-    string.rep("─", 78),
+    "Клавиши: Enter/gf к файлу:строке · a разбор ИИ · Tab 10↔Все · y копия · c очистить · r обновить · q выход",
+    string.rep("─", 92),
   }
-
+  local map_lines = {}
   local copy_blocks = {}
+  shown_entries = {}
 
   if #shown == 0 then
     lines[#lines + 1] = ""
@@ -285,34 +406,139 @@ local function format_view(mode)
     lines[#lines + 1] = ""
     lines[#lines + 1] = "Подсказка:"
     lines[#lines + 1] = "  • Ошибки кода/LSP в файлах проекта: <leader>xx (Trouble)"
-    lines[#lines + 1] = "  • Диагностика Avante: :AvanteStatus"
+    lines[#lines + 1] = "  • Диагностика Avante: :AvanteStatus (<leader>AI)"
     lines[#lines + 1] = "  • Лог установки пакетов Mason: :MasonLog"
   else
     for _, row in ipairs(shown) do
       local e = row.item
+      shown_entries[#shown_entries + 1] = e
       local repeat_tag = (e.count and e.count > 1) and (" ×" .. tostring(e.count)) or ""
-      local head = ("[%d] %s · %s%s"):format(row.idx, e.time or "--:--:--", e.source or "nvim", repeat_tag)
+      local loc = M.parse_location(e.text)
+      local loc_hint = loc and ("  📍 " .. vim.fn.fnamemodify(loc.path, ":t") .. ":" .. loc.line) or ""
+      local head = ("[%d] %s · %s%s%s"):format(row.idx, e.time or "--:--:--", e.source or "nvim", repeat_tag, loc_hint)
       lines[#lines + 1] = ""
       lines[#lines + 1] = head
+      map_lines[#lines] = e
       for sub in (e.text .. "\n"):gmatch("(.-)\n") do
         lines[#lines + 1] = "  " .. sub
+        map_lines[#lines] = e
       end
       copy_blocks[#copy_blocks + 1] = head .. "\n" .. e.text
     end
   end
 
-  return lines, table.concat(copy_blocks, "\n\n"), title
+  return lines, map_lines, table.concat(copy_blocks, "\n\n"), title
+end
+
+local function close_win()
+  if win_id and vim.api.nvim_win_is_valid(win_id) then
+    pcall(vim.api.nvim_win_close, win_id, true)
+  end
+  win_id = nil
+end
+
+local function current_cursor_line_and_entry()
+  local lnum = 1
+  if win_id and vim.api.nvim_win_is_valid(win_id) and type(vim.api.nvim_win_get_cursor) == "function" then
+    local ok, pos = pcall(vim.api.nvim_win_get_cursor, win_id)
+    if ok and type(pos) == "table" and tonumber(pos[1]) then
+      lnum = tonumber(pos[1])
+    end
+  end
+  local line_str = ""
+  if buf_id and vim.api.nvim_buf_is_valid(buf_id) and type(vim.api.nvim_buf_get_lines) == "function" then
+    local ok, fetched = pcall(vim.api.nvim_buf_get_lines, buf_id, lnum - 1, lnum, false)
+    if ok and type(fetched) == "table" and fetched[1] then
+      line_str = fetched[1]
+    end
+  end
+  local entry = line_to_entry[lnum] or shown_entries[1]
+  return line_str, entry
+end
+
+local function jump_from_cursor()
+  local line_str, entry = current_cursor_line_and_entry()
+  local loc = M.parse_location(line_str) or (entry and M.parse_location(entry.text)) or nil
+  if not loc or not loc.path then
+    vim.notify("В выбранной ошибке не найден путь файл:строка для перехода.", vim.log.levels.INFO)
+    pcall(vim.api.nvim_echo, { { "В этой записи нет координат файл:строка", "WarningMsg" } }, false, {})
+    return
+  end
+  if vim.fn.filereadable and vim.fn.filereadable(loc.path) ~= 1 then
+    local msg = "Файл из стектрейса не найден на диске: " .. tostring(loc.path)
+    vim.notify(msg, vim.log.levels.WARN)
+    pcall(vim.api.nvim_echo, { { msg, "WarningMsg" } }, false, {})
+    return
+  end
+
+  local target_win = prev_win_id
+  close_win()
+  if target_win and vim.api.nvim_win_is_valid and vim.api.nvim_win_is_valid(target_win) then
+    pcall(vim.api.nvim_set_current_win, target_win)
+  end
+  vim.cmd("edit " .. vim.fn.fnameescape(loc.path))
+  if type(vim.api.nvim_win_set_cursor) == "function" then
+    pcall(vim.api.nvim_win_set_cursor, 0, { math.max(1, loc.line or 1), math.max(0, (loc.col or 1) - 1) })
+  end
+  pcall(vim.cmd, "normal! zz")
+end
+
+local function analyze_with_ai()
+  local _, entry = current_cursor_line_and_entry()
+  if not entry or not entry.text or entry.text == "" then
+    pcall(vim.api.nvim_echo, { { "Нет выбранной ошибки для разбора ИИ", "WarningMsg" } }, false, {})
+    return
+  end
+  local ok_ai, AI = pcall(require, "config.ai_api")
+  if not ok_ai or type(AI.chat) ~= "function" then
+    vim.notify("Модуль config.ai_api недоступен", vim.log.levels.ERROR)
+    return
+  end
+
+  pcall(vim.api.nvim_echo, { { "🤖 Отправляю ошибку на разбор ИИ…", "MoreMsg" } }, false, {})
+  AI.chat({
+    {
+      role = "system",
+      content = "Ты опытный инженер по Neovim, Lua, Go и системной отладке. Отвечай кратко и по делу на русском языке: 1) в чём точная причина ошибки, 2) как исправить (команда или патч кода), 3) как проверить.",
+    },
+    {
+      role = "user",
+      content = "Разбери эту ошибку из журнала Neovim:\n\n```text\n" .. entry.text .. "\n```",
+    },
+  }, { temperature = 0.15 }, function(answer, why, provider)
+    if not answer then
+      local err_msg = "ИИ не смог разобрать ошибку: " .. tostring(why or "нет ответа") .. " (проверь :AiStatus / <leader>Ap)"
+      vim.notify(err_msg, vim.log.levels.ERROR)
+      pcall(vim.api.nvim_echo, { { err_msg, "ErrorMsg" } }, true, {})
+      return
+    end
+    local pname = (type(provider) == "table" and provider.name) and provider.name or "AI"
+    if type(AI.float) == "function" then
+      AI.float("🤖 Разбор ошибки · " .. pname, answer)
+    else
+      pcall(vim.api.nvim_echo, { { answer, "None" } }, true, {})
+    end
+  end)
 end
 
 local function render_into_window(mode)
   current_mode = mode or current_mode
-  local lines, copy_text, short_title = format_view(current_mode)
+  if not (win_id and vim.api.nvim_win_is_valid(win_id)) and type(vim.api.nvim_get_current_win) == "function" then
+    local ok_w, cur = pcall(vim.api.nvim_get_current_win)
+    if ok_w then prev_win_id = cur end
+  end
 
-  -- Безопасная очистка вложенных переводов строк для nvim_buf_set_lines
+  local raw_lines, raw_map, copy_text, short_title = format_view(current_mode)
+
   local safe_lines = {}
-  for _, line in ipairs(lines) do
+  line_to_entry = {}
+  for idx, line in ipairs(raw_lines) do
+    local mapped = raw_map[idx]
     for part in (tostring(line) .. "\n"):gmatch("(.-)\n") do
       safe_lines[#safe_lines + 1] = part
+      if mapped then
+        line_to_entry[#safe_lines] = mapped
+      end
     end
   end
 
@@ -332,7 +558,7 @@ local function render_into_window(mode)
   if has_ui and type(vim.api.nvim_open_win) == "function" then
     local cols = (vim.o and vim.o.columns and vim.o.columns > 20) and vim.o.columns or 100
     local rows = (vim.o and vim.o.lines and vim.o.lines > 10) and vim.o.lines or 30
-    local width = math.min(math.max(68, math.floor(cols * 0.82)), math.max(20, cols - 4))
+    local width = math.min(math.max(76, math.floor(cols * 0.84)), math.max(20, cols - 4))
     local height = math.min(math.max(12, #safe_lines + 2), math.max(8, rows - 6))
     local win_cfg = {
       relative = "editor",
@@ -355,7 +581,6 @@ local function render_into_window(mode)
     vim.wo[win_id].linebreak = true
     vim.wo[win_id].cursorline = true
   else
-    -- Headless / запасной сплит
     if not (win_id and vim.api.nvim_win_is_valid(win_id)) then
       vim.cmd("botright new")
       win_id = vim.api.nvim_get_current_win()
@@ -363,16 +588,12 @@ local function render_into_window(mode)
     end
   end
 
-  local function close_win()
-    if win_id and vim.api.nvim_win_is_valid(win_id) then
-      pcall(vim.api.nvim_win_close, win_id, true)
-    end
-    win_id = nil
-  end
-
   local map_opts = { buffer = buf_id, nowait = true, silent = true }
   vim.keymap.set("n", "q", close_win, vim.tbl_extend("force", map_opts, { desc = "Закрыть окно ошибок" }))
   vim.keymap.set("n", "<Esc>", close_win, vim.tbl_extend("force", map_opts, { desc = "Закрыть окно ошибок" }))
+  vim.keymap.set("n", "<CR>", jump_from_cursor, vim.tbl_extend("force", map_opts, { desc = "Перейти на файл:строку из стектрейса" }))
+  vim.keymap.set("n", "gf", jump_from_cursor, vim.tbl_extend("force", map_opts, { desc = "Перейти на файл:строку из стектрейса" }))
+  vim.keymap.set("n", "a", analyze_with_ai, vim.tbl_extend("force", map_opts, { desc = "Разобрать ошибку через ИИ" }))
   vim.keymap.set("n", "<Tab>", function()
     render_into_window(current_mode == "last10" and "log" or "last10")
   end, vim.tbl_extend("force", map_opts, { desc = "Переключить 10 ошибок ↔ полный журнал" }))
@@ -410,6 +631,9 @@ function M.clear()
   M.last_seen_errmsg = ""
 end
 
+M.jump_from_cursor = jump_from_cursor
+M.analyze_with_ai = analyze_with_ai
+
 local setup_done = false
 
 function M.setup()
@@ -418,7 +642,6 @@ function M.setup()
   end
   setup_done = true
 
-  -- Перехватываем ранние ошибки vim.notify ещё до загрузки плагинов
   local prev_notify = vim.notify
   if type(prev_notify) == "function" then
     vim.notify = function(msg, level, opts)
@@ -455,8 +678,6 @@ function M.setup()
     desc = "🧹 Очистить журнал ошибок Neovim текущего сеанса",
   })
 
-  -- Два отдельных макроса в разделе <leader>x (без конфликта с <leader>xl Trouble!)
-  -- плюс зеркала в главном меню <leader>Hx:
   local mappings = {
     { "<leader>xe", "<cmd>ErrorLast10<cr>", "🔟 Последние 10 ошибок Neovim" },
     { "<leader>xj", "<cmd>ErrorLog<cr>", "📜 Журнал ошибок Neovim (все)" },

@@ -99,14 +99,53 @@ local function handle_http(client, method, target, body)
 
   if method == "POST" and clean_path == "/api/scan" then
     local doc = Scan.scan_project(root)
+    Scan.enrich_from_lsp(doc, root, function(updated, added)
+      if added and added > 0 then
+        Model.save_file(paths.json, updated)
+        Model.export_mermaid(paths.mermaid, updated, paths.markdown)
+        refresh_board_async()
+      end
+    end)
     Model.save_file(paths.json, doc)
     Model.export_mermaid(paths.mermaid, doc, paths.markdown)
     refresh_board_async()
     return send_json(client, "200 OK", {
       ok = true,
       doc = doc,
-      mermaid = Model.to_mermaid(doc),
+      mermaid = Model.to_mermaid(doc, ""),
     })
+  end
+
+  if method == "POST" and clean_path == "/api/ai-draft" then
+    local ok, payload = pcall(vim.json.decode, body or "")
+    local prompt = (ok and type(payload) == "table" and type(payload.prompt) == "string") and vim.trim(payload.prompt) or ""
+    if prompt == "" then
+      return send_json(client, "400 Bad Request", { ok = false, error = "Укажи описание архитектуры" })
+    end
+    require("config.architecture_ai").draft(prompt, root, function(new_doc, why)
+      if not new_doc then
+        return send_json(client, "500 Internal Server Error", { ok = false, error = tostring(why or "ошибка ИИ") })
+      end
+      send_json(client, "200 OK", {
+        ok = true,
+        doc = new_doc,
+        mermaid = Model.to_mermaid(new_doc, ""),
+      })
+    end)
+    return
+  end
+
+  if method == "POST" and clean_path == "/api/ai-review" then
+    require("config.architecture_ai").review(root, function(report_md, why)
+      if not report_md then
+        return send_json(client, "500 Internal Server Error", { ok = false, error = tostring(why or "ошибка ревью") })
+      end
+      send_json(client, "200 OK", {
+        ok = true,
+        report = report_md,
+      })
+    end)
+    return
   end
 
   if method == "POST" and clean_path == "/api/open-path" then

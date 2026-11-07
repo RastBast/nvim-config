@@ -51,6 +51,13 @@ return {
         return " " .. table.concat(names, ",")
       end
 
+      -- Счётчик ошибок Neovim за сеанс (<leader>xe / :ErrorLast10); пусто при 0.
+      local function nvim_errors()
+        local ok, eh = pcall(require, "config.error_history")
+        if not ok or type(eh.component) ~= "function" then return "" end
+        return eh.component()
+      end
+
       require("lualine").setup({
         options = {
           theme = "auto",
@@ -61,6 +68,14 @@ return {
         sections = {
           lualine_c = { { "filename", path = 1 } },
           lualine_x = {
+            {
+              nvim_errors,
+              color = { fg = "#f7768e", gui = "bold" },
+              on_click = function()
+                local ok, eh = pcall(require, "config.error_history")
+                if ok and type(eh.last) == "function" then eh.last() end
+              end,
+            },
             -- 🎃 тыква-индикатор хэллоуин-оверлея (<leader>uH, lua/config/halloween.lua)
             {
               function() return "🎃👻🦇" end,

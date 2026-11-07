@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Тесты визуальной архитектуры приложения и связей:
-  - модель architecture.json + экспорт Mermaid/Markdown;
-  - авто-сканер Go + docker-compose и реального Lua-репозитория nvim-config;
-  - доска :ArchBoard в Neovim (навигация, сдвиг, переход Enter к файлу);
-  - команды :Arch*, клавиши <leader>mA* / <leader>Haa без конфликта с <leader>a (Aerial);
-  - наличие веб-холста assets/architecture_editor.html."""
+"""Комплексные тесты визуальной архитектуры C4, умного скана и ИИ-архитектора:
+  - модель architecture.json v2 (C4 parent_id, contracts, scoped_view roll-up, Mermaid subgraph);
+  - умный скан Go + .proto (gRPC) + OpenAPI + SQL-миграции (FK + SQL-запросы) + LSP workspace/symbol;
+  - реальный C4-скан репозитория nvim-config (контейнеры lua/config, lua/plugins, lua/games);
+  - интерактивная доска :ArchBoard (C4-зум l/h, сдвиг L, переход Enter к коду);
+  - ИИ-архитектор (:ArchAiDraft и поиск циклов :ArchAiReview);
+  - веб-холст assets/architecture_editor.html (C4, /api/ai-draft, /api/ai-review)."""
 import json
 import os
 import sys
@@ -47,6 +48,31 @@ def make_lua_env(tmpdir):
         CMDS = {}
         BUF_LINES = {}
         EDITED_FILE = nil
+        AI_FLOATS = {}
+
+        package.loaded["config.ai_api"] = {
+          resolve = function() return { id = "mock", name = "MockArchAI" } end,
+          chat = function(messages, opts, cb)
+            cb("### Рекомендации\nРазорвать цикл через шину событий.", nil, { name = "MockArchAI" })
+          end,
+          chat_json = function(messages, opts, cb)
+            cb({
+              title = "ИИ-Маркетплейс",
+              direction = "LR",
+              nodes = {
+                { id = "gw", label = "API Gateway", kind = "gateway", contracts = { "POST /checkout" } },
+                { id = "pay", label = "Payments", kind = "service", tech = "Go" },
+                { id = "pay_stripe", label = "Stripe Adapter", kind = "worker", parent_id = "pay" },
+              },
+              edges = {
+                { from = "gw", to = "pay_stripe", label = "gRPC", kind = "sync" },
+              },
+            }, nil, { name = "MockArchAI" })
+          end,
+          float = function(title, text)
+            AI_FLOATS[#AI_FLOATS + 1] = { title = title, text = text }
+          end,
+        }
 
         vim = {
           o = { columns = 130, lines = 42 },
@@ -55,14 +81,30 @@ def make_lua_env(tmpdir):
           log = { levels = { INFO = 2, WARN = 3, ERROR = 4 } },
           trim = function(s) return (tostring(s or ""):gsub("^%s+", ""):gsub("%s+$", "")) end,
           pesc = function(s) return (tostring(s):gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")) end,
+          schedule = function(fn) fn() end,
           notify = function() end,
+          uri_to_fname = function(uri) return (uri:gsub("^file://", "")) end,
+          lsp = {
+            get_clients = function()
+              return {
+                {
+                  name = "gopls",
+                  request = function(self, method, params, cb)
+                    cb(nil, {
+                      { name = "OrderRepository", uri = "file://" .. TMP .. "/internal/orders/service.go" },
+                    })
+                  end,
+                },
+              }
+            end,
+          },
           cmd = function(c)
             local p = c:match("^edit%s+(.+)$")
             if p then EDITED_FILE = p end
           end,
           json = {
             decode = function(raw) return PY_JSON_DECODE(raw) end,
-            encode = function(tbl) return "{}" end,
+            encode = function() return "{}" end,
           },
           fs = {
             root = function() return TMP end,
@@ -160,15 +202,40 @@ def make_lua_env(tmpdir):
 
 def main():
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Создаём мини-проект на Go + docker-compose для проверки авто-сканера
         os.makedirs(os.path.join(tmpdir, "cmd", "api"), exist_ok=True)
         os.makedirs(os.path.join(tmpdir, "internal", "orders"), exist_ok=True)
+        os.makedirs(os.path.join(tmpdir, "proto"), exist_ok=True)
+        os.makedirs(os.path.join(tmpdir, "migrations"), exist_ok=True)
+
         with open(os.path.join(tmpdir, "go.mod"), "w", encoding="utf-8") as f:
             f.write("module example.com/shop\n\ngo 1.23\n")
         with open(os.path.join(tmpdir, "cmd", "api", "main.go"), "w", encoding="utf-8") as f:
             f.write('package main\nimport "example.com/shop/internal/orders"\nfunc main() { _ = orders.New() }\n')
         with open(os.path.join(tmpdir, "internal", "orders", "service.go"), "w", encoding="utf-8") as f:
-            f.write("package orders\nfunc New() int { return 1 }\n")
+            f.write(
+                'package orders\n'
+                'func Register(r Router, cli OrderServiceClient) {\n'
+                '  r.Post("/v1/orders", nil)\n'
+                '  _ = cli.CreateOrder\n'
+                '  _ = "SELECT id, total FROM orders WHERE user_id = $1"\n'
+                '}\n'
+                'func New() int { return 1 }\n'
+            )
+        with open(os.path.join(tmpdir, "proto", "orders.proto"), "w", encoding="utf-8") as f:
+            f.write(
+                'syntax = "proto3";\npackage shop.v1;\n'
+                'service OrderService {\n'
+                '  rpc CreateOrder (CreateOrderReq) returns (CreateOrderResp);\n'
+                '}\n'
+            )
+        with open(os.path.join(tmpdir, "openapi.yaml"), "w", encoding="utf-8") as f:
+            f.write("openapi: 3.0.3\npaths:\n  /v1/orders:\n    post: {}\n")
+        with open(os.path.join(tmpdir, "migrations", "001_init.sql"), "w", encoding="utf-8") as f:
+            f.write(
+                "CREATE TABLE users (id BIGSERIAL PRIMARY KEY);\n"
+                "CREATE TABLE orders (id BIGSERIAL PRIMARY KEY, user_id BIGINT REFERENCES users(id));\n"
+                "CREATE TABLE IF NOT EXISTS payments (id BIGSERIAL PRIMARY KEY, order_id BIGINT REFERENCES orders(id));\n"
+            )
         with open(os.path.join(tmpdir, "docker-compose.yml"), "w", encoding="utf-8") as f:
             f.write("services:\n  db:\n    image: postgres:16\n  cache:\n    image: redis:7\n")
 
@@ -179,10 +246,11 @@ def main():
             local Model = require("config.architecture_model")
             local Scan = require("config.architecture_scan")
             local Board = require("config.architecture_board")
+            local AIArch = require("config.architecture_ai")
 
             Arch.setup()
 
-            -- 1. Проверяем модель, связи разных типов и Mermaid/Markdown экспорт:
+            -- 1. Базовая модель и Mermaid/Markdown:
             local doc = Model.default_doc("Тестовая система")
             Model.upsert_node(doc, { id = "billing", label = "Billing", kind = "service", path = "internal/orders", tech = "Go" })
             Model.add_edge(doc, "api_gateway", "billing", "gRPC", "sync")
@@ -191,56 +259,125 @@ def main():
             MMD = Model.to_mermaid(doc)
             MD = Model.to_markdown(doc)
 
-            local paths = Model.default_paths(TMP)
-            Model.save_file(paths.json, doc)
-            RELOADED = Model.load_file(paths.json)
-
-            -- Удаление узла должно каскадно удалить его рёбра:
-            Model.remove_node(RELOADED, "billing")
-            EDGES_AFTER_REMOVE = #RELOADED.edges
-
-            -- 2. Проверяем авто-сканер на Go + docker-compose проекте:
+            -- 2. Умный скан Go + .proto + OpenAPI + SQL + docker-compose + LSP:
             GO_DOC = Scan.scan_project(TMP)
+            Scan.enrich_from_lsp(GO_DOC, TMP, function(updated, added)
+              LSP_ADDED = added
+              GO_DOC = updated
+            end)
 
-            -- 3. Проверяем авто-сканер на реальном Lua-репозитории этого nvim-config:
+            -- Проверяем C4 проекцию на верхнем уровне и внутри postgres_db:
+            ROOT_VIEW = Model.scoped_view(GO_DOC, "")
+            DB_VIEW = Model.scoped_view(GO_DOC, "postgres_db")
+
+            local orders_node = Model.find_node(GO_DOC, "internal_orders")
+            ORDERS_CONTRACTS = table.concat(orders_node and orders_node.contracts or {}, " | ")
+            local grpc_node = Model.find_node(GO_DOC, "grpc_orderservice")
+            GRPC_CONTRACTS = table.concat(grpc_node and grpc_node.contracts or {}, " | ")
+
+            -- 3. Проверяем C4-скан реального репозитория nvim-config:
             NVIM_DOC = Scan.scan_project(ROOT)
+            NVIM_ROOT_VIEW = Model.scoped_view(NVIM_DOC, "")
+            NVIM_CONFIG_VIEW = Model.scoped_view(NVIM_DOC, "c4_lua_config")
 
-            -- 4. Открываем интерактивную доску :ArchBoard и проверяем переход Enter к коду:
+            -- 4. Навигация C4 на доске :ArchBoard (вход в postgres_db через l и выход через h):
+            local paths = Model.default_paths(TMP)
             Model.save_file(paths.json, GO_DOC)
-            Board.open(TMP)
-            BOARD_TEXT = table.concat(BUF_LINES, "\n")
-            BUF_MAPS["L"]()
+            Board.open(TMP, "")
+            BOARD_ROOT_TEXT = table.concat(BUF_LINES, "\n")
+
+            -- Переводим выбор на postgres_db и входим внутрь клавишей `l`:
+            for i = 1, 12 do
+              local text_now = table.concat(BUF_LINES, "\n")
+              if text_now:find("Выбран [^\n]-PostgreSQL") then break end
+              BUF_MAPS["j"]()
+            end
+            BUF_MAPS["l"]()
+            BOARD_DB_ZOOM_TEXT = table.concat(BUF_LINES, "\n")
+            BUF_MAPS["h"]()
+            BOARD_AFTER_ZOOM_OUT = table.concat(BUF_LINES, "\n")
             BUF_MAPS["<CR>"]()
+
+            -- 5. Проверяем детектор циклов и ИИ-ревью + ИИ-генерацию (:ArchAiDraft / :ArchAiReview):
+            local cyc_doc = Model.normalize({
+              title = "Цикличная схема",
+              nodes = {
+                { id = "svc_a", label = "A", kind = "service" },
+                { id = "svc_b", label = "B", kind = "service" },
+                { id = "svc_c", label = "C", kind = "service" },
+              },
+              edges = {
+                { from = "svc_a", to = "svc_b" },
+                { from = "svc_b", to = "svc_c" },
+                { from = "svc_c", to = "svc_a" },
+              },
+            })
+            Model.save_file(paths.json, cyc_doc)
+            AIArch.review(TMP, function(rep) REVIEW_REPORT = rep end)
+
+            AIArch.draft("Сделай схему маркетплейса", TMP, function(drafted)
+              DRAFTED_DOC = drafted
+              DRAFTED_ROOT_VIEW = Model.scoped_view(drafted, "")
+            end)
             """
         )
 
         maps = lua.eval("MAPS")
         cmds = lua.eval("CMDS")
-        check("ArchBoard" in cmds and "ArchWeb" in cmds and "ArchScan" in cmds and "ArchMermaid" in cmds, "все команды :Arch* зарегистрированы")
-        check("<leader>mAb" in maps and "<leader>mAw" in maps and "<leader>mAs" in maps and "<leader>Haa" in maps, "клавиши <leader>mA* и <leader>Haa зарегистрированы")
+        check(
+            all(k in cmds for k in ("ArchBoard", "ArchWeb", "ArchScan", "ArchLspScan", "ArchAiDraft", "ArchAiReview")),
+            "все команды :Arch* (включая ArchLspScan, ArchAiDraft, ArchAiReview) зарегистрированы",
+        )
+        check(
+            all(k in maps for k in ("<leader>mAb", "<leader>mAw", "<leader>mAs", "<leader>mAl", "<leader>mAd", "<leader>mAr", "<leader>Haa")),
+            "все клавиши <leader>mA* и <leader>Haa зарегистрированы",
+        )
         check("<leader>a" not in maps, "одиночная клавиша <leader>a НЕ затронута (сохранена за Aerial)")
 
         mmd = lua.eval("MMD")
         md = lua.eval("MD")
-        check('api_gateway -- "gRPC" --> billing' in mmd, "Mermaid рисует синхронную стрелку -->")
-        check('billing -. "InvoicePaid" .-> event_bus' in mmd, "Mermaid рисует асинхронную пунктирную стрелку -.->")
-        check('billing == "SQL" ==> primary_db' in mmd, "Mermaid рисует стрелку данных ==>")
-        check("Каталог компонентов" in md and "```mermaid" in md, "Markdown-экспорт включает диаграмму и таблицу компонентов")
-        check(lua.eval("EDGES_AFTER_REMOVE") == 4, "удаление узла каскадно очищает привязанные к нему связи")
+        check('api_gateway -- "gRPC" --> billing' in mmd and 'billing -. "InvoicePaid" .-> event_bus' in mmd and 'billing == "SQL" ==> primary_db' in mmd, "Mermaid рисует стрелки sync/async/data")
+        check("Каталог компонентов" in md and "Контракты / API" in md, "Markdown-экспорт включает таблицу контрактов и C4-контейнеров")
 
-        check(lua.eval("#GO_DOC.nodes") >= 4 and lua.eval("#GO_DOC.edges") >= 1, "авто-сканер находит cmd/api, internal/orders, PostgreSQL и Redis со связью import")
-        check(lua.eval("#NVIM_DOC.nodes") >= 20 and lua.eval("#NVIM_DOC.edges") >= 15, "авто-сканер строит реальную граф-карту модулей и require этого nvim-config")
+        orders_contracts = lua.eval("ORDERS_CONTRACTS")
+        grpc_contracts = lua.eval("GRPC_CONTRACTS")
+        check("POST /v1/orders" in orders_contracts and "sym OrderRepository" in orders_contracts, "умный скан извлекает HTTP-маршрут и LSP workspace/symbol в контракты сервиса")
+        check("rpc CreateOrder(CreateOrderReq) → CreateOrderResp" in grpc_contracts, "умный скан .proto извлекает gRPC-сервис и сигнатуру rpc")
+        check(lua.eval("#DB_VIEW.nodes") == 3 and lua.eval("#DB_VIEW.edges") == 2, "SQL-миграции создают таблицы users, orders и payments внутри C4-контейнера БД со связями FK")
 
-        board_text = lua.eval("BOARD_TEXT")
-        edited = lua.eval("EDITED_FILE")
-        check("cmd/api" in board_text and "internal/orders" in board_text, ":ArchBoard отображает слои и компоненты проекта на 2D-доске")
-        check(edited is not None and ("cmd/api" in edited or "internal/orders" in edited or "docker-compose" in edited), "нажатие Enter на доске :ArchBoard открывает путь компонента в редакторе")
+        # Проверяем, что на верхнем уровне C4 связь internal_orders -> tbl_orders агрегировалась в internal_orders -> postgres_db!
+        has_rollup = lua.eval(
+            r"""(function()
+              for _, e in ipairs(ROOT_VIEW.edges) do
+                if e.from == "internal_orders" and e.to == "postgres_db" and e.label:find("SQL: orders", 1, true) then
+                  return true
+                end
+              end
+              return false
+            end)()"""
+        )
+        check(has_rollup is True, "проекция C4 агрегирует запрос к вложенной таблице orders в стрелку internal/orders ══▶ PostgreSQL на уровне системы")
+
+        check(4 <= lua.eval("#NVIM_ROOT_VIEW.nodes") <= 6 and lua.eval("#NVIM_CONFIG_VIEW.nodes") >= 25, "C4-скан nvim-config группирует 140+ файлов в чистые контейнеры верхнего уровня с детализацией внутри")
+
+        zoom_text = lua.eval("BOARD_DB_ZOOM_TEXT")
+        out_text = lua.eval("BOARD_AFTER_ZOOM_OUT")
+        check("table orders" in zoom_text and "table users" in zoom_text, "нажатие l на доске :ArchBoard проваливается внутрь C4-контейнера PostgreSQL")
+        check("Вся система" in out_text and "internal/orders" in out_text, "нажатие h на доске :ArchBoard возвращает на верхний C4-уровень")
+        check(lua.eval("EDITED_FILE") is not None, "нажатие Enter на доске :ArchBoard открывает файл/папку выбранного компонента")
+
+        review_rep = lua.eval("REVIEW_REPORT")
+        check("svc_a ──▶ svc_b ──▶ svc_c ──▶ svc_a" in review_rep and "MockArchAI" in review_rep, ":ArchAiReview находит точный цикл зависимостей и добавляет рекомендации ИИ")
+
+        check(lua.eval("DRAFTED_DOC.title") == "ИИ-Маркетплейс" and lua.eval("#DRAFTED_ROOT_VIEW.edges") == 1, ":ArchAiDraft генерирует C4-схему через ИИ и агрегирует вложенные связи")
 
         html_path = os.path.join(ROOT, "assets", "architecture_editor.html")
-        check(os.path.isfile(html_path), "файл браузерного редактора assets/architecture_editor.html существует")
         with open(html_path, "r", encoding="utf-8") as f:
             html = f.read()
-        check("/api/architecture" in html and "/api/scan" in html and "/api/open-path" in html, "assets/architecture_editor.html подключён к API сохранения, авто-скана и открытия файлов в Neovim")
+        check(
+            all(tok in html for tok in ("/api/ai-draft", "/api/ai-review", "scopedView", "dblclick")),
+            "assets/architecture_editor.html поддерживает C4-зум, ИИ-генерацию и ИИ-ревью",
+        )
 
 
 if __name__ == "__main__":

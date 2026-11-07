@@ -1,9 +1,9 @@
 -- ========================================================================== --
---     АРХИТЕКТУРА ПРИЛОЖЕНИЯ И ВИЗУАЛЬНЫЕ СВЯЗИ (:Arch*, <leader>mA*)        --
+--   АРХИТЕКТУРА ПРИЛОЖЕНИЯ C4, КОНТРАКТЫ И ИИ (:Arch*, <leader>mA*)          --
 -- ========================================================================== --
 -- Примечание по клавишам: одиночная <leader>a занята Aerial (структура файла),
 -- поэтому все операции архитектуры живут без конфликтов в подменю <leader>mA
--- («Архитектура приложения») и в главном меню <leader>Haa.
+-- («Архитектура и связи») и в главном меню <leader>Haa.
 local M = {}
 
 local setup_done = false
@@ -29,10 +29,46 @@ function M.scan()
   local doc = Scan.scan_project(root)
   Model.save_file(paths.json, doc)
   Model.export_mermaid(paths.mermaid, doc, paths.markdown)
-  local msg = ("🔍 Схема обновлена по коду: %d компонентов, %d связей"):format(#doc.nodes, #doc.edges)
+  Scan.enrich_from_lsp(doc, root, function(updated, added)
+    if added and added > 0 then
+      Model.save_file(paths.json, updated)
+      Model.export_mermaid(paths.mermaid, updated, paths.markdown)
+      pcall(function() require("config.architecture_board").reload_from_disk() end)
+    end
+  end)
+  local msg = ("🔍 Схема обновлена (код + .proto/OpenAPI/SQL): %d узлов, %d связей"):format(#doc.nodes, #doc.edges)
   vim.notify(msg, vim.log.levels.INFO)
   pcall(vim.api.nvim_echo, { { msg, "MoreMsg" } }, true, {})
-  require("config.architecture_board").open(root)
+  require("config.architecture_board").open(root, "")
+end
+
+function M.lsp_scan()
+  local Model = require("config.architecture_model")
+  local Scan = require("config.architecture_scan")
+  local doc, paths = Model.ensure_project_file()
+  Scan.enrich_from_lsp(doc, paths.root, function(updated, added, why)
+    if why then
+      local msg = "LSP-скан архитектуры: " .. why
+      vim.notify(msg, vim.log.levels.INFO)
+      pcall(vim.api.nvim_echo, { { msg, "WarningMsg" } }, false, {})
+      return
+    end
+    Model.save_file(paths.json, updated)
+    Model.export_mermaid(paths.mermaid, updated, paths.markdown)
+    local msg = "🔎 LSP добавил символов в контракты: " .. tostring(added)
+    vim.notify(msg, vim.log.levels.INFO)
+    pcall(vim.api.nvim_echo, { { msg, "MoreMsg" } }, false, {})
+    pcall(function() require("config.architecture_board").reload_from_disk() end)
+  end)
+end
+
+function M.ai_draft(cmd_opts)
+  local arg = type(cmd_opts) == "table" and cmd_opts.args or cmd_opts
+  require("config.architecture_ai").draft(arg)
+end
+
+function M.ai_review()
+  require("config.architecture_ai").review()
 end
 
 function M.export_mermaid()
@@ -117,29 +153,35 @@ function M.setup()
   setup_done = true
 
   local cmds = {
-    { "ArchBoard",   M.board,          "🏗️ Открыть интерактивную доску архитектуры в Neovim" },
-    { "ArchWeb",     M.web,            "🌐 Открыть браузерный drag-and-drop холст архитектуры" },
-    { "ArchWebStop", M.web_stop,       "⏹️ Остановить локальный сервер ArchWeb" },
-    { "ArchScan",    M.scan,           "🔍 Построить схему архитектуры и связей по коду проекта" },
-    { "ArchAddNode", M.add_node,       "➕ Добавить компонент в схему архитектуры" },
-    { "ArchConnect", M.connect_nodes,  "🔗 Соединить два компонента связью" },
-    { "ArchMermaid", M.export_mermaid, "📐 Экспортировать Mermaid и Markdown документацию архитектуры" },
-    { "ArchJson",    M.open_json,      "📄 Открыть файл architecture.json" },
+    { "ArchBoard",    M.board,          { force = true, desc = "🏗️ Открыть C4-доску архитектуры в Neovim" } },
+    { "ArchWeb",      M.web,            { force = true, desc = "🌐 Открыть браузерный drag-and-drop C4-холст" } },
+    { "ArchWebStop",  M.web_stop,       { force = true, desc = "⏹️ Остановить локальный сервер ArchWeb" } },
+    { "ArchScan",     M.scan,           { force = true, desc = "🔍 Умный скан кода, .proto, OpenAPI, SQL и C4-слоёв" } },
+    { "ArchLspScan",  M.lsp_scan,       { force = true, desc = "🔎 Подтянуть контракты из активного LSP (workspace/symbol)" } },
+    { "ArchAiDraft",  M.ai_draft,       { force = true, nargs = "*", desc = "✨ Сгенерировать или доработать схему через ИИ" } },
+    { "ArchAiReview", M.ai_review,      { force = true, desc = "🧠 Поиск циклов, узких мест и ИИ-ревью архитектуры" } },
+    { "ArchAddNode",  M.add_node,       { force = true, desc = "➕ Добавить компонент в схему архитектуры" } },
+    { "ArchConnect",  M.connect_nodes,  { force = true, desc = "🔗 Соединить два компонента связью" } },
+    { "ArchMermaid",  M.export_mermaid, { force = true, desc = "📐 Экспортировать Mermaid и Markdown документацию" } },
+    { "ArchJson",     M.open_json,      { force = true, desc = "📄 Открыть файл architecture.json" } },
   }
   for _, c in ipairs(cmds) do
-    vim.api.nvim_create_user_command(c[1], c[2], { force = true, desc = c[3] })
+    vim.api.nvim_create_user_command(c[1], c[2], c[3])
   end
 
   local maps = {
-    { "<leader>mAb", "<cmd>ArchBoard<cr>",   "🏗️ Доска архитектуры в Neovim" },
-    { "<leader>mAw", "<cmd>ArchWeb<cr>",     "🌐 Браузерный холст (drag-and-drop)" },
-    { "<leader>mAs", "<cmd>ArchScan<cr>",    "🔍 Авто-скан модулей и связей из кода" },
-    { "<leader>mAn", "<cmd>ArchAddNode<cr>", "➕ Добавить компонент" },
-    { "<leader>mAc", "<cmd>ArchConnect<cr>", "🔗 Соединить компоненты" },
-    { "<leader>mAm", "<cmd>ArchMermaid<cr>", "📐 Экспорт в Mermaid + Markdown" },
-    { "<leader>mAj", "<cmd>ArchJson<cr>",    "📄 Открыть architecture.json" },
-    { "<leader>mAx", "<cmd>ArchWebStop<cr>", "⏹️ Остановить веб-холст" },
-    { "<leader>Haa", "<cmd>ArchBoard<cr>",   "🏗️ Архитектура приложения и связи" },
+    { "<leader>mAb", "<cmd>ArchBoard<cr>",    "🏗️ C4-доска архитектуры в Neovim" },
+    { "<leader>mAw", "<cmd>ArchWeb<cr>",      "🌐 Браузерный C4-холст (drag-and-drop)" },
+    { "<leader>mAs", "<cmd>ArchScan<cr>",     "🔍 Умный скан (код + .proto + SQL + OpenAPI)" },
+    { "<leader>mAl", "<cmd>ArchLspScan<cr>",  "🔎 Обогатить контракты из LSP" },
+    { "<leader>mAd", "<cmd>ArchAiDraft<cr>",  "✨ ИИ-генерация / правка схемы" },
+    { "<leader>mAr", "<cmd>ArchAiReview<cr>", "🧠 Аудит циклов и ИИ-ревью схемы" },
+    { "<leader>mAn", "<cmd>ArchAddNode<cr>",  "➕ Добавить компонент" },
+    { "<leader>mAc", "<cmd>ArchConnect<cr>",  "🔗 Соединить компоненты" },
+    { "<leader>mAm", "<cmd>ArchMermaid<cr>",  "📐 Экспорт в Mermaid + Markdown" },
+    { "<leader>mAj", "<cmd>ArchJson<cr>",     "📄 Открыть architecture.json" },
+    { "<leader>mAx", "<cmd>ArchWebStop<cr>",  "⏹️ Остановить веб-холст" },
+    { "<leader>Haa", "<cmd>ArchBoard<cr>",    "🏗️ Архитектура C4 и связи" },
   }
   for _, m in ipairs(maps) do
     vim.keymap.set("n", m[1], m[2], { desc = m[3], silent = true })
