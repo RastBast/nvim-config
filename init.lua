@@ -259,7 +259,9 @@ require("config.games").setup() -- игры: <leader>Xc шахматы, Xs зм�
 require("config.hover_ru").setup()
 require("config.gloss").setup() -- K (визуал) и <leader>Kw: английский по словам с частью речи; :Gloss
 require("config.ai_api").setup() -- ИИ любой: <leader>Ap (выбор: Groq, Gemini, OpenAI…), <leader>Aq; :AiProvider, :AiStatus, :AiAsk
-require("config.ghost_text").setup() -- Призрачные inline-подсказки ТОЛЬКО на Gemini (вкл по умолчанию; <leader>AG / <leader>ui)
+require("config.ai_thinking").setup() -- Скрытие размышлений ИИ по умолчанию (переключатель: <leader>Ah / :AiThinkingToggle)
+require("config.ai_file_txt").setup() -- Отправка файла как .txt (<leader>AF / <leader>AT) + просмотр правок как в git (<leader>AD)
+require("config.neocodeium_ui").setup() -- Codeium / NeoCodeium Ghost Text (вкл по умолчанию; <leader>AG / <leader>ui; вход: <leader>AK)
 require("config.go_ide").setup() -- Go как в GoLand: <leader>gi (меню), gT/gC/gD/ga/go/gr/gx; :GoIde
 vim.keymap.set("n", "<leader>AE", "<cmd>EnvCheck<cr>", { desc = "Диагностика git и avante" })
 vim.keymap.set("n", "<leader>AI", "<cmd>AvanteStatus<cr>", { desc = "🩺 Статус Avante и библиотек" })

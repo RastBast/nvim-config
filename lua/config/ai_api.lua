@@ -565,6 +565,15 @@ function M.chat(messages, opts, cb)
       local choice = ok2 and type(data) == "table" and type(data.choices) == "table" and data.choices[1] or nil
       local msg = type(choice) == "table" and type(choice.message) == "table" and choice.message or nil
       local content = msg and msg.content or nil
+      if type(content) == "string" and not opts.keep_thinking then
+        local ok_th, thinking = pcall(require, "config.ai_thinking")
+        if ok_th and type(thinking) == "table" and not thinking.is_enabled() and type(thinking.strip) == "function" then
+          local cleaned = thinking.strip(content)
+          if cleaned ~= "" then
+            content = cleaned
+          end
+        end
+      end
       if type(content) ~= "string" or content == "" then
         return cb(nil, "пустой ответ сервиса", p)
       end

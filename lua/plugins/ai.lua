@@ -94,6 +94,16 @@ return {
         },
       },
 
+      -- По умолчанию скрываем размышления модели (только чистый ответ; переключить: <leader>Ah)
+      display = {
+        chat = {
+          show_reasoning = (function()
+            local ok_th, th = pcall(require, "config.ai_thinking")
+            return ok_th and type(th) == "table" and th.is_enabled() or false
+          end)(),
+        },
+      },
+
       -- Актуальное имя секции (раньше называлось `strategies`)
       interactions = {
         chat = {

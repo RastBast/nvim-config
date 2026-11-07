@@ -176,12 +176,14 @@ return {
       }),
 
       -- ========================= ПОВЕДЕНИЕ ================================ --
+      -- Отключаем встроенный инструмент "think", чтобы в чате оставался только чистый ответ ИИ
+      -- (переключатель размышлений: <leader>Ah / :AiThinkingToggle).
+      disabled_tools = { "think" },
       behaviour = {
-        -- Встроенные серые автоподсказки (Ghost Text) вынесены в выделенный модуль
-        -- lua/config/ghost_text.lua, который работает СТРОГО и ТОЛЬКО на Google Gemini
-        -- (включён по умолчанию; переключатель: <leader>AG или <leader>ui).
-        -- Штатный авто-режим avante по умолчанию выключен, чтобы он не отправлял
-        -- подсказки в OpenRouter/Groq и не дублировал Ghost Text (включить при желании:
+        -- Встроенные серые автоподсказки (Ghost Text) вынесены в плагин
+        -- Codeium / NeoCodeium (lua/plugins/neocodeium.lua, включён по умолчанию;
+        -- переключатель: <leader>AG или <leader>ui; авторизация: <leader>AK).
+        -- Штатный авто-режим avante по умолчанию выключен (включить при желании:
         -- set -Ux AVANTE_SUGGESTIONS 1).
         auto_suggestions = vim.env.AVANTE_SUGGESTIONS == "1",
         -- дифы не применяются сами: сначала показываем, ты подтверждаешь.
@@ -350,6 +352,7 @@ return {
         end
         configured = true
         last_reason = nil
+        pcall(function() require("config.ai_thinking").install_avante_hooks() end)
         if ok_guard and type(repo_guard.install) == "function" then
           pcall(repo_guard.install, function() return configured end, notify_not_ready)
         end

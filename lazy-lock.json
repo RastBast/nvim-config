@@ -171,6 +171,10 @@
     "branch": "master",
     "commit": "c8d29979cb0cb3a2437a8e0ae683fd82f340d3b8"
   },
+  "neocodeium": {
+    "branch": "main",
+    "commit": "ab8a3da3a66d299ad5422b76ce5ee21b68719296"
+  },
   "neotest": {
     "branch": "master",
     "commit": "ad991822b7076b1d940b33a9d6d0d30416d5df81"

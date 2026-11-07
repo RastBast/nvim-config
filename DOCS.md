@@ -23,7 +23,9 @@
 | `<leader>AU` | Повторить восстановление avante. |
 | `<leader>AN` | Проверить сеть выбранного ИИ без отправки ключа и текста. |
 | `<leader>Ap` / `<leader>Aq` | Выбрать ИИ (сразу переключает и открытый чат Avante) / задать вопрос. |
-| `<leader>AG` / `<leader>ui` | **Ghost Text (Inline Suggestions ТОЛЬКО на Gemini):** включено по умолчанию; переключить вкл/выкл (`:GhostTextToggle`). Принять: `<Tab>` / `<M-l>`, слово: `<M-w>`, скрыть: `<C-]>` |
+| `<leader>AG` / `<leader>ui` | **Codeium / NeoCodeium (Ghost Text):** включён по умолчанию; вкл/выкл (`:CodeiumToggle`). Вход: `<leader>AK` (`:CodeiumAuth`). Принять: `<Tab>` / `<M-l>`, слово: `<M-w>`, строку: `<M-a>`, скрыть: `<C-]>` |
+| `<leader>Ah` | **Размышления ИИ (`<think>` / Reasoning):** по умолчанию скрыты (виден только ответ); переключить вкл/выкл (`:AiThinkingToggle`). |
+| `<leader>AF` / `<leader>AT` / `<leader>AD` | **Файл как `.txt` + правки как в `git`:** `<leader>AF` — отправить файл как `.txt` и сразу открыть git-diff; `<leader>AT` — прикрепить `.txt` в чат Avante; `<leader>AD` — показать git-diff для кода файла из последнего ответа чата (`Enter`/`a` весь файл, `y` один ханк, `Tab` — 2 окна `vimdiff`). |
 | `<leader>Ag` / `<leader>Ao` | Мгновенно переключить чат Avante на **прямой Google Gemini** (`:AvanteGemini`) / **OpenRouter** (`:AvanteOpenRouter`). |
 | `<leader>Am` / `<leader>Ak` | Выбрать модель в чате Avante (`:AvanteModels`) / вставить API-ключ на сеанс (`:AvanteKey`). |
 | `<leader>C` (`<leader>Cb`, `<leader>Cw`, `<leader>Cs`…) | **Отдельный раздел «🏗️ Архитектура C4 и связи»:** доска `:ArchBoard`, веб-холст `:ArchWeb`, умный скан `:ArchScan`, поиск текущего файла `:ArchFocusFile` (`<leader>Cf`), меню `:ArchMenu` (`<leader>Cp`). |

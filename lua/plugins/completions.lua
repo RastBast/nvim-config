@@ -91,16 +91,16 @@ return {
           ["<CR>"] = cmp.mapping.confirm({ select = true }),
           ["<C-n>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
           ["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
-          -- Прыжки по плейсхолдерам сниппетов + принятие призрачной ИИ-подсказки
-          -- (Gemini Ghost Text → avante): меню cmp → сниппеты → Ghost Text → Tab
+          -- Прыжки по плейсхолдерам сниппетов + принятие призрачной подсказки
+          -- (Codeium / NeoCodeium → avante): меню cmp → сниппеты → Codeium → Tab
           ["<Tab>"] = cmp.mapping(function(fallback)
-            local ok_gt, gt = pcall(require, "config.ghost_text")
+            local ok_nc, nc = pcall(require, "config.neocodeium_ui")
             if cmp.visible() then
               cmp.select_next_item()
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
-            elseif ok_gt and type(gt.is_visible) == "function" and gt.is_visible() then
-              gt.accept()
+            elseif ok_nc and type(nc.visible) == "function" and nc.visible() then
+              nc.accept()
             elseif avante_suggestion_visible() then
               -- Принимаем напрямую, а не через feedkeys("<Plug>(...)", "n"):
               -- режим "n" запрещает маппинги, и <Plug>-мапа не срабатывала бы.

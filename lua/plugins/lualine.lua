@@ -58,11 +58,11 @@ return {
         return eh.component()
       end
 
-      -- Индикатор Ghost Text (призрачные подсказки ТОЛЬКО на Gemini; <leader>AG / <leader>ui)
-      local function ghost_text_status()
-        local ok, gt = pcall(require, "config.ghost_text")
-        if not ok or type(gt.lualine_component) ~= "function" then return "" end
-        return gt.lualine_component()
+      -- Индикатор Codeium / NeoCodeium (Ghost Text; переключить: <leader>AG / <leader>ui)
+      local function codeium_status()
+        local ok, nc = pcall(require, "config.neocodeium_ui")
+        if not ok or type(nc.lualine_component) ~= "function" then return "" end
+        return nc.lualine_component()
       end
 
       require("lualine").setup({
@@ -84,11 +84,11 @@ return {
               end,
             },
             {
-              ghost_text_status,
+              codeium_status,
               color = { fg = "#a6e3a1" },
               on_click = function()
-                local ok, gt = pcall(require, "config.ghost_text")
-                if ok and type(gt.toggle) == "function" then gt.toggle() end
+                local ok, nc = pcall(require, "config.neocodeium_ui")
+                if ok and type(nc.toggle) == "function" then nc.toggle() end
               end,
             },
             -- 🎃 тыква-индикатор хэллоуин-оверлея (<leader>uH, lua/config/halloween.lua)

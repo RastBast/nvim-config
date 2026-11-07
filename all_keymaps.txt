@@ -483,8 +483,13 @@ N                      n      Предыдущее совпадение (по ц
 <leader>xg             n      Журнал ошибок Neovim (алиас :ErrorLog)
 <leader>Hxe            n      Последние 10 ошибок Neovim (:ErrorLast10)
 <leader>Hxj            n      Журнал ошибок Neovim (:ErrorLog)
-<leader>AG             n      Ghost Text (призрачные подсказки ТОЛЬКО на Gemini): вкл/выкл (:GhostTextToggle)
-<leader>Ai             n      Запросить призрачную подсказку Gemini вручную (:GhostTextSuggest)
+<leader>AG             n      Codeium / NeoCodeium (Ghost Text): вкл/выкл (:CodeiumToggle)
+<leader>AK             n      Авторизация Codeium / NeoCodeium (:CodeiumAuth)
+<leader>Ai             n      Запросить призрачную подсказку Codeium вручную
+<leader>Ah             n      Размышления ИИ: скрыть/показать (по умолчанию скрыты; :AiThinkingToggle)
+<leader>AF             n      Отправить текущий файл как .txt ИИ и открыть цветной git-diff (:AiFileTxt)
+<leader>AT             n      Прикрепить текущий файл как .txt в чат Avante (:AvanteFileTxt)
+<leader>AD             n      Показать изменения файла из последнего ответа ИИ как в git (:AiDiffLast)
 <leader>AI             n      Статус Avante и нативных библиотек (:AvanteStatus)
 <leader>AU             n      Восстановить библиотеки Avante (:AvanteRebuild)
 <leader>AX             n      Снять зависшие .git/*.lock в плагинах Lazy (:LazyUnlock)
@@ -492,11 +497,12 @@ N                      n      Предыдущее совпадение (по ц
 <leader>Ao             n      Чат Avante → OpenRouter (:AvanteOpenRouter)
 <leader>Am             n      Выбрать модель в чате Avante (:AvanteModels)
 <leader>Ak             n      Задать API-ключ ИИ на сеанс (:AvanteKey)
-<leader>ui             n      Ghost Text (призрачные подсказки ТОЛЬКО на Gemini): вкл/выкл (:GhostTextToggle)
-<leader>HuI            n      Ghost Text (призрачные подсказки ТОЛЬКО на Gemini): вкл/выкл
-<M-l>                  i      Принять призрачную подсказку Ghost Text целиком
-<M-w>                  i      Принять одно следующее слово из Ghost Text
-<M-g>                  i      Запросить подсказку Ghost Text у Gemini вручную
+<leader>ui             n      Codeium / NeoCodeium (Ghost Text): вкл/выкл (:CodeiumToggle)
+<leader>HuI            n      Codeium / NeoCodeium (Ghost Text): вкл/выкл
+<M-l>                  i      Принять призрачную подсказку Codeium целиком
+<M-w>                  i      Принять одно следующее слово из Codeium
+<M-a>                  i      Принять одну строку из Codeium
+<M-g>                  i      Запросить подсказку Codeium вручную
 <leader>C              n      Группа: 🏗️ Архитектура C4 и связи (отдельный раздел через Leader)
 <leader>Cb             n      Открыть C4-доску архитектуры в Neovim (:ArchBoard)
 <leader>Cf             n      Найти текущий открытый файл на C4-доске (:ArchFocusFile)
