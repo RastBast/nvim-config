@@ -2,8 +2,8 @@
 --     РАЗДЕЛ ОШИБОК (<leader>x): ПОСЛЕДНИЕ 10 ОШИБОК И ПОЛНЫЙ ЖУРНАЛ         --
 -- ========================================================================== --
 -- Два отдельных макроса (клавиши) в группе <leader>x («Ошибки и журнал»):
---   1) <leader>xe  (и <leader>Hxe, :ErrorLast10) — последние 10 ошибок Neovim
---   2) <leader>xj  (и <leader>xg, <leader>Hxj, :ErrorLog) — полный журнал ошибок
+--   1) <leader>xe  (:ErrorLast10) — последние 10 ошибок Neovim
+--   2) <leader>xj  (и <leader>xg, :ErrorLog) — полный журнал ошибок
 --
 -- Дополнительно:
 --   * Внутри окна ошибок:
@@ -682,9 +682,6 @@ function M.setup()
     { "<leader>xe", "<cmd>ErrorLast10<cr>", "🔟 Последние 10 ошибок Neovim" },
     { "<leader>xj", "<cmd>ErrorLog<cr>", "📜 Журнал ошибок Neovim (все)" },
     { "<leader>xg", "<cmd>ErrorLog<cr>", "📜 Журнал ошибок Neovim (алиас)" },
-    { "<leader>Hxe", "<cmd>ErrorLast10<cr>", "🔟 Последние 10 ошибок Neovim" },
-    { "<leader>Hxj", "<cmd>ErrorLog<cr>", "📜 Журнал ошибок Neovim (все)" },
-    { "<leader>Hxg", "<cmd>ErrorLog<cr>", "📜 Журнал ошибок Neovim (алиас)" },
   }
   for _, m in ipairs(mappings) do
     vim.keymap.set("n", m[1], m[2], { desc = m[3], silent = true })

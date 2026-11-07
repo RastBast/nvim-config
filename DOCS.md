@@ -3229,8 +3229,8 @@ Neovim, чата Avante и запросы к внешним ИИ с реальн
 
 | Клавиша / команда | Что делает |
 |---|---|
-| `<leader>xe` или `<leader>Hxe` (`:ErrorLast10` / `:Errors10`) | Показывает **последние 10 ошибок Neovim** за текущий сеанс (подряд идущие дубли склеиваются с пометкой `×N`) |
-| `<leader>xj` или `<leader>xg`, `<leader>Hxj` (`:ErrorLog`) | Открывает **полный журнал ошибок Neovim** за сеанс (включая стектрейсы Lua, ошибки `vim.notify`, `v:errmsg`, Noice и `:messages`) |
+| `<leader>xe` (`:ErrorLast10` / `:Errors10`) | Показывает **последние 10 ошибок Neovim** за текущий сеанс (подряд идущие дубли склеиваются с пометкой `×N`) |
+| `<leader>xj` или `<leader>xg` (`:ErrorLog`) | Открывает **полный журнал ошибок Neovim** за сеанс (включая стектрейсы Lua, ошибки `vim.notify`, `v:errmsg`, Noice и `:messages`) |
 | `:ErrorClear` | Очищает накопленный сеансовый журнал ошибок |
 
 Внутри окна просмотра: **`Enter` / `gf`** открывает точный `файл:строка` из стектрейса под курсором, **`a`** отправляет ошибку на разбор через ИИ (`config.ai_api`), **`Tab`** переключает **10 ошибок ↔ полный журнал**, **`y`** копирует ошибки в буфер обмена `+`, **`c`** очищает список, **`r`** обновляет, **`q` / `Esc`** закрывает. В строке состояния Lualine также отображается компактный индикатор **`❗N`** (скрыт при `0`), клик по которому открывает `:ErrorLast10`.
@@ -3243,19 +3243,38 @@ Neovim, чата Avante и запросы к внешним ИИ с реальн
 * Перед запуском `lazy.nvim` автоматически очищаются осиротевшие git-блокировки `.git/index.lock` (и `HEAD.lock` / `shallow.lock`) в `~/.local/share/nvim/lazy/*/.git/`, если в этих каталогах не работает живой процесс `git` (вручную: `:LazyUnlock` / `:LazyUnlock!`, клавиша `<leader>AX`).
 * Сервер `nil_ls` для Nix больше не устанавливается через Mason (требует `cargo`) и включается в LSP только когда `nil` реально есть в `PATH` (`brew install nil` или `nix profile install nixpkgs#nil`).
 
-### Визуальная архитектура приложения и связи (`<leader>mA*`, `:Arch*`)
+### Визуальная архитектура приложения и связи (`<leader>C*`, `<leader>mA*`, `:Arch*`)
 
 Для наглядного проектирования и просмотра архитектуры и связей компонентов прямо из редактора (одиночная `<leader>a` остаётся за Aerial):
 
 | Клавиша / команда | Что делает |
 |---|---|
-| `<leader>mAb` или `<leader>Haa` (`:ArchBoard`) | Открывает интерактивную 2D/C4-доску архитектуры в Neovim (`l`/`zi` — войти внутрь C4-контейнера `⊞`, `h`/`BS`/`zo` — подняться выше, `Enter`/`gf` — прыжок к коду, `g` — ИИ-схема, `R` — ревью и поиск циклов, `w` — веб-холст) |
-| `<leader>mAw` (`:ArchWeb`) | Запускает локальный браузерный drag-and-drop SVG-холст (`127.0.0.1`) с C4-хлебными крошками, входом в контейнер по двойному клику, кнопками «✨ ИИ-схема» и «🧠 Ревью / Циклы» |
-| `<leader>mAs` (`:ArchScan`) | Умный скан проекта: модули (Go, Lua/Neovim, TS/JS, Python), контракты `.proto` (gRPC), OpenAPI/Swagger, SQL-миграции (`CREATE TABLE` + `REFERENCES` + запросы `SQL: <table>`), `docker-compose.yml` и активный LSP |
-| `<leader>mAl` (`:ArchLspScan`) | Подтягивает символы и интерфейсы из активных LSP-клиентов (`workspace/symbol`) в контракты узлов |
-| `<leader>mAd` (`:ArchAiDraft`) | Генерирует или дорабатывает схему `architecture.json` по текстовому описанию через выбранный ИИ-провайдер (`<leader>Ap`) |
-| `<leader>mAr` (`:ArchAiReview`) | Ищет циклические зависимости (`A ──▶ B ──▶ A`), нарушения слоёв и узкие места + запрашивает архитектурное ревью у ИИ |
-| `<leader>mAn` / `<leader>mAc` (`:ArchAddNode` / `:ArchConnect`) | Быстро добавить компонент или протянуть связь (`sync` / `async` / `data`) |
-| `<leader>mAm` (`:ArchMermaid`) | Экспортирует `docs/architecture.mmd` и `docs/architecture.md` с цветной Mermaid-диаграммой и каталогом модулей |
-| `<leader>mAj` / `<leader>mAx` (`:ArchJson` / `:ArchWebStop`) | Открыть `architecture.json` / остановить локальный веб-сервер |
+| `<leader>Cb` или `<leader>mAb` (`:ArchBoard`) | Открывает интерактивную 2D/C4-доску архитектуры в Neovim (`l`/`zi` — войти внутрь C4-контейнера `⊞`, `h`/`BS`/`zo` — подняться выше, `Enter`/`gf` — прыжок к коду, `g` — ИИ-схема, `R` — ревью и поиск циклов, `w` — веб-холст) |
+| `<leader>Cf` (`:ArchFocusFile`) | Находит текущий открытый файл на C4-доске архитектуры и раскрывает его контейнер |
+| `<leader>Cp` (`:ArchMenu`) | Быстрое меню всех действий архитектуры |
+| `<leader>Cw` или `<leader>mAw` (`:ArchWeb`) | Запускает локальный браузерный drag-and-drop SVG-холст (`127.0.0.1`) с C4-хлебными крошками, входом в контейнер по двойному клику, кнопками «✨ ИИ-схема» и «🧠 Ревью / Циклы» |
+| `<leader>Cs` или `<leader>mAs` (`:ArchScan`) | Умный скан проекта: модули (Go, Lua/Neovim, TS/JS, Python), контракты `.proto` (gRPC), OpenAPI/Swagger, SQL-миграции (`CREATE TABLE` + `REFERENCES` + запросы `SQL: <table>`), `docker-compose.yml` и активный LSP |
+| `<leader>Cl` или `<leader>mAl` (`:ArchLspScan`) | Подтягивает символы и интерфейсы из активных LSP-клиентов (`workspace/symbol`) в контракты узлов |
+| `<leader>Cd` или `<leader>mAd` (`:ArchAiDraft`) | Генерирует или дорабатывает схему `architecture.json` по текстовому описанию через выбранный ИИ-провайдер (`<leader>Ap`) |
+| `<leader>Cr` или `<leader>mAr` (`:ArchAiReview`) | Ищет циклические зависимости (`A ──▶ B ──▶ A`), нарушения слоёв и узкие места + запрашивает архитектурное ревью у ИИ |
+| `<leader>Cn` / `<leader>Cc` (`:ArchAddNode` / `:ArchConnect`) | Быстро добавить компонент или протянуть связь (`sync` / `async` / `data`) |
+| `<leader>Cm` (`:ArchMermaid`) | Экспортирует `docs/architecture.mmd` и `docs/architecture.md` с цветной Mermaid-диаграммой и каталогом модулей |
+| `<leader>Cj` / `<leader>Cx` (`:ArchJson` / `:ArchWebStop`) | Открыть `architecture.json` / остановить локальный веб-сервер |
+
+### Панель `<leader>` (Пробел) в 3 столбика без дублирующего `<leader>H`
+
+Панель `which-key` при нажатии **Пробела** (`<leader>`) и **все вложенные отделы** отображаются строго в **3 столбика** (`layout.width = { min = 0.27, max = 0.30 }`, `spacing = 2`, `win.width = 0.96`). Дублирующий отдел `<leader>H` («Главное меню») полностью убран, а все его разделы и кнопки перенесены напрямую в основной `<leader>`:
+
+| Отдел `<leader>` | Что внутри |
+|---|---|
+| **`<leader>V`** (`🌿 Git · Diffview · Конфликты`) | `Vs` stage hunk · `Vu` undo hunk · `Vb` автор строки · `Vh` preview hunk · `Vd` diff файла · `Vl` blame строки · `Vg` LazyGit · `Vv`/`Vf`/`Vq` Diffview · `Vm*` мерж-конфликты (`Vmo`, `Vmt`, `Vmb`, `Vm0`, `Vmn`, `Vmp`, `Vml`) |
+| **`<leader>i`** (`☸ Инфра: K8s · Docker · Kafka`) | `ik*` Kubernetes (`ikk` k9s, `ikp` pods, `ikc` contexts) · `id*` Docker (`idd` lazydocker, `idp` ps, `idi` images) · `ia*` Kafka (`iak` ktea, `iat` topics, `iag` groups, `iab` brokers) |
+| **`<leader>L`** (`🔌 Плагины и LSP`) | `Ll` `:Lazy` · `Ls` `:Lazy sync` · `Lu` `:LazyUnlock` · `Lm` `:Mason` · `Li` `:LspInfo` · `Lc` `:ConformInfo` · `Lh` `:checkhealth` |
+| **`<leader>l`** (`🧰 Утилиты · HUD · Огонёк · RU`) | `lh` плашка HUD · `ld` диагностика HUD · `li`/`lo` IP · `lc`/`lt`/`l2`/`l1`/`lz` часы · `lk`/`la`/`lA`/`lg`/`lb` огонёк коммитов · `lr`/`lK`/`lD`/`ln` русский перевод · `le` `:EnvCheck` · `lm` `:Matrix` |
+| **`<leader>f`** (`🔍 Поиск и файлы`) | Дополнен `fw` (поиск слова под курсором), `fm` (метки `marks`) и `fF` (найти/создать файл в дереве) |
+| **`<leader>d`** (`🗄 Отладка · БД · Docker`) | Дополнен `da` (добавить БД), `df` (найти БД), `de` (выполнить SQL `:%DB`), `dg` (DAP continue), `ds` (step into), `do` (step over) |
+| **`<leader>g`** (`🐹 Go и LazyGit`) | Дополнен `gs` (формочка struct), `gf` (поля struct), `gj` (json-теги), `ge` (`if err`), `gF` (`GoFillStruct`), `gu` (`JSON → struct`), `gI` (`GoImpl`) |
+| **`<leader>A`** (`🤖 AI · Codeium · .txt · Git-Diff`) | Включает Codeium (`AG`, `AK`, `Ai`), скрытие размышлений (`Ah`), `.txt` + Git-Diff (`AF`, `AT`, `AD`), Avante (`Aa`, `Ag`, `Ao`, `Am`, `Ak`) и CodeCompanion (`Ac`, `AA`, `Av`, `AM`) |
+| **`<leader>u` / `<leader>o` / `<leader>t` / `<leader>x` / `<leader>n` / `<leader>k` / `<leader>y` / `<leader>r` / `<leader>U`** | Разворот окна `um`/`uM`, поиск/создание Obsidian `os`/`on`, следующий тест `tn`, символы/TODO Trouble `xs`/`xt`, сброс подсветки `nh`, шпаргалки `kc`/`kl`, macOS `ym`/`yk`, переименование файла `rf`, Discordo `UD` |
+
 

@@ -6,7 +6,7 @@
 -- gstr — динамический: при раскрытии берёт ближайший struct над курсором
 -- и разворачивается в «формочку» со всеми полями и нулевыми значениями,
 -- курсор прыгает по полям (<Tab>/<S-Tab>). Выбор любого struct'а —
--- <leader>HGS (пикер), автодополнение полей — <leader>HGf.
+-- <leader>gs (пикер), автодополнение полей — <leader>gf.
 local M = {}
 
 function M.register()
@@ -21,7 +21,7 @@ function M.register()
     local ge = require("config.go_extras")
     local name = ge.nearest_struct()
     if not name then
-      return sn(nil, { t("// struct не найден: <leader>HGS или проверь парсер go") })
+      return sn(nil, { t("// struct не найден: <leader>gs или проверь парсер go") })
     end
     local fields = ge.fields_of(name)
     if #fields == 0 then

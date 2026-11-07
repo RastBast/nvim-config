@@ -338,17 +338,17 @@ def main():
             all(k in maps for k in (
                 "<leader>Cb", "<leader>Cf", "<leader>Cp", "<leader>Cw", "<leader>Cs", "<leader>Cl",
                 "<leader>Cd", "<leader>Cr", "<leader>Cn", "<leader>Cc", "<leader>Cm", "<leader>Cj", "<leader>Cx",
-                "<leader>HCb", "<leader>HCf", "<leader>HCw", "<leader>mAb", "<leader>Haa",
-            )),
-            "отдельный раздел <leader>C*, зеркало <leader>HC* и алиасы <leader>mA* зарегистрированы",
+                "<leader>mAb",
+            )) and "<leader>HCb" not in maps and "<leader>Haa" not in maps,
+            "отдельный раздел <leader>C* и алиасы <leader>mA* зарегистрированы, дубли <leader>H* убраны",
         )
         check("<leader>a" not in maps, "одиночная клавиша <leader>a НЕ затронута (сохранена за Aerial)")
 
         wk_src = open(os.path.join(ROOT, "lua", "plugins", "which-key.lua"), encoding="utf-8").read()
         check(
             '{ "<leader>C", group = "🏗️ Архитектура C4 и связи"' in wk_src
-            and '{ "<leader>HC", group = "🏗️ Архитектура C4 и связи"' in wk_src,
-            "which-key.lua содержит отдельный раздел <leader>C и зеркало <leader>HC для архитектуры",
+            and '"<leader>H' not in wk_src,
+            "which-key.lua содержит отдельный раздел <leader>C и не содержит убранного <leader>H",
         )
         check(
             "table orders" in lua.eval("FOCUS_BOARD_TEXT") and "PostgreSQL" in lua.eval("FOCUS_BOARD_TEXT"),

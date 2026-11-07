@@ -49,7 +49,7 @@ return {
         desc = "🖼 Найти картинку в проекте",
       },
       -- Git-клавиши здесь намеренно не объявляем: <leader>g* занят
-      -- lazygit/gitsigns/go.nvim. Blame строки — <leader>Hgb (gitsigns).
+      -- lazygit/gitsigns/go.nvim. Blame строки — <leader>Vb (gitsigns).
     },
   },
 }

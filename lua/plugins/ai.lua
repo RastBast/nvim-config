@@ -36,12 +36,12 @@ return {
       "CodeCompanionCodeReview",
     },
     keys = {
-      { "<leader>Hat", "<cmd>CodeCompanionChat<cr>", desc = "💬 Чат с ИИ (выбранный провайдер)", mode = { "n", "v" } },
-      { "<leader>Hai", "<cmd>CodeCompanionActions<cr>", desc = "🛠 Действия AI", mode = { "n", "v" } },
+      { "<leader>Ac", "<cmd>CodeCompanionChat<cr>", desc = "💬 CodeCompanion: чат с ИИ", mode = { "n", "v" } },
+      { "<leader>AA", "<cmd>CodeCompanionActions<cr>", desc = "🛠 CodeCompanion: меню действий AI", mode = { "n", "v" } },
       -- Строковый rhs, а не <cmd>: в visual Vim дописывает '<,'> и команда
       -- получает именно выделение. С <cmd> range пустой → уходила одна строка.
-      { "<leader>Hae", ":CodeCompanion<cr>", desc = "📤 Отправить выделение ИИ", mode = { "n", "v" } },
-      { "<leader>Hac", "<cmd>CodeCompanionCmd<cr>", desc = "✨ Команда в CodeCompanion", mode = { "n", "v" } },
+      { "<leader>Av", ":CodeCompanion<cr>", desc = "📤 CodeCompanion: отправить выделение ИИ", mode = { "n", "v" } },
+      { "<leader>AM", "<cmd>CodeCompanionCmd<cr>", desc = "✨ CodeCompanion: inline-команда", mode = { "n", "v" } },
     },
     opts = function()
       local cc = AI.cc_adapter()

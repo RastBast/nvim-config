@@ -512,8 +512,7 @@ end
 -- ========================================================================== --
 --                              КЛАВИШИ / КОМАНДЫ
 -- ========================================================================== --
--- <leader>Hu* — группа «🎨 Визуал и UI» в which-key.lua; us/ur/uz/um/up/ua/ut/uP
--- там уже заняты, взяты свободные h/d/i/c.
+-- <leader>l* — отдел «🧰 Утилиты · HUD · Огонёк · RU» в which-key.lua.
 
 local ip_cycle = { lan = "public", public = "both", both = "off", off = "lan" }
 
@@ -540,24 +539,24 @@ end
 
 function H.keymaps()
   local map = vim.keymap.set
-  map("n", "<leader>Huh", function()
+  map("n", "<leader>lh", function()
     H.render()
     vim.api.nvim_echo({ { "🕐 hud: " .. (H.opts.enabled and "показан" or "скрыт"), "Normal" } }, false, {})
   end, { desc = "🕐 HUD: плашка в углу (вкл/выкл)" })
-  map("n", "<leader>Hud", H.debug, { desc = "🕐 HUD: что он видит (диагностика)" })
-  map("n", "<leader>Hui", function()
+  map("n", "<leader>ld", H.debug, { desc = "🕐 HUD: что он видит (диагностика)" })
+  map("n", "<leader>li", function()
     H.opts.ip_mode = ip_cycle[H.opts.ip_mode] or "lan"
     H.read_public_ip()
     H.render()
     vim.api.nvim_echo({ { "🌐 ip: " .. H.opts.ip_mode, "Normal" } }, false, {})
   end, { desc = "🌐 HUD: какой IP (lan → public → both → off)" })
-  map("n", "<leader>Huo", H.toggle_ip, { desc = "🙈 HUD: IP в углу — скрыть/показать" })
-  map("n", "<leader>Huc", function()
+  map("n", "<leader>lo", H.toggle_ip, { desc = "🙈 HUD: IP в углу — скрыть/показать" })
+  map("n", "<leader>lc", function()
     H.opts.clock = (H.opts.clock == 12) and 24 or 12
     H.render()
     vim.api.nvim_echo({ { ("🕐 часы %d-часовые"):format(H.opts.clock), "Normal" } }, false, {})
   end, { desc = "🕐 HUD: 12/24-часовой формат" })
-  map("n", "<leader>Huk", function()
+  map("n", "<leader>lk", function()
     local ok, streak = pcall(require, "config.streak")
     if ok then vim.api.nvim_echo({ { streak.report(), "Normal" } }, true, {}) end
   end, { desc = "🔥 HUD: огонёк за коммиты (:Streak)" })

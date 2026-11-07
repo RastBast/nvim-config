@@ -15,7 +15,7 @@
 --   <leader>Cm — экспорт в Mermaid + Markdown (:ArchMermaid)
 --   <leader>Cj — открыть docs/architecture.json (:ArchJson)
 --   <leader>Cx — остановить локальный сервер веб-холста (:ArchWebStop)
--- Также сохранены зеркала в главном меню (<leader>HC* и <leader>Haa) и <leader>mA*.
+-- Также сохранены совместимые алиасы <leader>mA*.
 local M = {}
 
 local setup_done = false
@@ -279,8 +279,7 @@ function M.setup()
   end
 
   -- 1) ОТДЕЛЬНЫЙ РАЗДЕЛ ЧЕРЕЗ LEADER: <leader>C («🏗️ Архитектура C4 и связи»)
-  -- 2) Зеркало в главном меню: <leader>HC* (и быстрый вход <leader>Haa)
-  -- 3) Совместимые алиасы: <leader>mA*
+  -- 2) Совместимые алиасы: <leader>mA*
   local actions = {
     { suffix = "b", cmd = "<cmd>ArchBoard<cr>",     desc = "🏗️ C4-доска архитектуры в Neovim (:ArchBoard)" },
     { suffix = "w", cmd = "<cmd>ArchWeb<cr>",       desc = "🌐 Браузерный C4-холст drag-and-drop (:ArchWeb)" },
@@ -299,11 +298,8 @@ function M.setup()
 
   for _, a in ipairs(actions) do
     vim.keymap.set("n", "<leader>C" .. a.suffix, a.cmd, { desc = a.desc, silent = true })
-    vim.keymap.set("n", "<leader>HC" .. a.suffix, a.cmd, { desc = a.desc, silent = true })
     vim.keymap.set("n", "<leader>mA" .. a.suffix, a.cmd, { desc = a.desc, silent = true })
   end
-
-  vim.keymap.set("n", "<leader>Haa", "<cmd>ArchBoard<cr>", { desc = "🏗️ Архитектура C4 и связи (:ArchBoard)", silent = true })
 end
 
 return M

@@ -198,7 +198,7 @@ def main():
     maps = lua.eval("MAPS")
     check("<leader>xe" in maps, "макрос 1 (<leader>xe) зарегистрирован для последних 10 ошибок")
     check("<leader>xj" in maps, "макрос 2 (<leader>xj) зарегистрирован для полного журнала ошибок")
-    check("<leader>Hxe" in maps and "<leader>Hxj" in maps, "зеркала <leader>Hxe и <leader>Hxj зарегистрированы в главном меню")
+    check("<leader>Hxe" not in maps and "<leader>Hxj" not in maps, "устаревшие зеркала <leader>Hxe и <leader>Hxj убраны вместе с отделом <leader>H")
     check("<leader>xl" not in maps, "<leader>xl НЕ перезаписан (сохранён за Trouble Location List)")
 
     check(lua.eval("COMP_EMPTY") == "", "индикатор Lualine пустой при 0 ошибок")

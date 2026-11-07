@@ -1,7 +1,7 @@
 -- ========================================================================== --
 --        GO КАК В GOLAND: генерация, рефакторинг, навигация, запуск          --
 -- ========================================================================== --
--- Что умеет (меню <leader>gi или <leader>HGi, :GoIde):
+-- Что умеет (меню <leader>gi, :GoIde):
 --   * сгенерировать тест для функции под курсором  <leader>gT
 --     (gotests, если установлен; иначе шаблон table-driven теста);
 --   * конструктор New<Тип> для struct под курсором  <leader>gC;
@@ -461,7 +461,7 @@ function M.menu()
     { label = "⚠ if err != nil (go.nvim :GoIfErr)", run = call_cmd("GoIfErr") },
     { label = "🔌 Реализовать интерфейс (go.nvim :GoImpl)", run = call_cmd("GoImpl") },
     { label = "🏷 Теги json/yaml у struct (go.nvim :GoAddTag)", run = call_cmd("GoAddTag") },
-    { label = "🧩 Формочка struct (<leader>HGS)", run = function()
+    { label = "🧩 Формочка struct (<leader>gs)", run = function()
         require("config.go_extras").fill_struct()
       end },
     { label = "▶ Запустить пакет: go run . (<leader>gr)", run = M.run_pkg },
@@ -503,7 +503,6 @@ end
 function M.setup()
   local map = vim.keymap.set
   map("n", "<leader>gi", M.menu, { desc = "🧠 Go IDE-меню: тесты, конструкторы, рефакторинг (как Alt+Enter)" })
-  map("n", "<leader>HGi", M.menu, { desc = "🧠 Go IDE-меню (как в GoLand)" })
   map("n", "<leader>gT", M.gen_test, { desc = "🧪 Go: тест для функции под курсором" })
   map("n", "<leader>gC", M.gen_constructor, { desc = "🏗 Go: конструктор New… для struct" })
   map("n", "<leader>gD", M.gen_doc, { desc = "📝 Go: комментарий-документация к функции" })
