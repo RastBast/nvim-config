@@ -302,17 +302,18 @@ OpenAI-совместимому провайдеру. В конфиг уже в�
 `openrouter` в avante: `lua/avante/config.lua:547-553`).
 
 ```fish
-set -Ux OPENROUTER_API_KEY "sk-or-..."        # ключ: https://openrouter.ai/keys
+set -Ux OPENROUTER_API_KEY "ваш_ключ_sk_or"   # ключ: https://openrouter.ai/keys
 set -Ux AVANTE_PROVIDER "openrouter-free"     # чат/агент
 set -Ux AVANTE_SUGGEST_PROVIDER "openrouter-free"   # inline-подсказки
-# модель по желанию (список: https://openrouter.ai/models, бесплатные — ":free")
-set -Ux OPENROUTER_MODEL "openrouter/auto"
+# по умолчанию уже стоит бесплатный роутер openrouter/free (OPENROUTER_MODEL можно не задавать!)
+set -Ux OPENROUTER_MODEL "openrouter/free"
 ```
 
-Затем в nvim: `:AvanteRefresh` (или перезапуск). Вернуться к Gemini:
-`set -e AVANTE_PROVIDER AVANTE_SUGGEST_PROVIDER`.
+Затем в nvim: `<leader>Ao` (`:AvanteOpenRouter`) — переключит чат на OpenRouter,
+а `<leader>Ag` (`:AvanteGemini`) в один клик переключит чат на прямой Google Gemini
+(для отдельного прямого ключа Gemini используйте `AVANTE_GEMINI_API_KEY` или `GEMINI_API_KEY`).
 
-Переключить провайдер можно и без переменных — командой `:AvanteSwitchProvider`.
+Переключить провайдер или модель прямо внутри чата можно клавишами `<leader>Ap` и `<leader>Am` (`:AvanteModels`).
 
 ### Проверить ключ OpenRouter, не тратя токены
 
@@ -331,12 +332,13 @@ for m in d:
         print(m['id'])" | head -20
 ```
 
-`openrouter/auto` роутит на лучшую доступную модель — на аккаунте **без
-кредитов** она может оказаться платной и вернуть 402. Тогда поставь
-конкретную бесплатную из списка выше:
+Роутер `openrouter/free` автоматически выбирает доступную бесплатную модель.
+Если нужна конкретная модель из списка выше (строго латиницей, НЕ шаблон):
 
 ```fish
-set -Ux OPENROUTER_MODEL "автор/модель:free"
+set -Ux OPENROUTER_MODEL "qwen/qwen3-coder:free"
+# или сбросить на дефолтный бесплатный роутер openrouter/free:
+set -Ue OPENROUTER_MODEL
 ```
 
 Бесплатные модели OpenRouter имеют жёсткие лимиты (десятки запросов в день).

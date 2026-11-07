@@ -115,5 +115,61 @@ vim.env.AVANTE_SUGGEST_PROVIDER = 'gemini-flash'
 package.loaded['plugins.avante'] = nil
 av = require('plugins.avante')[1].opts()
 assert(av.auto_suggestions_provider == 'gemini-flash')
+
+-- Проверка защиты от битого шаблона «автор/модель:free» во всех 3 местах (ai_api, avante, CodeCompanion):
+vim.env.OPENROUTER_MODEL = 'автор/модель:free'
+vim.env.OPENROUTER_API_KEY = 'sk-or-real-key-123'
+local resolved_or = AI.resolve('openrouter')
+assert(resolved_or and resolved_or.model == 'openrouter/free')
+assert(AI.ignored_model_envs.OPENROUTER_MODEL == 'автор/модель:free')
+package.loaded['plugins.avante'] = nil
+local av_or = require('plugins.avante')[1].opts()
+assert(av_or.providers.openrouter.model == 'openrouter/free')
+assert(av_or.providers['openrouter-free'].model == 'openrouter/free')
+vim.env.OPENROUTER_MODEL = nil
+
+-- Проверка очистки ~/.local/state/nvim/avante/config.json от «автор/модель:free»:
+local tmp_state = '/tmp/test_avante_bad_config.json'
+local wf = io.open(tmp_state, 'w')
+wf:write('{"last_model":"автор/модель:free","last_provider":"openrouter","save_provider":true}')
+wf:close()
+vim.json.decode = function(raw)
+  if raw:find('автор/модель:free', 1, true) then
+    return { last_model = 'автор/модель:free', last_provider = 'openrouter', save_provider = true }
+  end
+  return { choices = { { message = { content = 'Ответ' } } } }
+end
+vim.json.encode = function(val) SAVED_STATE_TBL = val; return '{"last_model":"' .. tostring(val.last_model) .. '"}' end
+assert(AI.sanitize_avante_state_file(tmp_state) == true)
+assert(SAVED_STATE_TBL and SAVED_STATE_TBL.last_model == 'openrouter/free')
+os.remove(tmp_state)
+
+-- Проверка мгновенного переключения живого чата Avante на прямой Google Gemini (<leader>Ag / :AvanteGemini):
+SWITCHED_TO, OVERRIDDEN_SUGGEST, SIDEBAR_OPENED = nil, nil, false
+package.loaded['avante.utils.environment'] = { cache = { AVANTE_GEMINI_API_KEY = 'stale' } }
+package.loaded['avante.config'] = {
+  providers = { gemini = { model = 'gemini-3.6-flash' }, ['gemini-flash'] = { model = 'gemini-3.6-flash' }, openrouter = { model = 'openrouter/free' } },
+  override = function(o) OVERRIDDEN_SUGGEST = o.auto_suggestions_provider end,
+}
+package.loaded['avante.api'] = {
+  switch_provider = function(name, save) SWITCHED_TO = { name = name, save = save } end,
+}
+package.loaded['avante'] = {
+  is_sidebar_open = function() return false end,
+  open_sidebar = function() SIDEBAR_OPENED = true end,
+}
+vim.env.AVANTE_GEMINI_API_KEY = nil
+vim.env.GEMINI_API_KEY = nil
+vim.env.GOOGLE_API_KEY = nil
+vim.ui = {
+  input = function(_, cb) cb('AIzaDirectGeminiKeyTest123') end,
+  select = function() end,
+}
+AI.use_gemini()
+assert(vim.env.AVANTE_GEMINI_API_KEY == 'AIzaDirectGeminiKeyTest123')
+assert(SWITCHED_TO and SWITCHED_TO.name == 'gemini' and SWITCHED_TO.save == true)
+assert(OVERRIDDEN_SUGGEST == 'gemini-flash')
+assert(SIDEBAR_OPENED == true)
+assert(next(package.loaded['avante.utils.environment'].cache) == nil)
 ''')
-print('OK: AiAsk, ошибки, ключ через stdin, адаптеры и выбор провайдера подсказок')
+print('OK: AiAsk, ошибки, ключ через stdin, защита от автор/модель:free и переключение чата Avante на прямой Gemini')

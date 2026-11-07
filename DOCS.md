@@ -22,7 +22,9 @@
 | `<leader>AE` | Диагностика PATH и наличия библиотеки avante. |
 | `<leader>AU` | Повторить восстановление avante. |
 | `<leader>AN` | Проверить сеть выбранного ИИ без отправки ключа и текста. |
-| `<leader>Ap` / `<leader>Aq` | Выбрать ИИ на текущую сессию / задать вопрос. |
+| `<leader>Ap` / `<leader>Aq` | Выбрать ИИ (сразу переключает и открытый чат Avante) / задать вопрос. |
+| `<leader>Ag` / `<leader>Ao` | Мгновенно переключить чат Avante на **прямой Google Gemini** (`:AvanteGemini`) / **OpenRouter** (`:AvanteOpenRouter`). |
+| `<leader>Am` / `<leader>Ak` | Выбрать модель в чате Avante (`:AvanteModels`) / вставить API-ключ на сеанс (`:AvanteKey`). |
 | `<leader>Aa` / `<leader>Hat` | Чат Avante / чат CodeCompanion. |
 
 Подсказки показывает только подключённый LSP, поддерживающий inlay hints;

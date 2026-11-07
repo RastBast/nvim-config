@@ -1,7 +1,11 @@
 -- Группа 10: ИИ-точка входа (Groq и др.) и GoLand-функции Go (lua/config/go_ide.lua).
 -- Поля: { lhs, mode (по умолч. "n"), name, doc }
 return {
-  { lhs = "<leader>Ap", name = "ИИ: выбрать провайдера", doc = "Меню ИИ-провайдеров (Groq, Gemini, OpenAI, OpenRouter, Mistral, DeepSeek, Kimi, Ollama, свой сервис). Выбор действует на перевод K, :AiAsk и :AiProvider; ещё не загруженные чаты используют этот выбор; уже открытые не переключаются. Выбор на сессию не сохраняется, постоянно: AI_PROVIDER. Ключи — только из переменных окружения." },
+  { lhs = "<leader>Ap", name = "ИИ: выбрать провайдера", doc = "Меню ИИ-провайдеров (Groq, Gemini, OpenAI, OpenRouter, Mistral, DeepSeek, Kimi, Ollama, свой сервис). Мгновенно переключает И открытый чат Avante, И :AiAsk / перевод K (:AiProvider)." },
+  { lhs = "<leader>Ag", name = "Чат Avante → прямой Gemini", doc = "Мгновенно переключает открытый чат Avante на прямой Google Gemini (:AvanteGemini). Если ключ AVANTE_GEMINI_API_KEY / GEMINI_API_KEY ещё не задан — предложит вставить его прямо на сеанс." },
+  { lhs = "<leader>Ao", name = "Чат Avante → OpenRouter", doc = "Мгновенно переключает открытый чат Avante на OpenRouter (:AvanteOpenRouter) с защитой от битых шаблонов моделей." },
+  { lhs = "<leader>Am", name = "Чат Avante: выбрать модель", doc = "Открывает выбор модели текущего провайдера прямо в чате Avante (:AvanteModels: gemini-3.6-flash, gemini-2.5-pro, openrouter/free и др.)." },
+  { lhs = "<leader>Ak", name = "ИИ: задать ключ на сеанс", doc = "Позволяет вставить или обновить API-ключ любого ИИ-провайдера в память текущего сеанса Neovim без перезапуска (:AvanteKey)." },
   { lhs = "<leader>AN", name = "ИИ: проверить сеть", doc = "Без ключа и текста проверяет доступность /models выбранного ИИ. HTTP-ответ не гарантирует правильность ключа и модели. Ошибки указывают на DNS, VPN или прокси." },
   { lhs = "<leader>Aq", name = "ИИ: быстрый вопрос", doc = "Спрашивает выбранный ИИ (то же, что :AiAsk): вопрос вводится в строке, ответ открывается в окне (q или Esc — закрыть)." },
   { lhs = "<leader>gi", name = "Go IDE: меню", doc = "Меню функций в духе GoLand (Alt+Enter): тест, конструктор, документация, файл↔тест, импорты, if err, интерфейсы, теги, запуск пакета, references, rename, code action. Работает только в Go-файлах." },
