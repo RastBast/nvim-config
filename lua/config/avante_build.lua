@@ -4,6 +4,8 @@
 -- СИМПТОМ:
 --   * «Make sure to build avante (missing avante_templates)» в чате / ModeChanged / WinEnter
 --   * «Failed to load avante_repo_map»
+--   * на macOS (Darwin): «dlopen(.../avante_templates.so): Library not loaded:
+--     /nix/store/...-libiconv-.../lib/libiconv.2.dylib (no such file)»
 --
 -- ПРИЧИНЫ:
 --   1. build.sh из репозитория avante при отсутствии тегов тихо выходит с кодом 0;
@@ -12,7 +14,17 @@
 --      после фоновой распаковки `.so` без сброса кэша и `package.cpath`
 --      вызов `require("avante_templates")` не видел только что скачанные файлы;
 --   4. нужно проверять ВСЕ 4 нативные библиотеки релиза (`avante_templates`,
---      `avante_tokenizers`, `avante_repo_map`, `avante_html2md`), а не только одну.
+--      `avante_tokenizers`, `avante_repo_map`, `avante_html2md`), а не только одну;
+--   5. апстрим avante-corp/avante.nvim собирает релизные `.so` для macOS внутри
+--      `nix develop .#ci`, из-за чего в Mach-O зашивается путь вида
+--      `/nix/store/<hash>-libiconv-115.100.1/lib/libiconv.2.dylib`. На обычном
+--      Mac без этого Nix-пути `dlopen` падает, хотя системная
+--      `/usr/lib/libiconv.2.dylib` всегда есть в macOS dyld shared cache.
+--      Поэтому на Darwin мы автоматически переписываем отсутствующие пути
+--      `/nix/store/...` на системные (`/usr/lib/...` / Homebrew) через
+--      `install_name_tool` во временную копию (новый inode для Apple Silicon
+--      UBC-кэша), переподписываем `codesign --force --sign -` и атомарно
+--      заменяем `.so`.
 --
 -- Тег должен совпадать с `tag = ...` в lua/plugins/avante.lua (проверяет
 -- tests/avante_build_test.py).
@@ -33,11 +45,40 @@ M.LIBRARIES = {
   { name = "avante_html2md", exports = { "fetch_md", "html2md" } },
 }
 
+-- Префиксы стандартных библиотек macOS, живущих в `/usr/lib/` (dyld shared cache;
+-- начиная с macOS 11 Big Sur файлов на диске нет, но `dlopen("/usr/lib/...")` работает штатно).
+M.MACOS_SYSTEM_DYLIB_PREFIXES = {
+  "libiconv.",
+  "libcharset.",
+  "libSystem.",
+  "libc++.",
+  "libc++abi.",
+  "libobjc.",
+  "libz.",
+  "libbz2.",
+  "libcompression.",
+  "libresolv.",
+  "libcurl.",
+  "libsqlite3.",
+  "libxml2.",
+  "liblzma.",
+  "libedit.",
+  "libncurses.",
+  "libexpat.",
+  "libffi.",
+}
+
+M.darwin_patched_count = 0
+
 local OS_NAMES = { Darwin = "darwin", Linux = "linux" }
 local ARCHES = { x86_64 = "x86_64", amd64 = "x86_64", arm64 = "aarch64", aarch64 = "aarch64" }
 
 local function lib_ext()
   return vim.fn.has("win32") == 1 and "dll" or "so"
+end
+
+local function has(cmd)
+  return vim.fn.executable(cmd) == 1
 end
 
 --- Имя архива релиза для платформы или nil, если платформы нет в списке.
@@ -105,6 +146,217 @@ function M.refresh_loader(dir)
   end
 end
 
+--- Подобрать системный / Homebrew путь на macOS взамен отсутствующего `/nix/store/...`.
+---@param dep string путь из `otool -L`
+---@param file_exists? fun(path: string): boolean
+---@return string
+function M.resolve_macos_dylib(dep, file_exists)
+  local exists = file_exists or function(p)
+    return vim.uv.fs_stat(p) ~= nil
+  end
+  local fw = dep:match("/Library/Frameworks/(.+)$")
+  if fw then
+    if exists("/Library/Frameworks/" .. fw) then
+      return "/Library/Frameworks/" .. fw
+    end
+    return "/System/Library/Frameworks/" .. fw
+  end
+
+  local base = dep:match("([^/]+)$") or dep
+  for _, prefix in ipairs(M.MACOS_SYSTEM_DYLIB_PREFIXES) do
+    if base:sub(1, #prefix) == prefix then
+      return "/usr/lib/" .. base
+    end
+  end
+
+  local home = (vim.env and vim.env.HOME) or ""
+  local candidates = {
+    "/opt/homebrew/lib/" .. base,
+    "/opt/homebrew/opt/openssl@3/lib/" .. base,
+    "/opt/homebrew/opt/libiconv/lib/" .. base,
+    "/usr/local/lib/" .. base,
+    "/usr/local/opt/openssl@3/lib/" .. base,
+    "/usr/local/opt/libiconv/lib/" .. base,
+  }
+  if home ~= "" then
+    candidates[#candidates + 1] = home .. "/.nix-profile/lib/" .. base
+  end
+  candidates[#candidates + 1] = "/nix/var/nix/profiles/default/lib/" .. base
+
+  for _, cand in ipairs(candidates) do
+    if exists(cand) then
+      return cand
+    end
+  end
+  return "/usr/lib/" .. base
+end
+
+--- Разобрать вывод `otool -L <file.so>` и сформировать план патча для `install_name_tool`.
+---@param otool_output string
+---@param lib_name? string
+---@param file_exists? fun(path: string): boolean
+---@return { needs_patch: boolean, new_id: string|nil, changes: { old: string, new: string }[] }
+function M.parse_otool_fixes(otool_output, lib_name, file_exists)
+  local exists = file_exists or function(p)
+    return vim.uv.fs_stat(p) ~= nil
+  end
+  local plan = {
+    needs_patch = false,
+    new_id = nil,
+    changes = {},
+  }
+  local seen = {}
+  for _, line in ipairs(vim.split(otool_output or "", "\n", { plain = true })) do
+    if line:match("^%s+") then
+      local dep = line:match("^%s+(.+)%s+%(compatibility version")
+        or line:match("^%s+(%S+)")
+      if dep and dep:sub(1, 11) == "/nix/store/" and not seen[dep] then
+        seen[dep] = true
+        local base = dep:match("([^/]+)$") or ""
+        local is_self_id = base:match("^libavante_") ~= nil
+          or (lib_name and base:find(lib_name, 1, true) ~= nil)
+        if is_self_id then
+          local short = lib_name or base:gsub("^lib", ""):gsub("%.dylib$", ""):gsub("%.so$", "")
+          plan.new_id = "@rpath/" .. short .. ".so"
+          plan.needs_patch = true
+        elseif not exists(dep) then
+          plan.changes[#plan.changes + 1] = {
+            old = dep,
+            new = M.resolve_macos_dylib(dep, exists),
+          }
+          plan.needs_patch = true
+        end
+      end
+    end
+  end
+  return plan
+end
+
+--- Собрать команду `install_name_tool` по плану `parse_otool_fixes`.
+function M.build_install_name_cmd(plan, target_file)
+  local cmd = { "install_name_tool" }
+  if plan.new_id then
+    cmd[#cmd + 1] = "-id"
+    cmd[#cmd + 1] = plan.new_id
+  end
+  for _, ch in ipairs(plan.changes or {}) do
+    cmd[#cmd + 1] = "-change"
+    cmd[#cmd + 1] = ch.old
+    cmd[#cmd + 1] = ch.new
+  end
+  cmd[#cmd + 1] = target_file
+  return cmd
+end
+
+local function copy_for_patch(src, dst)
+  local uv = vim.uv or vim.loop
+  if uv and type(uv.fs_copyfile) == "function" then
+    local ok = pcall(uv.fs_copyfile, src, dst)
+    if ok then
+      if type(uv.fs_chmod) == "function" then
+        pcall(uv.fs_chmod, dst, 493) -- 0755 (снимает read-only 0555 из Nix-архива)
+      end
+      return true
+    end
+  end
+  local r = io.open(src, "rb")
+  if not r then
+    return false
+  end
+  local data = r:read("*a")
+  r:close()
+  local w = io.open(dst, "wb")
+  if not w then
+    return false
+  end
+  w:write(data)
+  w:close()
+  if uv and type(uv.fs_chmod) == "function" then
+    pcall(uv.fs_chmod, dst, 493)
+  end
+  return true
+end
+
+local function atomic_replace(src, dst)
+  local uv = vim.uv or vim.loop
+  if uv and type(uv.fs_rename) == "function" then
+    local ok, res = pcall(uv.fs_rename, src, dst)
+    if ok and res ~= nil then
+      return true
+    end
+  end
+  local ok_os = os.rename(src, dst)
+  return ok_os == true
+end
+
+local function unlink_quiet(path)
+  local uv = vim.uv or vim.loop
+  if uv and type(uv.fs_unlink) == "function" then
+    pcall(uv.fs_unlink, path)
+    return
+  end
+  os.remove(path)
+end
+
+--- Синхронно пропатчить Mach-O `.so` библиотеки на macOS (Nix `/nix/store/...` → `/usr/lib/...`
+--- + `codesign --force --sign -` на новом inode). Безопасно вызывать в обычном контексте Neovim.
+---@param dir string
+---@return boolean patched_any, string detail
+function M.repair_darwin_libs_sync(dir)
+  local uname = vim.uv.os_uname()
+  if not uname or uname.sysname ~= "Darwin" then
+    return false, "не macOS"
+  end
+  if not has("otool") or not has("install_name_tool") then
+    return false, "нет otool / install_name_tool (установите: xcode-select --install)"
+  end
+  if has("xattr") then
+    pcall(vim.fn.system, { "xattr", "-dr", "com.apple.quarantine", dir .. "/lua" })
+  end
+
+  local patched = 0
+  for _, lib in ipairs(M.LIBRARIES) do
+    local file = M.lib_file(dir, lib.name)
+    if vim.uv.fs_stat(file) ~= nil then
+      local out = vim.fn.system({ "otool", "-L", file })
+      local shell_err = (vim.v and vim.v.shell_error) or 0
+      if shell_err == 0 and type(out) == "string" and out ~= "" then
+        local plan = M.parse_otool_fixes(out, lib.name)
+        if plan.needs_patch then
+          local tmp = file .. ".patched"
+          unlink_quiet(tmp)
+          if not copy_for_patch(file, tmp) then
+            return false, "не удалось создать копию для патча: " .. tmp
+          end
+          local patch_out = vim.fn.system(M.build_install_name_cmd(plan, tmp))
+          if ((vim.v and vim.v.shell_error) or 0) ~= 0 then
+            unlink_quiet(tmp)
+            return false, "install_name_tool (" .. lib.name .. "): " .. vim.trim(tostring(patch_out or ""))
+          end
+          if has("codesign") then
+            local cs_out = vim.fn.system({ "codesign", "--force", "--sign", "-", tmp })
+            if ((vim.v and vim.v.shell_error) or 0) ~= 0 then
+              unlink_quiet(tmp)
+              return false, "codesign (" .. lib.name .. "): " .. vim.trim(tostring(cs_out or ""))
+            end
+          end
+          if not atomic_replace(tmp, file) then
+            unlink_quiet(tmp)
+            return false, "не удалось атомарно обновить " .. file
+          end
+          patched = patched + 1
+        end
+      end
+    end
+  end
+
+  if patched > 0 then
+    M.darwin_patched_count = (M.darwin_patched_count or 0) + patched
+    return true, ("пропатчено библиотек macOS Mach-O: %d"):format(patched)
+  end
+  return false, "патч Mach-O не требовался"
+end
+
 --- Проверить наличие, загрузку через dlopen (`package.loadlib`) и экспорты всех 4 библиотек.
 ---@param dir string
 ---@return boolean, string
@@ -131,12 +383,28 @@ function M.check_all_libs(dir)
   return true, "все 4 нативные библиотеки исправны"
 end
 
---- Полная runtime-готовность: обновляет cpath/loader и проверяет `require()` всех 4 библиотек.
+--- Полная runtime-готовность: обновляет cpath/loader, при необходимости чинит
+--- Nix-пути в Mach-O на macOS и проверяет `require()` всех 4 библиотек.
 ---@param dir string
 ---@return boolean, string
 function M.ensure_runtime(dir)
   M.refresh_loader(dir)
   local ok_files, reason = M.check_all_libs(dir)
+  if not ok_files then
+    local uname = vim.uv.os_uname()
+    local why = tostring(reason or "")
+    if uname and uname.sysname == "Darwin" and (
+      why:find("/nix/store/", 1, true)
+      or why:find("Library not loaded", 1, true)
+      or why:find("code signature", 1, true)
+    ) then
+      local repaired = M.repair_darwin_libs_sync(dir)
+      if repaired then
+        M.refresh_loader(dir)
+        ok_files, reason = M.check_all_libs(dir)
+      end
+    end
+  end
   if not ok_files then
     return false, reason
   end
@@ -167,14 +435,72 @@ local function sys(cmd, opts, cb)
   return ok and result or nil
 end
 
-local function has(cmd)
-  return vim.fn.executable(cmd) == 1
-end
-
 local function tail(text, n)
   local lines = vim.split(vim.trim(text or ""), "\n", { plain = true })
   local from = math.max(1, #lines - (n or 6) + 1)
   return table.concat(vim.list_slice(lines, from), "\n")
+end
+
+--- Асинхронный патч Mach-O после распаковки архива на macOS.
+local function repair_darwin_libs_async(dir, cb)
+  local uname = vim.uv.os_uname()
+  if not uname or uname.sysname ~= "Darwin" or not has("otool") or not has("install_name_tool") then
+    return cb(0)
+  end
+  local patched = 0
+  local function step(idx)
+    local lib = M.LIBRARIES[idx]
+    if not lib then
+      if patched > 0 then
+        M.darwin_patched_count = (M.darwin_patched_count or 0) + patched
+      end
+      return cb(patched)
+    end
+    local file = M.lib_file(dir, lib.name)
+    if vim.uv.fs_stat(file) == nil then
+      return step(idx + 1)
+    end
+    sys({ "otool", "-L", file }, { text = true }, function(ot)
+      if ot.code ~= 0 then
+        return step(idx + 1)
+      end
+      local plan = M.parse_otool_fixes(ot.stdout or "", lib.name)
+      if not plan.needs_patch then
+        return step(idx + 1)
+      end
+      local tmp = file .. ".patched"
+      unlink_quiet(tmp)
+      if not copy_for_patch(file, tmp) then
+        return step(idx + 1)
+      end
+      sys(M.build_install_name_cmd(plan, tmp), { text = true }, function(ir)
+        if ir.code ~= 0 then
+          unlink_quiet(tmp)
+          return step(idx + 1)
+        end
+        local function finalize_tmp()
+          if atomic_replace(tmp, file) then
+            patched = patched + 1
+          else
+            unlink_quiet(tmp)
+          end
+          step(idx + 1)
+        end
+        if has("codesign") then
+          sys({ "codesign", "--force", "--sign", "-", tmp }, { text = true }, function(cs)
+            if cs.code ~= 0 then
+              unlink_quiet(tmp)
+              return step(idx + 1)
+            end
+            finalize_tmp()
+          end)
+        else
+          finalize_tmp()
+        end
+      end)
+    end)
+  end
+  step(1)
 end
 
 --- Получить локальный git HEAD плагина (асинхронно, без сети).
@@ -219,10 +545,23 @@ function M.build(dir, on_done, force)
       return false
     end
     local uname = vim.uv.os_uname()
+    local function run_macho_patch()
+      repair_darwin_libs_async(dir, function(patched)
+        if patched > 0 then
+          finish(true, label .. (" (адаптировано под macOS: %d .so)"):format(patched))
+        else
+          finish(true, label)
+        end
+      end)
+    end
     if uname and uname.sysname == "Darwin" and has("xattr") then
       sys({ "xattr", "-dr", "com.apple.quarantine", dir .. "/lua" }, { text = true }, function()
-        finish(true, label)
+        run_macho_patch()
       end)
+      return true
+    end
+    if uname and uname.sysname == "Darwin" and has("otool") and has("install_name_tool") then
+      run_macho_patch()
       return true
     end
     finish(true, label)

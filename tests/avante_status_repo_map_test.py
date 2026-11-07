@@ -313,10 +313,149 @@ def test_nil_ls_conditional_enable():
     check(lua.eval("HAS_WITH") is True, "при наличии бинарника nil в PATH сервер nil_ls включается в vim.lsp.enable")
 
 
+def test_macos_nix_libiconv_macho_patch():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        lua_dir = os.path.join(tmpdir, "lua")
+        os.makedirs(lua_dir, exist_ok=True)
+        for name in ("avante_templates", "avante_tokenizers", "avante_repo_map", "avante_html2md"):
+            so_path = os.path.join(lua_dir, f"{name}.so")
+            with open(so_path, "wb") as f:
+                f.write(b"UNPATCHED_NIX_MACHO_" + name.encode("utf-8"))
+            os.chmod(so_path, 0o555)  # read-only как после Nix-сборки!
+
+        lua = lupa.LuaRuntime(unpack_returned_tuples=True)
+        g = lua.globals()
+        g.ROOT = ROOT
+        g.DIR = tmpdir
+        lua.execute(
+            r"""
+            package.path = ROOT .. "/lua/?.lua;" .. ROOT .. "/lua/?/init.lua;" .. package.path
+            SYS_CMDS = {}
+            PATCHED_FILES = {}
+
+            vim = {
+              v = { shell_error = 0 },
+              env = { HOME = "/Users/mi6" },
+              trim = function(s) return (tostring(s):gsub("^%s+", ""):gsub("%s+$", "")) end,
+              split = function(s, sep)
+                local out = {}
+                for part in (s .. sep):gmatch("(.-)" .. sep:gsub("%p", "%%%0")) do out[#out + 1] = part end
+                return out
+              end,
+              fn = {
+                has = function() return 0 end,
+                executable = function(bin)
+                  return (bin == "otool" or bin == "install_name_tool" or bin == "codesign" or bin == "xattr") and 1 or 0
+                end,
+                system = function(cmd)
+                  SYS_CMDS[#SYS_CMDS + 1] = table.concat(cmd, " ")
+                  vim.v.shell_error = 0
+                  if cmd[1] == "otool" and cmd[2] == "-L" then
+                    local f = cmd[3]
+                    local base = f:match("([^/]+)%.so$") or "avante_templates"
+                    if PATCHED_FILES[f] then
+                      return f .. ":\n\t@rpath/" .. base .. ".so (compatibility version 0.0.0, current version 0.0.0)\n\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1345.100.2)\n"
+                    end
+                    return f .. ":\n\t/nix/store/0000-" .. base .. "/lib/lib" .. base .. ".dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/nix/store/fgrxz4hr8f71hkhsddbvk8nxadpg67bv-libiconv-115.100.1/lib/libiconv.2.dylib (compatibility version 9.0.0, current version 9.1.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1345.100.2)\n"
+                  elseif cmd[1] == "install_name_tool" then
+                    local target = cmd[#cmd]
+                    -- Проверяем, что патч пишется во временную копию .patched (новый inode), а не поверх read-only файла!
+                    local wf = io.open(target, "wb")
+                    if not wf then
+                      vim.v.shell_error = 1
+                      return "Permission denied"
+                    end
+                    wf:write("PATCHED_MACHO_OK")
+                    wf:close()
+                    return ""
+                  elseif cmd[1] == "codesign" then
+                    return ""
+                  end
+                  return ""
+                end,
+              },
+              uv = {
+                os_uname = function() return { sysname = "Darwin", machine = "arm64" } end,
+                fs_stat = function(p)
+                  local f = io.open(p, "rb")
+                  if f then f:close(); return { type = "file" } end
+                  return nil
+                end,
+                fs_chmod = function(p, mode)
+                  os.execute("chmod " .. string.format("%o", mode) .. " " .. string.format("%q", p))
+                end,
+              },
+              loader = { reset = function() end },
+            }
+
+            local MOCK_EXPORTS = {
+              avante_templates = { initialize = function() end, render = function() end },
+              avante_tokenizers = { from_pretrained = function() end, encode = function() end },
+              avante_repo_map = { stringify_definitions = function() end },
+              avante_html2md = { fetch_md = function() end, html2md = function() end },
+            }
+
+            package.loadlib = function(file, sym)
+              local rf = io.open(file, "rb")
+              local content = rf and rf:read("*a") or ""
+              if rf then rf:close() end
+              if content ~= "PATCHED_MACHO_OK" then
+                return nil, "dlopen(" .. file .. ", 0x0006): Library not loaded: /nix/store/fgrxz4hr8f71hkhsddbvk8nxadpg67bv-libiconv-115.100.1/lib/libiconv.2.dylib"
+              end
+              PATCHED_FILES[file] = true
+              local modname = sym:match("^luaopen_(.+)$")
+              return function() return MOCK_EXPORTS[modname] end
+            end
+
+            -- Подключаем загрузчик из package.preload/searchers для require("avante_*") после патча:
+            table.insert(package.searchers or package.loaders, 1, function(modname)
+              if MOCK_EXPORTS[modname] then
+                local f = DIR .. "/lua/" .. modname .. ".so"
+                local loader, err = package.loadlib(f, "luaopen_" .. modname)
+                if not loader then return "\n\t" .. tostring(err) end
+                return loader
+              end
+            end)
+
+            local B = require("config.avante_build")
+            PLAN = B.parse_otool_fixes(
+              "/Users/mi6/avante_templates.so:\n\t/nix/store/000-avante_templates/lib/libavante_templates.dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/nix/store/fgrxz4hr8f71hkhsddbvk8nxadpg67bv-libiconv-115.100.1/lib/libiconv.2.dylib (compatibility version 9.0.0, current version 9.1.0)\n",
+              "avante_templates",
+              function() return false end
+            )
+            ENSURE_OK, ENSURE_MSG = B.ensure_runtime(DIR)
+            PATCHED_COUNT = B.darwin_patched_count
+            """
+        )
+
+        check(
+            lua.eval("PLAN.new_id") == "@rpath/avante_templates.so"
+            and lua.eval("#PLAN.changes") == 1
+            and lua.eval("PLAN.changes[1].new") == "/usr/lib/libiconv.2.dylib",
+            "parse_otool_fixes заменяет /nix/store/.../libiconv.2.dylib → /usr/lib/libiconv.2.dylib и ставит @rpath id",
+        )
+        check(
+            lua.eval("ENSURE_OK") is True and lua.eval("PATCHED_COUNT") == 4,
+            "ensure_runtime на macOS автоматически патчит и переподписывает все 4 .so (включая read-only 0555) при ошибке /nix/store/.../libiconv.2.dylib",
+        )
+        used_codesign = lua.eval(
+            r"""(function()
+              local cs, it = 0, 0
+              for _, c in ipairs(SYS_CMDS) do
+                if c:find("^install_name_tool ") and c:find("%.so%.patched$") then it = it + 1 end
+                if c:find("^codesign %-%-force %-%-sign %- ") and c:find("%.so%.patched$") then cs = cs + 1 end
+              end
+              return it == 4 and cs == 4
+            end)()"""
+        )
+        check(used_codesign is True, "патч Mach-O идёт через .so.patched (новый inode) + codesign --force --sign - для Apple Silicon")
+
+
 if __name__ == "__main__":
     test_lockfile_matches_tag()
     test_avante_commands_and_build()
     test_repo_map_and_sidebar_guards()
     test_nil_ls_conditional_enable()
+    test_macos_nix_libiconv_macho_patch()
     print(f"\nпроверок: {checked}, провалов: {failed}")
     sys.exit(1 if failed else 0)

@@ -360,6 +360,9 @@ return {
             repo_guard.invalid_cache_count or 0
           )
         end
+        if type(B.darwin_patched_count) == "number" and B.darwin_patched_count > 0 then
+          lines[#lines + 1] = ("- **macOS Mach-O (Nix → dyld):** адаптировано библиотек: %d"):format(B.darwin_patched_count)
+        end
         local ok_ai, AI = pcall(require, "config.ai_api")
         if ok_ai and type(AI.active_id) == "function" then
           lines[#lines + 1] = "- **ИИ-провайдер по умолчанию:** `" .. tostring(AI.active_id() or "gemini") .. "` (`:AiStatus`)"
@@ -395,11 +398,20 @@ return {
           vim.notify("avante: сборка " .. B.TAG .. "…", vim.log.levels.INFO)
           echo_msg("avante: скачиваю/собираю библиотеки " .. B.TAG .. "…", "None")
         end
-        -- Удаляем только непригодную библиотеку: иначе неудачный make может
-        -- оставить старый файл и создать ложное впечатление успешной сборки.
+        -- Удаляем непригодные библиотеки перед пересборкой (создаст новые inode без старого кэша).
         local loadable = available()
-        if not loadable and B.is_built(plugin_dir()) then vim.fn.delete(B.lib_file(plugin_dir())) end
-        local build_arg = (rebuild_opts and rebuild_opts.source) and { force = true, source = true } or (not loadable or (rebuild_opts and rebuild_opts.force) or false)
+        if not loadable then
+          if type(B.LIBRARIES) == "table" then
+            for _, lib in ipairs(B.LIBRARIES) do
+              local f = B.lib_file(plugin_dir(), lib.name)
+              if vim.uv.fs_stat(f) then vim.fn.delete(f) end
+            end
+          elseif B.is_built(plugin_dir()) then
+            vim.fn.delete(B.lib_file(plugin_dir()))
+          end
+        end
+        local want_source = type(rebuild_opts) == "table" and rebuild_opts.source == true
+        local build_arg = want_source and { force = true, source = true } or (not loadable or (rebuild_opts and rebuild_opts.force) or false)
         B.build(plugin_dir(), function(ok, msg)
           running = false
           if ok then
@@ -407,6 +419,11 @@ return {
             if ready then
               vim.notify("avante готов: " .. msg, vim.log.levels.INFO)
               echo_msg("✅ avante готов: " .. msg, "MoreMsg")
+            elseif not want_source and vim.fn.executable("cargo") == 1 and vim.fn.executable("make") == 1 then
+              vim.notify("avante: готовый бинарник не загрузился (" .. tostring(reason) .. "), собираю локально через cargo/make…", vim.log.levels.WARN)
+              vim.schedule(function()
+                rebuild({ force = true, source = true })
+              end)
             else
               vim.notify("avante: библиотека не загрузилась/ошибка setup: " .. reason .. "\nПроверьте :AvanteStatus и перезапустите Neovim.", vim.log.levels.ERROR)
             end

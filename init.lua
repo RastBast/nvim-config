@@ -9,6 +9,12 @@ require("config.env_path").setup()
 vim.api.nvim_create_user_command("EnvCheck", function() require("config.env_path").check() end, {
   desc = "Показать git/curl/tar и PATH этого nvim",
 })
+vim.api.nvim_create_user_command("LazyUnlock", function(cmd_opts)
+  require("config.env_path").unlock_command(cmd_opts and cmd_opts.bang == true)
+end, {
+  bang = true,
+  desc = "Снять зависшие .git/*.lock в плагинах Lazy (:LazyUnlock! — принудительно)",
+})
 -- Какой переводчик en→ru реально отвечает (Google из РФ без VPN не работает,
 -- тогда должен отвечать MyMemory). Без этого «нет перевода» не диагностировать.
 vim.api.nvim_create_user_command("RuCheck", function() require("config.ru_util").check() end, {
@@ -111,6 +117,10 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
   end
 end
 vim.opt.rtp:prepend(lazypath)
+
+-- Перед стартом lazy.nvim автоматически снимаем осиротевшие `.git/index.lock`
+-- (иначе прерванный :Lazy sync навсегда блокирует обновление плагина).
+require("config.env_path").clean_lazy_git_locks()
 
 -- Загружаем все плагины из папки ~/.config/nvim/lua/plugins/
 require("lazy").setup("plugins", {
@@ -254,6 +264,7 @@ vim.keymap.set("n", "<leader>AE", "<cmd>EnvCheck<cr>", { desc = "Диагнос�
 vim.keymap.set("n", "<leader>AI", "<cmd>AvanteStatus<cr>", { desc = "🩺 Статус Avante и библиотек" })
 vim.keymap.set("n", "<leader>AL", "<cmd>Lazy<cr>", { desc = "Плагины: открыть Lazy" })
 vim.keymap.set("n", "<leader>AU", "<cmd>AvanteRebuild<cr>", { desc = "🔧 Восстановить avante" })
+vim.keymap.set("n", "<leader>AX", "<cmd>LazyUnlock<cr>", { desc = "🔓 Снять git-блокировки Lazy" })
 require("config.inlay").setup() -- inlay hints изначально выключены; <leader>uh
 require("config.go_pro").setup() -- Go как в VS Code/GoLand: gh gL gR gB gc gM gn gS gE gG gp gA gV gH gO gJ
 require("config.tui_tools").setup() -- <leader>U: TUI-утилиты (k9s, iredis, pgcli, lazysql, dive…); :Tui

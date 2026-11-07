@@ -3233,6 +3233,8 @@ Neovim, чата Avante и запросы к внешним ИИ с реальн
 
 * `:AvanteStatus` (или `<leader>AI`) и `:AvanteRebuild` (или `<leader>AU`) регистрируются при старте `init.lua` до `lazy.nvim`, поэтому ошибка `E492: Not an editor command: AvanteStatus` исключена в любом состоянии.
 * При сборке и проверке `avante.nvim` (`v0.4.8`) проверяются **все 4 нативные библиотеки** (`avante_templates`, `avante_tokenizers`, `avante_repo_map`, `avante_html2md`), сбрасывается кеш модулей `lazy.core.cache` / `vim.loader`, а битые файлы `*.repo_map.json` с `null` автоматически очищаются (`lua/config/avante_repo_map.lua`).
+* На **macOS (Darwin)** релизные архивы `avante.nvim` собраны апстримом внутри `nix develop`, поэтому в Mach-O зашивается `/nix/store/...-libiconv-.../lib/libiconv.2.dylib`. Модуль `lua/config/avante_build.lua` автоматически переписывает такие отсутствующие `/nix/store/...` пути на системные (`/usr/lib/libiconv.2.dylib` в macOS dyld shared cache / Homebrew) через `install_name_tool` в новый inode и переподписывает бинарники `codesign --force --sign -` прямо на старте и при распаковке.
+* Перед запуском `lazy.nvim` автоматически очищаются осиротевшие git-блокировки `.git/index.lock` (и `HEAD.lock` / `shallow.lock`) в `~/.local/share/nvim/lazy/*/.git/`, если в этих каталогах не работает живой процесс `git` (вручную: `:LazyUnlock` / `:LazyUnlock!`, клавиша `<leader>AX`).
 * Сервер `nil_ls` для Nix больше не устанавливается через Mason (требует `cargo`) и включается в LSP только когда `nil` реально есть в `PATH` (`brew install nil` или `nix profile install nixpkgs#nil`).
 
 ### Визуальная архитектура приложения и связи (`<leader>mA*`, `:Arch*`)

@@ -485,6 +485,7 @@ N                      n      Предыдущее совпадение (по ц
 <leader>Hxj            n      Журнал ошибок Neovim (:ErrorLog)
 <leader>AI             n      Статус Avante и нативных библиотек (:AvanteStatus)
 <leader>AU             n      Восстановить библиотеки Avante (:AvanteRebuild)
+<leader>AX             n      Снять зависшие .git/*.lock в плагинах Lazy (:LazyUnlock)
 <leader>mAb            n      C4-доска архитектуры в Neovim (:ArchBoard)
 <leader>mAw            n      Браузерный C4-холст архитектуры (:ArchWeb)
 <leader>mAs            n      Умный скан (код + .proto + OpenAPI + SQL) (:ArchScan)
