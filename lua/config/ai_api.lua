@@ -497,27 +497,38 @@ function M.network_check()
 end
 
 --- Один запрос chat/completions. cb(text|nil, причина|nil, провайдер|nil).
---- opts: provider (id), json (bool — JSON-режим), temperature, timeout.
+--- opts: provider (id), model (переопределение модели), max_tokens, stop,
+---       json (bool — JSON-режим), temperature, timeout, silent_cancel.
+--- Возвращает job-хэндл vim.system (или nil), чтобы вызывающий мог отменить запрос (:kill(9)).
 function M.chat(messages, opts, cb)
   opts = opts or {}
   local p, why = M.resolve(opts.provider)
   if not p then
-    return vim.schedule(function()
+    vim.schedule(function()
       cb(nil, why)
     end)
+    return nil
   end
+  local req_model = (opts.model and M.is_valid_model_id(opts.model) and vim.trim(opts.model)) or p.model
   local body = {
-    model = p.model,
+    model = req_model,
     messages = messages,
     temperature = opts.temperature or 0.2,
   }
+  if opts.max_tokens then
+    body.max_tokens = opts.max_tokens
+  end
+  if type(opts.stop) == "table" and #opts.stop > 0 then
+    body.stop = opts.stop
+  end
   if opts.json then
     body.response_format = { type = "json_object" }
   end
   if vim.fn.executable("curl") == 0 then
-    return vim.schedule(function()
+    vim.schedule(function()
       cb(nil, "нет curl")
     end)
+    return nil
   end
   local args = {
     "curl", "-sS", "--max-time", tostring(request_timeout(opts.timeout)),
@@ -528,10 +539,16 @@ function M.chat(messages, opts, cb)
   }
   if p.insecure then args[#args + 1] = "-k" end
   local stdin, config_err = curl_config(p.key, p.proxy)
-  if config_err then return vim.schedule(function() cb(nil, config_err, p) end) end
+  if config_err then
+    vim.schedule(function() cb(nil, config_err, p) end)
+    return nil
+  end
   if stdin then vim.list_extend(args, { "-K", "-" }) end
-  local ok = pcall(vim.system, args, { text = true, stdin = stdin }, function(res)
+  local ok, job = pcall(vim.system, args, { text = true, stdin = stdin }, function(res)
     vim.schedule(function()
+      if opts.silent_cancel and ((res.signal and res.signal ~= 0) or res.code == 137 or res.code == 143) then
+        return
+      end
       if res.code ~= 0 then
         return cb(nil, network_error(res.code, p.id), p)
       end
@@ -558,7 +575,9 @@ function M.chat(messages, opts, cb)
     vim.schedule(function()
       cb(nil, "не удалось запустить curl", p)
     end)
+    return nil
   end
+  return job
 end
 
 local function strip_fence(s)

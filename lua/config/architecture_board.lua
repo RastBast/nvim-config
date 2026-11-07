@@ -524,6 +524,29 @@ function M.set_scope(scope_id)
   M.refresh()
 end
 
+--- Открыть доску архитектуры и сфокусироваться на конкретном компоненте `node_id`
+--- (автоматически переходя внутрь его родительского C4-контейнера, если он вложенный).
+function M.focus_node(node_id, root)
+  M.open(root)
+  if not state.doc or not node_id or node_id == "" then
+    return false
+  end
+  local target = Model.find_node(state.doc, node_id)
+  if not target then
+    return false
+  end
+  state.scope_id = target.parent_id or ""
+  local view = Model.scoped_view(state.doc, state.scope_id)
+  for idx, n in ipairs(view.nodes or {}) do
+    if n.id == target.id then
+      state.selected_idx = idx
+      break
+    end
+  end
+  M.refresh()
+  return true
+end
+
 function M.open(root, scope_id)
   state.root = root or Model.project_root()
   if scope_id ~= nil then

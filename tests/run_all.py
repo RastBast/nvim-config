@@ -35,6 +35,7 @@ SUITES = [
     ("Avante (:AvanteStatus, 4 .so, repo_map, nil_ls)", "avante_status_repo_map_test.py"),
     ("Ошибки Neovim (<leader>xe последние 10, <leader>xj журнал)", "error_history_test.py"),
     ("Визуальная архитектура приложения и связи (:Arch*)", "architecture_test.py"),
+    ("Ghost Text / Inline Suggestions (только Google Gemini)", "ghost_text_test.py"),
 ]
 
 

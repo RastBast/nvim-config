@@ -319,20 +319,41 @@ def main():
               DRAFTED_DOC = drafted
               DRAFTED_ROOT_VIEW = Model.scoped_view(drafted, "")
             end)
+
+            -- Проверяем :ArchFocusFile (<leader>Cf) на файле внутри вложенного C4-контейнера:
+            Model.save_file(paths.json, GO_DOC)
+            vim.api.nvim_buf_get_name = function(_) return TMP .. "/migrations/001_init.sql" end
+            Arch.focus_current_file()
+            FOCUS_BOARD_TEXT = table.concat(BUF_LINES, "\n")
             """
         )
 
         maps = lua.eval("MAPS")
         cmds = lua.eval("CMDS")
         check(
-            all(k in cmds for k in ("ArchBoard", "ArchWeb", "ArchScan", "ArchLspScan", "ArchAiDraft", "ArchAiReview")),
-            "все команды :Arch* (включая ArchLspScan, ArchAiDraft, ArchAiReview) зарегистрированы",
+            all(k in cmds for k in ("ArchBoard", "ArchWeb", "ArchScan", "ArchLspScan", "ArchAiDraft", "ArchAiReview", "ArchFocusFile", "ArchMenu")),
+            "все команды :Arch* (включая ArchFocusFile, ArchMenu, ArchLspScan, ArchAiDraft, ArchAiReview) зарегистрированы",
         )
         check(
-            all(k in maps for k in ("<leader>mAb", "<leader>mAw", "<leader>mAs", "<leader>mAl", "<leader>mAd", "<leader>mAr", "<leader>Haa")),
-            "все клавиши <leader>mA* и <leader>Haa зарегистрированы",
+            all(k in maps for k in (
+                "<leader>Cb", "<leader>Cf", "<leader>Cp", "<leader>Cw", "<leader>Cs", "<leader>Cl",
+                "<leader>Cd", "<leader>Cr", "<leader>Cn", "<leader>Cc", "<leader>Cm", "<leader>Cj", "<leader>Cx",
+                "<leader>HCb", "<leader>HCf", "<leader>HCw", "<leader>mAb", "<leader>Haa",
+            )),
+            "отдельный раздел <leader>C*, зеркало <leader>HC* и алиасы <leader>mA* зарегистрированы",
         )
         check("<leader>a" not in maps, "одиночная клавиша <leader>a НЕ затронута (сохранена за Aerial)")
+
+        wk_src = open(os.path.join(ROOT, "lua", "plugins", "which-key.lua"), encoding="utf-8").read()
+        check(
+            '{ "<leader>C", group = "🏗️ Архитектура C4 и связи"' in wk_src
+            and '{ "<leader>HC", group = "🏗️ Архитектура C4 и связи"' in wk_src,
+            "which-key.lua содержит отдельный раздел <leader>C и зеркало <leader>HC для архитектуры",
+        )
+        check(
+            "table orders" in lua.eval("FOCUS_BOARD_TEXT") and "PostgreSQL" in lua.eval("FOCUS_BOARD_TEXT"),
+            "<leader>Cf (:ArchFocusFile) находит текущий файл на C4-доске и раскрывает его контейнер",
+        )
 
         mmd = lua.eval("MMD")
         md = lua.eval("MD")

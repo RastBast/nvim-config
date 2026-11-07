@@ -23,8 +23,10 @@
 | `<leader>AU` | Повторить восстановление avante. |
 | `<leader>AN` | Проверить сеть выбранного ИИ без отправки ключа и текста. |
 | `<leader>Ap` / `<leader>Aq` | Выбрать ИИ (сразу переключает и открытый чат Avante) / задать вопрос. |
+| `<leader>AG` / `<leader>ui` | **Ghost Text (Inline Suggestions ТОЛЬКО на Gemini):** включено по умолчанию; переключить вкл/выкл (`:GhostTextToggle`). Принять: `<Tab>` / `<M-l>`, слово: `<M-w>`, скрыть: `<C-]>` |
 | `<leader>Ag` / `<leader>Ao` | Мгновенно переключить чат Avante на **прямой Google Gemini** (`:AvanteGemini`) / **OpenRouter** (`:AvanteOpenRouter`). |
 | `<leader>Am` / `<leader>Ak` | Выбрать модель в чате Avante (`:AvanteModels`) / вставить API-ключ на сеанс (`:AvanteKey`). |
+| `<leader>C` (`<leader>Cb`, `<leader>Cw`, `<leader>Cs`…) | **Отдельный раздел «🏗️ Архитектура C4 и связи»:** доска `:ArchBoard`, веб-холст `:ArchWeb`, умный скан `:ArchScan`, поиск текущего файла `:ArchFocusFile` (`<leader>Cf`), меню `:ArchMenu` (`<leader>Cp`). |
 | `<leader>Aa` / `<leader>Hat` | Чат Avante / чат CodeCompanion. |
 
 Подсказки показывает только подключённый LSP, поддерживающий inlay hints;

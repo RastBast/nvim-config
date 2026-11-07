@@ -91,13 +91,16 @@ return {
           ["<CR>"] = cmp.mapping.confirm({ select = true }),
           ["<C-n>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
           ["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
-          -- Прыжки по плейсхолдерам сниппетов + принятие ИИ-подсказки
-          -- (avante/Gemini): меню cmp → сниппеты → ИИ-подсказка → Tab
+          -- Прыжки по плейсхолдерам сниппетов + принятие призрачной ИИ-подсказки
+          -- (Gemini Ghost Text → avante): меню cmp → сниппеты → Ghost Text → Tab
           ["<Tab>"] = cmp.mapping(function(fallback)
+            local ok_gt, gt = pcall(require, "config.ghost_text")
             if cmp.visible() then
               cmp.select_next_item()
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
+            elseif ok_gt and type(gt.is_visible) == "function" and gt.is_visible() then
+              gt.accept()
             elseif avante_suggestion_visible() then
               -- Принимаем напрямую, а не через feedkeys("<Plug>(...)", "n"):
               -- режим "n" запрещает маппинги, и <Plug>-мапа не срабатывала бы.

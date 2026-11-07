@@ -177,11 +177,13 @@ return {
 
       -- ========================= ПОВЕДЕНИЕ ================================ --
       behaviour = {
-        -- inline-подсказки при наборе (Copilot-стиль).
-        -- На бесплатных тарифах подсказка уходит на каждый останов ввода и
-        -- быстро упирается в лимит (429) — отключить без правки файла:
-        --   set -Ux AVANTE_SUGGESTIONS 0
-        auto_suggestions = vim.env.AVANTE_SUGGESTIONS ~= "0",
+        -- Встроенные серые автоподсказки (Ghost Text) вынесены в выделенный модуль
+        -- lua/config/ghost_text.lua, который работает СТРОГО и ТОЛЬКО на Google Gemini
+        -- (включён по умолчанию; переключатель: <leader>AG или <leader>ui).
+        -- Штатный авто-режим avante по умолчанию выключен, чтобы он не отправлял
+        -- подсказки в OpenRouter/Groq и не дублировал Ghost Text (включить при желании:
+        -- set -Ux AVANTE_SUGGESTIONS 1).
+        auto_suggestions = vim.env.AVANTE_SUGGESTIONS == "1",
         -- дифы не применяются сами: сначала показываем, ты подтверждаешь.
         -- Правильное имя опции — auto_apply_diff_after_generation
         -- (avante config.lua, таблица behaviour); auto_apply_diffs не

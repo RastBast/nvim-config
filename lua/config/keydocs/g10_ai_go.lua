@@ -1,7 +1,13 @@
 -- Группа 10: ИИ-точка входа (Groq и др.) и GoLand-функции Go (lua/config/go_ide.lua).
 -- Поля: { lhs, mode (по умолч. "n"), name, doc }
 return {
-  { lhs = "<leader>Ap", name = "ИИ: выбрать провайдера", doc = "Меню ИИ-провайдеров (Groq, Gemini, OpenAI, OpenRouter, Mistral, DeepSeek, Kimi, Ollama, свой сервис). Мгновенно переключает И открытый чат Avante, И :AiAsk / перевод K (:AiProvider)." },
+  { lhs = "<leader>AG", name = "Ghost Text (Gemini): вкл/выкл", doc = "Включает или выключает встроенные призрачные подсказки кода (Inline Suggestions / Ghost Text), которые работают СТРОГО и ТОЛЬКО на Google Gemini (включены по умолчанию; команда :GhostTextToggle)." },
+  { lhs = "<leader>ui", name = "Ghost Text (Gemini): вкл/выкл", doc = "Быстрый переключатель призрачных подсказок кода Gemini рядом с <leader>uh (inlay hints)." },
+  { lhs = "<leader>Ai", name = "Ghost Text (Gemini): подсказать сейчас", doc = "Вручную запрашивает призрачную inline-подсказку кода у Google Gemini (:GhostTextSuggest)." },
+  { lhs = "<M-l>", mode = "i", name = "Ghost Text: принять целиком", doc = "В режиме вставки принимает призрачную подсказку Gemini целиком (также принимается по <Tab>)." },
+  { lhs = "<M-w>", mode = "i", name = "Ghost Text: принять одно слово", doc = "В режиме вставки принимает только следующее слово из призрачной подсказки Gemini, оставляя хвост." },
+  { lhs = "<M-g>", mode = "i", name = "Ghost Text: вызвать подсказку", doc = "В режиме вставки вручную запрашивает призрачную подсказку у Google Gemini." },
+  { lhs = "<leader>Ap", name = "ИИ: выбрать провайдера", doc = "Меню ИИ-провайдеров (Groq, Gemini, OpenAI, OpenRouter, Mistral, DeepSeek, Kimi, Ollama, свой сервис). Мгновенно переключает И открытый чат Avante, И :AiAsk / перевод K (:AiProvider). На Ghost Text не влияет — он всегда работает только на Gemini." },
   { lhs = "<leader>Ag", name = "Чат Avante → прямой Gemini", doc = "Мгновенно переключает открытый чат Avante на прямой Google Gemini (:AvanteGemini). Если ключ AVANTE_GEMINI_API_KEY / GEMINI_API_KEY ещё не задан — предложит вставить его прямо на сеанс." },
   { lhs = "<leader>Ao", name = "Чат Avante → OpenRouter", doc = "Мгновенно переключает открытый чат Avante на OpenRouter (:AvanteOpenRouter) с защитой от битых шаблонов моделей." },
   { lhs = "<leader>Am", name = "Чат Avante: выбрать модель", doc = "Открывает выбор модели текущего провайдера прямо в чате Avante (:AvanteModels: gemini-3.6-flash, gemini-2.5-pro, openrouter/free и др.)." },

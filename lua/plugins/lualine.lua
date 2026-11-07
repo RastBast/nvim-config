@@ -58,6 +58,13 @@ return {
         return eh.component()
       end
 
+      -- Индикатор Ghost Text (призрачные подсказки ТОЛЬКО на Gemini; <leader>AG / <leader>ui)
+      local function ghost_text_status()
+        local ok, gt = pcall(require, "config.ghost_text")
+        if not ok or type(gt.lualine_component) ~= "function" then return "" end
+        return gt.lualine_component()
+      end
+
       require("lualine").setup({
         options = {
           theme = "auto",
@@ -74,6 +81,14 @@ return {
               on_click = function()
                 local ok, eh = pcall(require, "config.error_history")
                 if ok and type(eh.last) == "function" then eh.last() end
+              end,
+            },
+            {
+              ghost_text_status,
+              color = { fg = "#a6e3a1" },
+              on_click = function()
+                local ok, gt = pcall(require, "config.ghost_text")
+                if ok and type(gt.toggle) == "function" then gt.toggle() end
               end,
             },
             -- 🎃 тыква-индикатор хэллоуин-оверлея (<leader>uH, lua/config/halloween.lua)
