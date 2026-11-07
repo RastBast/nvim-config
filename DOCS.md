@@ -3217,3 +3217,34 @@ Neovim, чата Avante и запросы к внешним ИИ с реальн
 
 * Ключ истории — `scrollback-limit = 50000000` (байты). `scrollback-limit-lines` в старых версиях даёт ошибку `unknown field`.
 
+### Ошибки Neovim: последние 10 ошибок и полный журнал (`<leader>x`)
+
+В разделе `<leader>x` («Ошибки и журнал») добавлены два отдельных макроса для просмотра ошибок самого Neovim, плагинов и автокоманд (не трогая `<leader>xl` Location List у Trouble):
+
+| Клавиша / команда | Что делает |
+|---|---|
+| `<leader>xe` или `<leader>Hxe` (`:ErrorLast10` / `:Errors10`) | Показывает **последние 10 ошибок Neovim** за текущий сеанс (подряд идущие дубли склеиваются с пометкой `×N`) |
+| `<leader>xj` или `<leader>xg`, `<leader>Hxj` (`:ErrorLog`) | Открывает **полный журнал ошибок Neovim** за сеанс (включая стектрейсы Lua, ошибки `vim.notify`, `v:errmsg`, Noice и `:messages`) |
+| `:ErrorClear` | Очищает накопленный сеансовый журнал ошибок |
+
+Внутри окна просмотра: `Tab` переключает **10 ошибок ↔ полный журнал**, `y` копирует все ошибки в буфер обмена, `c` очищает список, `r` обновляет, `q` / `Esc` закрывает.
+
+### Диагностика Avante и Nix LSP
+
+* `:AvanteStatus` (или `<leader>AI`) и `:AvanteRebuild` (или `<leader>AU`) регистрируются при старте `init.lua` до `lazy.nvim`, поэтому ошибка `E492: Not an editor command: AvanteStatus` исключена в любом состоянии.
+* При сборке и проверке `avante.nvim` (`v0.4.8`) проверяются **все 4 нативные библиотеки** (`avante_templates`, `avante_tokenizers`, `avante_repo_map`, `avante_html2md`), сбрасывается кеш модулей `lazy.core.cache` / `vim.loader`, а битые файлы `*.repo_map.json` с `null` автоматически очищаются (`lua/config/avante_repo_map.lua`).
+* Сервер `nil_ls` для Nix больше не устанавливается через Mason (требует `cargo`) и включается в LSP только когда `nil` реально есть в `PATH` (`brew install nil` или `nix profile install nixpkgs#nil`).
+
+### Визуальная архитектура приложения и связи (`<leader>mA*`, `:Arch*`)
+
+Для наглядного проектирования и просмотра архитектуры и связей компонентов прямо из редактора (одиночная `<leader>a` остаётся за Aerial):
+
+| Клавиша / команда | Что делает |
+|---|---|
+| `<leader>mAb` или `<leader>Haa` (`:ArchBoard`) | Открывает интерактивную 2D-доску архитектуры в Neovim (`Enter`/`gf` — прыжок к коду выбранного компонента, `a` +узел, `c` +связь, `p` привязать путь, `s` скан кода, `w` веб-холст) |
+| `<leader>mAw` (`:ArchWeb`) | Запускает локальный браузерный drag-and-drop SVG-холст (`127.0.0.1`) с живым сохранением в `architecture.json` и переходом к файлам в Neovim |
+| `<leader>mAs` (`:ArchScan`) | Автоматически сканирует модули и связи по коду проекта (Go, Lua/Neovim, TS/JS, Python, `docker-compose.yml`) |
+| `<leader>mAn` / `<leader>mAc` (`:ArchAddNode` / `:ArchConnect`) | Быстро добавить компонент или протянуть связь (`sync` / `async` / `data`) |
+| `<leader>mAm` (`:ArchMermaid`) | Экспортирует `docs/architecture.mmd` и `docs/architecture.md` с цветной Mermaid-диаграммой и каталогом модулей |
+| `<leader>mAj` / `<leader>mAx` (`:ArchJson` / `:ArchWebStop`) | Открыть `architecture.json` / остановить локальный веб-сервер |
+

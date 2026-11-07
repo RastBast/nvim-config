@@ -62,6 +62,15 @@ return {
         { "<leader>md", desc = "🩺 диагностика (:TeleCheck)" },
         { "<leader>mk", desc = "💀 убить процесс tele" },
         { "<leader>m?", desc = "📋 шпаргалка по telegram-мосту" },
+        { "<leader>mA", group = "🏗️ Архитектура и связи" },
+        { "<leader>mAb", desc = "🏗️ Доска архитектуры в Neovim (:ArchBoard)" },
+        { "<leader>mAw", desc = "🌐 Браузерный холст drag-and-drop (:ArchWeb)" },
+        { "<leader>mAs", desc = "🔍 Авто-скан модулей и связей (:ArchScan)" },
+        { "<leader>mAn", desc = "➕ Добавить компонент (:ArchAddNode)" },
+        { "<leader>mAc", desc = "🔗 Соединить компоненты (:ArchConnect)" },
+        { "<leader>mAm", desc = "📐 Экспорт в Mermaid + Markdown (:ArchMermaid)" },
+        { "<leader>mAj", desc = "📄 Открыть architecture.json (:ArchJson)" },
+        { "<leader>mAx", desc = "⏹️ Остановить веб-холст (:ArchWebStop)" },
 
         -------------------------------------------------------------
         --  🔍 Поиск и Файлы (H + f)
@@ -127,6 +136,7 @@ return {
         { "<leader>Hae", desc = "📤 Отправить выделение ИИ" },
         { "<leader>Hac", desc = "✚ ✨ Команда в CodeCompanion" },
         { "<leader>Has", "<cmd>AerialToggle!<cr>", desc = "📑 Показать структуру файла" },
+        { "<leader>Haa", desc = "✚ 🏗️ Архитектура приложения и связи" },
 
         -------------------------------------------------------------
         --  💎 Obsidian (H + o)
@@ -211,9 +221,12 @@ return {
         { "<leader>Hpc", "<cmd>ConformInfo<cr>", desc = "✚ 🎨 Чем форматируется файл" },
 
         -------------------------------------------------------------
-        --  ⚠️ Диагностика (H + x)
+        --  ⚠️ Диагностика и Журнал ошибок (H + x)
         -------------------------------------------------------------
-        { "<leader>Hx", group = "⚠️ Диагностика" },
+        { "<leader>Hx", group = "⚠️ Ошибки и журнал" },
+        { "<leader>Hxe", desc = "✚ 🔟 Последние 10 ошибок Neovim" },
+        { "<leader>Hxj", desc = "✚ 📜 Журнал ошибок Neovim (все)" },
+        { "<leader>Hxg", desc = "✚ 📜 Журнал ошибок Neovim (алиас)" },
         { "<leader>Hxx", "<cmd>Trouble diagnostics toggle<cr>", desc = "❗ Показать все ошибки (Trouble)" },
         { "<leader>Hxl", "<cmd>Trouble loclist toggle<cr>", desc = "📋 Location list" },
         { "<leader>Hxq", "<cmd>Trouble qflist toggle<cr>", desc = "📋 Quickfix list" },
@@ -265,6 +278,8 @@ return {
         { "<leader>T", group = "🖥 Терминал (toggleterm)" },
         { "<leader>U", group = "🧰 TUI-утилиты (k9s, iredis, pgcli…)" },
         { "<leader>A", group = "🤖 AI (avante) · 🦊 Firefox" },
+        { "<leader>AI", desc = "🩺 Статус Avante и библиотек (:AvanteStatus)" },
+        { "<leader>AU", desc = "🔧 Восстановить Avante (:AvanteRebuild)" },
         { "<leader>G", group = "🐙 GitHub · 🦊 GitLab · 📰 Хабр" },
         { "<leader>K", group = "📖 Английский: перевод слов" },
         { "<leader>P", group = "🧊 Protobuf (buf)" },
@@ -283,7 +298,10 @@ return {
         { "<leader>s", group = "🎵 Spotify · 📸 скриншот" },
         { "<leader>t", group = "🌐 Перевод · 🧪 Тесты · 📖 Док" },
         { "<leader>u", group = "🎨 Визуал и тема · 🐾 Питомцы" },
-        { "<leader>x", group = "⚠️ Ошибки (Trouble)" },
+        { "<leader>x", group = "⚠️ Ошибки и журнал (Trouble / Nvim)" },
+        { "<leader>xe", desc = "🔟 Последние 10 ошибок Neovim (:ErrorLast10)" },
+        { "<leader>xj", desc = "📜 Журнал ошибок Neovim (:ErrorLog)" },
+        { "<leader>xg", desc = "📜 Журнал ошибок Neovim (алиас)" },
         { "<leader>W", group = "🪟 Окна: дерево · код · терминал" },
         { "<leader>k", group = "⌨️ Показ нажатий" },
         { "<leader>Tt", desc = "📟 Плавающий терминал" },

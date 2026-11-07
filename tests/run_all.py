@@ -32,6 +32,9 @@ SUITES = [
     ("темы и порядок запуска", "themes_test.py"),
     ("спецификации плагинов, b/q, Ghostty, доки", "config_specs_test.py"),
     ("спрайты питомцев", "pets_sprites_test.py"),
+    ("Avante (:AvanteStatus, 4 .so, repo_map, nil_ls)", "avante_status_repo_map_test.py"),
+    ("Ошибки Neovim (<leader>xe последние 10, <leader>xj журнал)", "error_history_test.py"),
+    ("Визуальная архитектура приложения и связи (:Arch*)", "architecture_test.py"),
 ]
 
 

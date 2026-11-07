@@ -1,5 +1,16 @@
 # Что исправлено в конфиге (2026-08-30)
 
+## 2026-11-07 · Статус и нативные модули Avante, nil_ls, макросы ошибок (<leader>x) и визуальная архитектура
+
+- **`:AvanteStatus` без `E492`:** новый модуль `lua/config/avante_commands.lua` регистрирует `:AvanteStatus` (`<leader>AI`) и `:AvanteRebuild` (`<leader>AU`) в самом начале `init.lua` до `lazy.nvim`. Команда работает всегда — даже до `VeryLazy`, при старом Neovim или до установки плагина, выводя сводку через `nvim_echo` и плавающее окно.
+- **Avante (`avante_templates`, `avante_repo_map`, `repo_map.lua:112`, lockfile):**
+  - `lazy-lock.json` синхронизирован с тегом `v0.4.8` (`079d964ea88bff4953996ee26d31314df5dc757f`).
+  - `lua/config/avante_build.lua` проверяет все 4 нативные `.so`-библиотеки (`avante_templates`, `avante_tokenizers`, `avante_repo_map`, `avante_html2md`), обновляет `package.cpath`, сбрасывает `lazy.core.cache` и `vim.loader`, а на macOS снимает карантин `xattr`.
+  - `lua/config/avante_repo_map.lua` очищает на диске испорченные `*.repo_map.json` с `null` (которые декодировались в `vim.NIL` `userdata` и роняли `next()` на `repo_map.lua:112`), блокирует запись невалидного кеша и страхует `Sidebar:show_input_hint` / `initialize_token_count` в автокомандах `ModeChanged` и `WinEnter` буфера `AvanteInput`.
+- **Nix LSP (`nil_ls`):** `lua/plugins/lsp-config.lua` включает `nil_ls` только когда бинарник `nil` реально доступен в `PATH` (дополнен каталогами Cargo и Nix в `lua/config/env_path.lua`); для `.nix` без `nil` выводится однократная подсказка `brew install nil` без падения Mason.
+- **Раздел ошибок (`<leader>x`) — 2 отдельных макроса:** `lua/config/error_history.lua` добавляет `<leader>xe` (`:ErrorLast10` — последние 10 ошибок Neovim) и `<leader>xj` / `<leader>xg` (`:ErrorLog` — полный журнал ошибок сеанса), не затрагивая `<leader>xl` у Trouble.
+- **Визуальная архитектура и связи (`<leader>mA*`, `<leader>Haa`, `:Arch*`):** добавлены `architecture_model.lua`, `architecture_board.lua` (2D-доска в Neovim с переходом к файлу по `Enter`/`gf`), `architecture_scan.lua` (авто-скан Go, Lua/Neovim, TS/JS, Python, `docker-compose.yml`), `architecture_server.lua` и `assets/architecture_editor.html` (локальный drag-and-drop SVG-холст на `127.0.0.1` + экспорт Mermaid/Markdown).
+
 ## 2026-10-29 · Таймаут ИИ, Mason nil_ls и конфликт Noice
 
 - Noice: `cmp.entry.get_documentation = false` (boolean для версии из lockfile); перевод документации cmp остаётся.

@@ -90,12 +90,38 @@ return {
       }
 
       -- Новый интерфейс Neovim 0.11+ (vim.lsp.config + vim.lsp.enable)
+      local enabled = {}
       for _, name in ipairs(servers) do
         local cfg = vim.deepcopy(custom[name] or {})
         cfg.capabilities = capabilities
         vim.lsp.config(name, cfg)
+        if name ~= "nil_ls" or vim.fn.executable("nil") == 1 then
+          enabled[#enabled + 1] = name
+        end
       end
-      vim.lsp.enable(servers)
+      vim.lsp.enable(enabled)
+
+      -- nil_ls не ставится Mason автоматически (пакет `nil` требует cargo).
+      -- Если открыт .nix-файл, а бинарника `nil` нет — показываем короткую подсказку
+      -- без спама и без аварийного падения LSP; если `nil` уже поставлен — включаем.
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("UserNixLspHint", { clear = true }),
+        pattern = "nix",
+        once = true,
+        callback = function()
+          if vim.fn.executable("nil") == 1 then
+            vim.lsp.enable("nil_ls")
+            return
+          end
+          vim.schedule(function()
+            if vim.fn.executable("nil") == 1 then return end
+            vim.api.nvim_echo({ {
+              "Nix LSP: бинарник `nil` не найден в PATH. Установи: brew install nil  или  nix profile install nixpkgs#nil (:EnvCheck)",
+              "WarningMsg",
+            } }, true, {})
+          end)
+        end,
+      })
 
       -- Клавиши включаются при подключении сервера (а не глобально)
       vim.api.nvim_create_autocmd("LspAttach", {

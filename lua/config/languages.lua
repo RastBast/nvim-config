@@ -59,7 +59,9 @@ M.list = {
   { ft = "r", parser = "r", toolchain = { "r_language_server" }, fmt = { "styler" } },
   { ft = "julia", parser = "julia", toolchain = { "julials" }, fmt = { "runic" } },
   { ft = "terraform", parser = "terraform", lsp = { "terraformls" }, fmt = { "terraform_fmt" } },
-  -- nil собирается в Mason из исходников через cargo: используем установленный системно nil.
+  -- Пакет `nil` в Mason собирается через cargo из исходников и падает без Rust.
+  -- Держим nil_ls в toolchain (Mason его НЕ ставит автоматически); для работы
+  -- установи готовый бинарник: `brew install nil` или `nix profile install nixpkgs#nil`.
   { ft = "nix", parser = "nix", toolchain = { "nil_ls" }, fmt = { "nixfmt" } },
   { ft = "vue", parser = "vue", lsp = { "vue_ls" }, fmt = { "prettier" } },
   { ft = "svelte", parser = "svelte", lsp = { "svelte" }, fmt = { "prettier" } },

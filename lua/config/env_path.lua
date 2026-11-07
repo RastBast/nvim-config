@@ -1,5 +1,5 @@
 -- ========================================================================== --
---   ПОЧИНКА PATH: чтобы nvim видел git и mason-бинари                        --
+--   ПОЧИНКА PATH: чтобы nvim видел git, mason, cargo и nix-бинари            --
 -- ========================================================================== --
 -- СИМПТОМ: в :Lazy на каждом плагине
 --   «Failed to spawn process git { args = { "fetch", … } }»
@@ -11,10 +11,8 @@
 -- исполняемый файл НЕ НАЙДЕН в PATH этого nvim.
 --
 -- На macOS так происходит, когда nvim запущен из GUI (Finder/Spotlight/
--- launchd даёт PATH=/usr/bin:/bin:/usr/sbin:/sbin), а git стоит в Homebrew
--- (/opt/homebrew/bin) и Xcode Command Line Tools не установлены — тогда
--- /usr/bin/git просто нет. В терминале при этом git работает: fish добавляет
--- /opt/homebrew/bin в свой PATH, но GUI-процессу его не передаёт.
+-- launchd даёт PATH=/usr/bin:/bin:/usr/sbin:/sbin), а git/cargo/nil стоят
+-- в Homebrew, ~/.cargo/bin или ~/.nix-profile/bin.
 --
 -- ЛЕЧЕНИЕ: дописываем недостающие стандартные каталоги в конец PATH
 -- (твой PATH остаётся приоритетнее). Подключается ПЕРВЫМ в init.lua —
@@ -22,21 +20,39 @@
 
 local M = {}
 
+local home = (vim.env and vim.env.HOME)
+  or (vim.uv and vim.uv.os_homedir and vim.uv.os_homedir())
+  or ""
+
+local function build_dirs()
+  local list = {
+    "/opt/homebrew/bin",  -- Homebrew, Apple Silicon (M1/M2/M3/M4)
+    "/opt/homebrew/sbin",
+    "/usr/local/bin",     -- Homebrew на Intel и ручной install
+    "/usr/local/sbin",
+    vim.fn.stdpath("data") .. "/mason/bin", -- LSP/DAP/format, поставленные mason
+  }
+  if type(home) == "string" and home ~= "" then
+    list[#list + 1] = home .. "/.cargo/bin"       -- Rust / cargo (запасная сборка avante)
+    list[#list + 1] = home .. "/.nix-profile/bin" -- Nix profile (nil LSP)
+    list[#list + 1] = home .. "/go/bin"           -- Go утилиты
+    list[#list + 1] = home .. "/.local/bin"       -- пользовательские CLI
+  end
+  list[#list + 1] = "/nix/var/nix/profiles/default/bin"
+  list[#list + 1] = "/run/current-system/sw/bin"
+  list[#list + 1] = "/usr/bin"
+  list[#list + 1] = "/bin"
+  list[#list + 1] = "/usr/sbin"
+  list[#list + 1] = "/sbin"
+  return list
+end
+
 -- Каталоги по порядку проверки. Несуществующие пропускаются (isdirectory).
-M.dirs = {
-  "/opt/homebrew/bin",  -- Homebrew, Apple Silicon (M1/M2/M3/M4)
-  "/opt/homebrew/sbin",
-  "/usr/local/bin",     -- Homebrew на Intel и ручной install
-  "/usr/local/sbin",
-  vim.fn.stdpath("data") .. "/mason/bin", -- LSP/DAP/format, поставленные mason
-  "/usr/bin",
-  "/bin",
-  "/usr/sbin",
-  "/sbin",
-}
+M.dirs = build_dirs()
 
 -- Что должно находиться, чтобы конфиг считался здоровым.
 M.required = { "git", "curl", "tar" }
+M.optional = { "cargo", "nil" }
 
 --- Добавить недостающие каталоги в PATH.
 --- Идемпотентно: повторный вызов ничего не меняет.
@@ -92,6 +108,10 @@ function M.check()
       lines[#lines + 1] = tool .. ": " .. (p ~= "" and p or "не найден")
     end
   end
+  for _, tool in ipairs(M.optional) do
+    local p = vim.fn.exepath(tool)
+    lines[#lines + 1] = tool .. " (опц.): " .. (p ~= "" and p or "не установлен")
+  end
   lines[#lines + 1] = " "
   lines[#lines + 1] = "PATH = " .. (vim.env.PATH or "(пусто)")
   if M.added and #M.added > 0 then
@@ -101,17 +121,20 @@ function M.check()
   -- avante: нативная библиотека для чата и подсказок (см. config/avante_build.lua)
   local okB, B = pcall(require, "config.avante_build")
   if okB then
-    local dir = vim.fn.stdpath("data") .. "/lazy/avante.nvim"
+    local dir = B.plugin_dir and B.plugin_dir() or (vim.fn.stdpath("data") .. "/lazy/avante.nvim")
     lines[#lines + 1] = " "
     if vim.fn.isdirectory(dir) == 0 then
       lines[#lines + 1] = "avante: плагин не установлен (:Lazy sync)"
     else
       lines[#lines + 1] = "avante " .. B.TAG .. ": " .. (B.is_built(dir) and "библиотека ЕСТЬ" or "библиотеки НЕТ, выполни :AvanteRebuild")
       lines[#lines + 1] = "  файл: " .. B.lib_file(dir)
+      lines[#lines + 1] = "  подробная диагностика: :AvanteStatus"
     end
   end
 
-  vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "Проверка окружения" })
+  local text = table.concat(lines, "\n")
+  vim.notify(text, vim.log.levels.INFO, { title = "Проверка окружения" })
+  pcall(vim.api.nvim_echo, { { text, "None" } }, true, {})
 end
 
 return M

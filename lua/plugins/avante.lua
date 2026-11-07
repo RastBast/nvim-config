@@ -64,9 +64,10 @@ return {
       end
     end,
     cmd = {
-      "AvanteAsk", "AvanteChat", "AvanteChatNew", "AvanteEdit",
+      "Avante", "AvanteAsk", "AvanteChat", "AvanteChatNew", "AvanteEdit",
       "AvanteFocus", "AvanteRefresh", "AvanteStop", "AvanteHistory",
-      "AvanteBuild", "AvanteRebuild", "AvanteSwitchProvider",
+      "AvanteToggle", "AvanteShowRepoMap", "AvanteModels", "AvanteClear",
+      "AvanteBuild", "AvanteRebuild", "AvanteStatus", "AvanteSwitchProvider",
     },
     dependencies = {
       "nvim-lua/plenary.nvim",
@@ -237,99 +238,251 @@ return {
     end,
     config = function(plugin, opts)
       local B = require("config.avante_build")
+      local ok_guard, repo_guard = pcall(require, "config.avante_repo_map")
+      local ok_cmds, avante_cmds = pcall(require, "config.avante_commands")
       local function plugin_dir() return plugin.dir end
       local running, configured = false, false
+      local last_reason = nil
 
-      -- Существование файла не гарантирует, что он подходит архитектуре и Lua.
-      -- До успешной загрузки нельзя вызывать setup: иначе чат установит
-      -- ModeChanged autocmd и упадёт при первом вводе текста.
+      local function echo_msg(text, hl)
+        pcall(vim.api.nvim_echo, { { text, hl or "None" } }, true, {})
+      end
+
+      local function notify_not_ready()
+        local msg = running
+          and ("avante: скачиваю/собираю нативные библиотеки " .. B.TAG .. "… Дождись завершения или проверь :AvanteStatus")
+          or ("avante ещё не готов" .. (last_reason and (": " .. last_reason) or "") .. ". Восстановление: :AvanteRebuild (<leader>AU), статус: :AvanteStatus")
+        vim.notify(msg, vim.log.levels.WARN)
+        echo_msg(msg, "WarningMsg")
+      end
+
+      -- Существование файла не гарантирует, что он подходит архитектуре и Lua,
+      -- а lazy.core.cache без сброса не видит новые .so до перезапуска.
+      -- До успешной загрузки ВСЕХ библиотек нельзя вызывать setup: иначе чат
+      -- установит ModeChanged/WinEnter autocmd и упадёт при вводе текста.
       local function available()
         if not B.is_built(plugin_dir()) then return false, "файл avante_templates отсутствует" end
+        if type(B.ensure_runtime) == "function" then
+          local ok_rt, err_rt = B.ensure_runtime(plugin_dir())
+          if not ok_rt then return false, tostring(err_rt) end
+          return true
+        end
         local loader, err = package.loadlib(B.lib_file(plugin_dir()), "luaopen_avante_templates")
         if not loader then return false, tostring(err) end
         local ok, result = pcall(require, "avante_templates")
         if not ok then
-          -- LuaJIT может оставить sentinel после неудачной загрузки; иначе
-          -- следующий require после восстановления сообщит «previous error».
           package.loaded.avante_templates = nil
           return false, tostring(result)
         end
         return true
       end
 
+      if ok_guard and type(repo_guard.install) == "function" then
+        pcall(repo_guard.install, function() return configured end, notify_not_ready)
+      end
+
+      local hold_keys = {
+        { "<leader>Aa", { "n", "v" }, "🤖 Чат Avante (ожидание сборки)" },
+        { "<leader>An", { "n", "v" }, "🤖 Новый чат Avante (ожидание сборки)" },
+        { "<leader>Ae", { "n", "v" }, "🤖 Рефакторинг Avante (ожидание сборки)" },
+        { "<leader>At", "n", "🤖 Панель Avante (ожидание сборки)" },
+        { "<leader>Af", "n", "🤖 Фокус Avante (ожидание сборки)" },
+        { "<leader>Ar", "n", "🤖 Обновить Avante (ожидание сборки)" },
+        { "<leader>AR", "n", "🤖 Карта репозитория Avante (ожидание сборки)" },
+        { "<leader>Ax", { "n", "v" }, "🤖 Объяснить код/ошибку (ожидание сборки)" },
+      }
+      local function install_hold_maps()
+        for _, item in ipairs(hold_keys) do
+          vim.keymap.set(item[2], item[1], notify_not_ready, { desc = item[3], silent = true })
+        end
+      end
+
       local function setup_if_ready()
         if configured then return true end
         local ready, reason = available()
-        if not ready then return false, reason end
+        if not ready then
+          last_reason = reason
+          return false, reason
+        end
+        if ok_guard and package.loaded["avante.path"] and package.loaded["avante.repo_map"] then
+          local ok_native, why_native = repo_guard.native_ready()
+          if not ok_native then
+            last_reason = why_native
+            return false, why_native
+          end
+        end
         local ok, err = pcall(function() require("avante").setup(opts) end)
-        if not ok then return false, tostring(err) end
+        if not ok then
+          last_reason = tostring(err)
+          return false, tostring(err)
+        end
         configured = true
+        last_reason = nil
+        if ok_guard and type(repo_guard.install) == "function" then
+          pcall(repo_guard.install, function() return configured end, notify_not_ready)
+        end
         vim.keymap.set({ "n", "v" }, "<leader>Ax", function()
           vim.cmd("AvanteAsk Объясни по-русски этот код или ошибку под курсором: что происходит, почему и как исправить")
         end, { desc = "🤖 Объяснить код/ошибку" })
         return true
       end
 
+      local function status_report()
+        local v = vim.version and vim.version() or { major = 0, minor = 0, patch = 0 }
+        local state = configured and "✅ готов к работе" or (running and "⏳ идёт сборка библиотек" or "⚠️ ожидает восстановления")
+        local lines = {
+          "# 🩺 Статус Avante (" .. B.TAG .. ")",
+          "",
+          "- **Состояние:** " .. state,
+          ("- **Neovim:** %d.%d.%d"):format(v.major or 0, v.minor or 0, v.patch or 0),
+          "- **Каталог плагина:** `" .. tostring(plugin_dir()) .. "`",
+        }
+        if type(B.LIBRARIES) == "table" then
+          lines[#lines + 1] = ""
+          lines[#lines + 1] = "### Нативные библиотеки (`.so`)"
+          for _, lib in ipairs(B.LIBRARIES) do
+            local path = B.lib_file(plugin_dir(), lib.name)
+            local exists = vim.uv.fs_stat(path) ~= nil
+            local loaded = type(package.loaded[lib.name]) == "table"
+            lines[#lines + 1] = ("- `%s`: файл %s · модуль %s"):format(
+              lib.name,
+              exists and "✓ есть" or "✗ НЕТ",
+              loaded and "✓ загружен" or "· ещё не загружен"
+            )
+          end
+        else
+          lines[#lines + 1] = "- **Библиотека:** `" .. tostring(B.lib_file(plugin_dir())) .. "`"
+        end
+        if ok_guard then
+          lines[#lines + 1] = ""
+          lines[#lines + 1] = ("- **Защита repo_map:** активна (очищено битых файлов: %d, перехвачено в сеансе: %d)"):format(
+            repo_guard.cleaned_disk_count or 0,
+            repo_guard.invalid_cache_count or 0
+          )
+        end
+        local ok_ai, AI = pcall(require, "config.ai_api")
+        if ok_ai and type(AI.active_id) == "function" then
+          lines[#lines + 1] = "- **ИИ-провайдер по умолчанию:** `" .. tostring(AI.active_id() or "gemini") .. "` (`:AiStatus`)"
+        end
+        if last_reason then
+          lines[#lines + 1] = ""
+          lines[#lines + 1] = "### Последняя причина отказа"
+          lines[#lines + 1] = "```text\n" .. tostring(last_reason) .. "\n```"
+        end
+        lines[#lines + 1] = ""
+        lines[#lines + 1] = "Команды: `:AvanteRebuild` (`<leader>AU`) · `:AiStatus` · `:EnvCheck`"
+        if ok_cmds and type(avante_cmds.show_report) == "function" then
+          avante_cmds.show_report("🩺 AvanteStatus", lines, not configured)
+        else
+          echo_msg(table.concat(lines, "\n"), configured and "None" or "WarningMsg")
+        end
+      end
+
       local function rebuild(rebuild_opts)
         if running then
           vim.notify("avante: сборка уже выполняется", vim.log.levels.INFO)
+          echo_msg("avante: сборка уже выполняется…", "WarningMsg")
           return
         end
         if vim.fn.isdirectory(plugin_dir()) == 0 then
-          vim.notify("avante не установлен: откройте <leader>AL и повторите установку", vim.log.levels.WARN)
+          local msg = "avante не установлен: откройте <leader>AL (:Lazy sync) и повторите установку"
+          vim.notify(msg, vim.log.levels.WARN)
+          echo_msg(msg, "WarningMsg")
           return
         end
         running = true
         if not (rebuild_opts and rebuild_opts.silent) then
           vim.notify("avante: сборка " .. B.TAG .. "…", vim.log.levels.INFO)
+          echo_msg("avante: скачиваю/собираю библиотеки " .. B.TAG .. "…", "None")
         end
         -- Удаляем только непригодную библиотеку: иначе неудачный make может
         -- оставить старый файл и создать ложное впечатление успешной сборки.
         local loadable = available()
         if not loadable and B.is_built(plugin_dir()) then vim.fn.delete(B.lib_file(plugin_dir())) end
+        local build_arg = (rebuild_opts and rebuild_opts.source) and { force = true, source = true } or (not loadable or (rebuild_opts and rebuild_opts.force) or false)
         B.build(plugin_dir(), function(ok, msg)
           running = false
           if ok then
             local ready, reason = setup_if_ready()
             if ready then
               vim.notify("avante готов: " .. msg, vim.log.levels.INFO)
+              echo_msg("✅ avante готов: " .. msg, "MoreMsg")
             else
-              vim.notify("avante: библиотека не загрузилась/ошибка setup: " .. reason .. "\nПроверьте архитектуру и перезапустите Neovim.", vim.log.levels.ERROR)
+              vim.notify("avante: библиотека не загрузилась/ошибка setup: " .. reason .. "\nПроверьте :AvanteStatus и перезапустите Neovim.", vim.log.levels.ERROR)
             end
           else
-            vim.notify("avante не собрался:\n" .. msg .. "\nПовторить: <leader>AU", vim.log.levels.ERROR)
+            last_reason = msg
+            vim.notify("avante не собрался:\n" .. msg .. "\nПовторить: <leader>AU (:AvanteRebuild)", vim.log.levels.ERROR)
           end
-        end, not loadable)
+        end, build_arg)
       end
 
-      vim.api.nvim_create_user_command("AvanteRebuild", function() rebuild() end,
-        { desc = "Скачать или собрать библиотеки avante" })
+      vim.api.nvim_create_user_command("AvanteRebuild", function() rebuild({ force = true }) end,
+        { force = true, desc = "Скачать или собрать библиотеки avante" })
+      vim.api.nvim_create_user_command("AvanteStatus", status_report,
+        { force = true, desc = "Диагностика Avante и нативных библиотек" })
+      if ok_cmds and type(avante_cmds.bind) == "function" then
+        avante_cmds.bind(status_report, function() rebuild({ force = true }) end)
+      end
 
       -- Команды avante регистрируются его plugin/ до config. Пока setup не
-      -- завершён, не позволяем им открыть сломанный чат; после сборки те же
-      -- обёртки пропускают вызовы в оригинальный API.
+      -- завершён, не позволяем им (включая :AvanteToggle и сайдбар) открыть
+      -- сломанный буфер AvanteInput; после сборки те же обёртки пропускают вызовы.
       local api_ok, api = pcall(require, "avante.api")
-      if api_ok then
-        for _, name in ipairs({ "ask", "full_view_ask", "edit", "focus", "refresh" }) do
+      if api_ok and type(api) == "table" then
+        for _, name in ipairs({ "ask", "full_view_ask", "zen_mode", "edit", "focus", "refresh", "select_model", "select_history" }) do
           local original = api[name]
           if type(original) == "function" then
             api[name] = function(...)
               if not configured then
-                vim.notify("avante ещё не готов. Восстановление: <leader>AU", vim.log.levels.WARN)
+                notify_not_ready()
                 return
               end
               return original(...)
             end
           end
         end
+        if type(api.build) == "function" then
+          api.build = function(bopts)
+            rebuild({ force = true, source = type(bopts) == "table" and bopts.source == true })
+          end
+        end
       end
+
+      local av_ok, av_mod = pcall(require, "avante")
+      if av_ok and type(av_mod) == "table" then
+        for _, name in ipairs({ "toggle_sidebar", "open_sidebar" }) do
+          local original = av_mod[name]
+          if type(original) == "function" then
+            av_mod[name] = function(...)
+              if not configured then
+                notify_not_ready()
+                return false
+              end
+              return original(...)
+            end
+          end
+        end
+        if type(av_mod.toggle) == "function" then
+          local orig_toggle = av_mod.toggle
+          av_mod.toggle = function(...)
+            if not configured then
+              notify_not_ready()
+              return false
+            end
+            return orig_toggle(...)
+          end
+        end
+      end
+
       local ready, reason = setup_if_ready()
       if not ready then
+        install_hold_maps()
         if not available() then
           vim.notify("avante пока отключён: " .. reason .. "\nПробуем восстановить; повторить: <leader>AU", vim.log.levels.WARN)
           vim.schedule(function() rebuild({ silent = true }) end)
         else
-          vim.notify("Ошибка настройки avante: " .. reason .. "\nПроверьте зависимости через <leader>AL и перезапустите Neovim.", vim.log.levels.ERROR)
+          vim.notify("Ошибка настройки avante: " .. reason .. "\nПроверьте :AvanteStatus и <leader>AL.", vim.log.levels.ERROR)
         end
       end
     end,

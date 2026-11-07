@@ -475,3 +475,22 @@ N                      n      Предыдущее совпадение (по ц
 <leader>=              n      Выровнять по символу (оператор)
 <leader>=              x      Выровнять выделение по символу
 <leader>qW             n      Записать через sudo
+
+Ошибки Neovim, диагностика Avante и визуальная архитектура
+------------------------------------------------------------------------------
+<leader>xe             n      Последние 10 ошибок Neovim (:ErrorLast10)
+<leader>xj             n      Журнал ошибок Neovim (:ErrorLog)
+<leader>xg             n      Журнал ошибок Neovim (алиас :ErrorLog)
+<leader>Hxe            n      Последние 10 ошибок Neovim (:ErrorLast10)
+<leader>Hxj            n      Журнал ошибок Neovim (:ErrorLog)
+<leader>AI             n      Статус Avante и нативных библиотек (:AvanteStatus)
+<leader>AU             n      Восстановить библиотеки Avante (:AvanteRebuild)
+<leader>mAb            n      Доска архитектуры в Neovim (:ArchBoard)
+<leader>mAw            n      Браузерный холст архитектуры (:ArchWeb)
+<leader>mAs            n      Авто-скан архитектуры из кода (:ArchScan)
+<leader>mAn            n      Архитектура: добавить компонент (:ArchAddNode)
+<leader>mAc            n      Архитектура: соединить компоненты (:ArchConnect)
+<leader>mAm            n      Архитектура: экспорт Mermaid (:ArchMermaid)
+<leader>mAj            n      Открыть architecture.json (:ArchJson)
+<leader>mAx            n      Остановить веб-холст (:ArchWebStop)
+<leader>Haa            n      Доска архитектуры в Neovim (:ArchBoard)
