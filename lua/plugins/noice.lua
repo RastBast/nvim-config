@@ -25,6 +25,19 @@ return {
             ['cmp.entry.get_documentation'] = false,
           },
         },
+        commands = {
+          errors10 = {
+            view = 'split',
+            opts = { enter = true, format = 'details' },
+            filter = { error = true },
+            filter_opts = { count = 10 },
+          },
+          errorlog = {
+            view = 'split',
+            opts = { enter = true, format = 'details' },
+            filter = { error = true },
+          },
+        },
         presets = {
           bottom_search = true,
           command_palette = true,

@@ -240,6 +240,8 @@ Groq — **обязательный** провайдер в этом конфи�
 | avante: `E239: Invalid sign text` при загрузке | в `windows.input.prefix` стоял эмодзи: текст знака не может быть шире 2 ячеек. Ставь `"> "` (уже исправлено в конфиге) |
 | avante: `400 User location is not supported` | геоблок Google по IP — нужен выход не из РФ или план B (OpenRouter). **PROXY.md**, §1.5 и §5 |
 | avante: `404 … no longer available to new users` | устарело имя модели: `set -Ux GEMINI_MODEL "gemini-3.6-flash"` |
+| `[mason-lspconfig.nvim] failed to install nil_ls` | Mason собирает `nil_ls` через `cargo` (Rust). В конфиге автоустановка отключена; если нужен Nix LSP — поставь готовый бинарник `brew install nil` или `nix profile install nixpkgs#nil` |
+| `E492: Not an editor command: AvanteStatus` / ошибки `avante_repo_map` | обнови конфиг (`git pull`), выполни `:Lazy sync` и `:AvanteRebuild` (`<leader>AU`); битый `*.repo_map.json` с `null` теперь чистится автоматически |
 
 ### 6.1. `:EnvCheck` — что видит nvim
 

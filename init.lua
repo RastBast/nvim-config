@@ -9,6 +9,12 @@ require("config.env_path").setup()
 vim.api.nvim_create_user_command("EnvCheck", function() require("config.env_path").check() end, {
   desc = "Показать git/curl/tar и PATH этого nvim",
 })
+vim.api.nvim_create_user_command("LazyUnlock", function(cmd_opts)
+  require("config.env_path").unlock_command(cmd_opts and cmd_opts.bang == true)
+end, {
+  bang = true,
+  desc = "Снять зависшие .git/*.lock в плагинах Lazy (:LazyUnlock! — принудительно)",
+})
 -- Какой переводчик en→ru реально отвечает (Google из РФ без VPN не работает,
 -- тогда должен отвечать MyMemory). Без этого «нет перевода» не диагностировать.
 vim.api.nvim_create_user_command("RuCheck", function() require("config.ru_util").check() end, {
@@ -17,6 +23,12 @@ vim.api.nvim_create_user_command("RuCheck", function() require("config.ru_util")
 
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
+
+-- Ранние команды и макросы (ДО lazy.nvim), чтобы :AvanteStatus никогда не
+-- выдавал E492, а журнал ошибок (<leader>xe / <leader>xj) ловил и старт плагинов:
+require("config.avante_commands").setup()
+require("config.error_history").setup()
+require("config.architecture").setup()
 
 local opt = vim.opt
 
@@ -106,6 +118,10 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- Перед стартом lazy.nvim автоматически снимаем осиротевшие `.git/index.lock`
+-- (иначе прерванный :Lazy sync навсегда блокирует обновление плагина).
+require("config.env_path").clean_lazy_git_locks()
+
 -- Загружаем все плагины из папки ~/.config/nvim/lua/plugins/
 require("lazy").setup("plugins", {
   -- Автопроверка обновлений при старте = `git fetch` для КАЖДОГО плагина.
@@ -141,17 +157,22 @@ require("config.themes").setup()
 -- Markdown: live-превью в браузере (<leader>mL, :MdPreview)
 require("config.md_preview").setup()
 
--- Фильтр всплывающих уведомлений (пропускаем только КРАСНЫЕ ОШИБКИ)
+-- Фильтр всплывающих уведомлений (пропускаем только КРАСНЫЕ ОШИБКИ и пишем их в <leader>xe / <leader>xj)
 do
+  local err_hist = require("config.error_history")
   local ok, notify = pcall(require, "notify")
-  if ok then
-    local base = vim.notify
-    vim.notify = function(msg, level, opts)
-      if level ~= nil and level < vim.log.levels.ERROR then return end
+  local base = vim.notify
+  vim.notify = function(msg, level, opts)
+    err_hist.record_notify(msg, level, opts)
+    if level ~= nil and level < vim.log.levels.ERROR then return end
+    if ok then
       if type(base) == "function" then
         return base(msg, level, opts)
       end
       return notify(msg, level, opts)
+    end
+    if type(base) == "function" then
+      return base(msg, level, opts)
     end
   end
 end
@@ -238,20 +259,15 @@ require("config.games").setup() -- игры: <leader>Xc шахматы, Xs зм�
 require("config.hover_ru").setup()
 require("config.gloss").setup() -- K (визуал) и <leader>Kw: английский по словам с частью речи; :Gloss
 require("config.ai_api").setup() -- ИИ любой: <leader>Ap (выбор: Groq, Gemini, OpenAI…), <leader>Aq; :AiProvider, :AiStatus, :AiAsk
+require("config.ai_thinking").setup() -- Скрытие размышлений ИИ по умолчанию (переключатель: <leader>Ah / :AiThinkingToggle)
+require("config.ai_file_txt").setup() -- Отправка файла как .txt (<leader>AF / <leader>AT) + просмотр правок как в git (<leader>AD)
+require("config.neocodeium_ui").setup() -- Codeium / NeoCodeium Ghost Text (вкл по умолчанию; <leader>AG / <leader>ui; вход: <leader>AK)
 require("config.go_ide").setup() -- Go как в GoLand: <leader>gi (меню), gT/gC/gD/ga/go/gr/gx; :GoIde
 vim.keymap.set("n", "<leader>AE", "<cmd>EnvCheck<cr>", { desc = "Диагностика git и avante" })
+vim.keymap.set("n", "<leader>AI", "<cmd>AvanteStatus<cr>", { desc = "🩺 Статус Avante и библиотек" })
 vim.keymap.set("n", "<leader>AL", "<cmd>Lazy<cr>", { desc = "Плагины: открыть Lazy" })
-vim.keymap.set("n", "<leader>AU", function()
-  if vim.fn.has("nvim-0.12") == 0 then
-    vim.notify("avante v0.4.8 требует Neovim 0.12+. Обновите Neovim.", vim.log.levels.WARN)
-    return
-  end
-  if vim.fn.exists(":AvanteRebuild") == 2 then
-    vim.cmd("AvanteRebuild")
-  else
-    vim.notify("avante недоступен: откройте <leader>AL и повторите установку", vim.log.levels.WARN)
-  end
-end, { desc = "🔧 Восстановить avante" })
+vim.keymap.set("n", "<leader>AU", "<cmd>AvanteRebuild<cr>", { desc = "🔧 Восстановить avante" })
+vim.keymap.set("n", "<leader>AX", "<cmd>LazyUnlock<cr>", { desc = "🔓 Снять git-блокировки Lazy" })
 require("config.inlay").setup() -- inlay hints изначально выключены; <leader>uh
 require("config.go_pro").setup() -- Go как в VS Code/GoLand: gh gL gR gB gc gM gn gS gE gG gp gA gV gH gO gJ
 require("config.tui_tools").setup() -- <leader>U: TUI-утилиты (k9s, iredis, pgcli, lazysql, dive…); :Tui

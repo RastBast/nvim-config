@@ -36,12 +36,12 @@ return {
       "CodeCompanionCodeReview",
     },
     keys = {
-      { "<leader>Hat", "<cmd>CodeCompanionChat<cr>", desc = "💬 Чат с ИИ (выбранный провайдер)", mode = { "n", "v" } },
-      { "<leader>Hai", "<cmd>CodeCompanionActions<cr>", desc = "🛠 Действия AI", mode = { "n", "v" } },
+      { "<leader>Ac", "<cmd>CodeCompanionChat<cr>", desc = "💬 CodeCompanion: чат с ИИ", mode = { "n", "v" } },
+      { "<leader>AA", "<cmd>CodeCompanionActions<cr>", desc = "🛠 CodeCompanion: меню действий AI", mode = { "n", "v" } },
       -- Строковый rhs, а не <cmd>: в visual Vim дописывает '<,'> и команда
       -- получает именно выделение. С <cmd> range пустой → уходила одна строка.
-      { "<leader>Hae", ":CodeCompanion<cr>", desc = "📤 Отправить выделение ИИ", mode = { "n", "v" } },
-      { "<leader>Hac", "<cmd>CodeCompanionCmd<cr>", desc = "✨ Команда в CodeCompanion", mode = { "n", "v" } },
+      { "<leader>Av", ":CodeCompanion<cr>", desc = "📤 CodeCompanion: отправить выделение ИИ", mode = { "n", "v" } },
+      { "<leader>AM", "<cmd>CodeCompanionCmd<cr>", desc = "✨ CodeCompanion: inline-команда", mode = { "n", "v" } },
     },
     opts = function()
       local cc = AI.cc_adapter()
@@ -59,6 +59,10 @@ return {
         chat_adapter = { name = cc, model = selected_model }
       end
       local groq_model = (AI.resolve("groq")) and AI.resolve("groq").model or "openai/gpt-oss-120b"
+      local gemini_model = (type(AI.env_model) == "function" and AI.env_model("GEMINI_MODEL", "gemini-3.6-flash")) or "gemini-3.6-flash"
+      local kimi_model = (type(AI.env_model) == "function" and AI.env_model("MOONSHOT_MODEL", "moonshot-v1-8k")) or "moonshot-v1-8k"
+      local openrouter_model = (type(AI.env_model) == "function" and AI.env_model("OPENROUTER_MODEL", "openrouter/free")) or "openrouter/free"
+      local custom_model = (type(AI.env_model) == "function" and AI.env_model("AI_MODEL", "model")) or "model"
       return {
       adapters = {
         http = {
@@ -67,14 +71,17 @@ return {
             return require("codecompanion.adapters").extend("gemini", {
               env = { api_key = function()
                 local scoped = vim.env.AVANTE_GEMINI_API_KEY
-                return scoped and scoped ~= "" and scoped or vim.env.GEMINI_API_KEY
+                if scoped and scoped ~= "" then return scoped end
+                local reg = vim.env.GEMINI_API_KEY
+                if reg and reg ~= "" then return reg end
+                return vim.env.GOOGLE_API_KEY
               end },
-              schema = { model = { default = vim.env.GEMINI_MODEL or "gemini-3.6-flash" } },
+              schema = { model = { default = gemini_model } },
             })
           end,
           groq = openai_compat("groq", "Groq", "https://api.groq.com/openai/v1", "GROQ_API_KEY", groq_model),
-          kimi = openai_compat("kimi", "Kimi", "https://api.moonshot.ai/v1", "MOONSHOT_API_KEY", vim.env.MOONSHOT_MODEL or "moonshot-v1-8k"),
-          openrouter = openai_compat("openrouter", "OpenRouter", "https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", vim.env.OPENROUTER_MODEL or "openrouter/free"),
+          kimi = openai_compat("kimi", "Kimi", "https://api.moonshot.ai/v1", "MOONSHOT_API_KEY", kimi_model),
+          openrouter = openai_compat("openrouter", "OpenRouter", "https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", openrouter_model),
           -- Любой свой OpenAI-совместимый сервис: AI_BASE_URL, AI_API_KEY, AI_MODEL
           -- AI_BASE_URL — полный базовый путь API; /chat/completions добавится автоматически
           custom = openai_compat(
@@ -82,8 +89,18 @@ return {
             "Свой сервис",
             ((vim.env.AI_BASE_URL or "http://localhost:8080/v1"):gsub("/+$", "")),
             "AI_API_KEY",
-            vim.env.AI_MODEL or "model"
+            custom_model
           ),
+        },
+      },
+
+      -- По умолчанию скрываем размышления модели (только чистый ответ; переключить: <leader>Ah)
+      display = {
+        chat = {
+          show_reasoning = (function()
+            local ok_th, th = pcall(require, "config.ai_thinking")
+            return ok_th and type(th) == "table" and th.is_enabled() or false
+          end)(),
         },
       },
 

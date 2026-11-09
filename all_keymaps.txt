@@ -1,18 +1,9 @@
 СПИСОК ГОРЯЧИХ КЛАВИШ — RastBast/nvim-config
-Обновлено: 2026-10-29. Собрано из lua/config/keydocs/ (справка <leader>?), db_menu.lua и зеркал <leader>HU… из tui_tools.lua.
-Тот же список с описаниями — в DOCS.md, §44. <leader> = пробел.
+Обновлено: 2026-11-07. Собрано из lua/config/keydocs/ (справка <leader>?) и db_menu.lua (все разделы перенесены напрямую в <leader>, отдел <leader>H убран).
+Панель <leader> (пробел) и все внутренние отделы отображаются в 3 столбика.
 ==============================================================================
 
-Всего записей: 433 (справка: 397, базы данных <leader>D…: 36)
-
-<leader>uh             n      Inlay hints: вкл/выкл для текущего буфера
-<leader>xb             n      Проблемы текущего буфера (нижняя панель)
-<leader>xq             n      Quickfix (нижняя панель)
-<leader>xl             n      Location list (нижняя панель)
-<leader>AU             n      Восстановить avante
-<leader>AL             n      Плагины: открыть Lazy
-<leader>AE             n      Диагностика avante и git
-<leader>AN             n      Проверить сеть выбранного ИИ
+Всего записей: 476 (справка: 440, базы данных <leader>D…: 36)
 
 <C-h>                  n      Окно слева
 <C-j>                  n      Окно снизу
@@ -61,7 +52,8 @@ q                      n      Quit (в Super Mode)
 <leader>Gl             n      GitLab: glab-tui
 <leader>Gb             n      Хабр: читать статьи
 <leader>Ab             n      Спросить в Firefox
-<leader>uT             n      Выбрать тему (7 штук)
+<leader>uT             n      Выбрать тему (8 штук)
+<leader>uH             n      Хэллоуин: вкл/выкл (мыши над экраном)
 <leader>a              n      Структура кода
 <leader>aj             n      Дерево JSON/структура
 <leader>gv             n      Проверить уязвимости
@@ -69,23 +61,16 @@ q                      n      Quit (в Super Mode)
 <leader>gt             n      Тесты пакета
 <leader>gb             n      Собрать
 <leader>gm             n      Сгенерировать мок
-<leader>HGS            n      Формочка struct (выбор из списка)
-<leader>HGf            n      Поля struct'а под курсором
+<leader>gs             n      Формочка struct (выбор из списка)
+<leader>gf             n      Поля struct'а под курсором
 <leader>jx             n      Список ключей JSON
 <leader>jq             n      jq-запрос по JSON
 <leader>gg             n      LazyGit
-<leader>gi             n      Go IDE: меню (как Alt+Enter в GoLand)
-<leader>HGi            n      Go IDE: меню (зеркало в группе HG)
-<leader>gT             n      Go: тест для функции под курсором
-<leader>gC             n      Go: конструктор New… для struct
-<leader>gD             n      Go: документация (godoc) к функции
-<leader>ga             n      Go: файл ↔ _test.go
-<leader>go             n      Go: оптимизировать импорты
-<leader>gr             n      Go: запуск пакета (go run .)
-<leader>gx             x      Go: извлечь выделение в переменную/функцию
 <leader>fL             n      Код потёк!
 <leader>e              n      Дерево файлов (nvim-tree)
-<leader>up             n      Питомец: выбрать и призвать (меню)
+<leader>mv             n      Предпросмотр markdown в браузере: вкл/выкл
+<leader>mV             n      Открыть предпросмотр markdown
+<leader>up             n      Питомец: выбрать и призвать
 <leader>uo             n      Питомец: сон
 <leader>ux             n      Убрать питомцев
 <leader>pt             n      Запустить таймер (25м)
@@ -143,126 +128,87 @@ q                      n      Quit (в Super Mode)
 <leader>mk             n      Убить процесс tele
 <leader>m?             n      Шпаргалка по telegram-мосту
 <C-\>                  n      Открыть/скрыть терминал
-<leader>Hff            n      Найти файл
-<leader>Hfg            n      Live grep
-<leader>Hfb            n      Открыть буферы
-<leader>Hfh            n      Поиск по справке
-<leader>Hfr            n      Недавние файлы
-<leader>Hft            n      TODO/FIXME
-<leader>Hfk            n      Все горячие клавиши
-<leader>Hfc            n      Все команды Neovim
-<leader>Hfw            n      Найти слово под курсором
-<leader>Hfm            n      Метки (marks)
-<leader>Hgs            n      Stage hunk
-<leader>Hgu            n      Undo stage hunk
-<leader>Hgb            n      Показать автора строки
-<leader>Hgh            n      Предпросмотр изменений
-<leader>Hgd            n      Diff текущего файла
-<leader>Hgl            n      Blame строки вкл/выкл
-<leader>Hgg            n      LazyGit
-<leader>Hgt            n      Запуск Go-тестов
-<leader>Hti            n      Добавить json-теги
-<leader>Hie            n      Авто if err
-<leader>Hfs            n      Заполнить struct
-<leader>Hj2s           n      JSON → struct
-<leader>Him            n      Сгенерировать impl
-<leader>Hvc            n      Проверка уязвимостей
-<leader>Hdu            n      Открыть панель БД
-<leader>Hda            n      Добавить подключение
-<leader>Hdf            n      Найти БД буфера
-<leader>Hdb            n      Точка останова
-<leader>Hdr            n      Старт/Продолжить
-<leader>Hdi            n      Шаг в
-<leader>Hdo            n      Шаг через
-<leader>Hdt            n      Тест в режиме отладки
-<leader>Has            n      Показать структуру файла
-<leader>Hos            n      Поиск заметок
-<leader>Hon            n      Новая заметка
-<leader>Hof            n      Перейти по ссылке
-<leader>Hot            n      Тоггл чекбокса
-<leader>Htr            n      Запуск теста под курсором
-<leader>Htf            n      Запуск всех тестов в файле
-<leader>Hts            n      Окно со статусом тестов
-<leader>Hto            n      Показать вывод ошибки
-<leader>Htn            n      Следующий тест
-<leader>Hsc            n      Скриншот кода (Silicon)
-<leader>Hrr            n      HTTP-запрос (Kulala)
-<leader>Hz             n      Дзен-режим
-<leader>Hum            n      Развернуть/восстановить окно
-<leader>Hm             n      Развернуть/восстановить окно
-<leader>Hup            n      Питомец: выбрать и призвать (меню)
-<leader>Hua            n      Переключить анимации
-<leader>Hpt            n      Старт Pomodoro
-<leader>Hps            n      Стоп Pomodoro
-<leader>Huh            n      HUD: плашка в углу (вкл/выкл)
-<leader>Hud            n      HUD: что он видит
-<leader>Hui            n      HUD: какой IP
-<leader>Huc            n      HUD: 12/24-часовой формат
-<leader>Huk            n      Огонёк за коммиты (:Streak)
-<leader>Hha            n      Добавить файл в Harpoon
-<leader>Hhh            n      Открыть меню Harpoon
-<leader>Hh1            n      Перейти к 1-му файлу
-<leader>Hh2            n      Перейти к 2-му файлу
-<leader>Hpl            n      Открыть Lazy UI
-<leader>Hpm            n      Открыть Mason UI
-<leader>Hpy            n      Lazy sync (поставить новые плагины)
-<leader>Hli            n      LspInfo
-<leader>Hch            n      Checkhealth
-<leader>Hpc            n      Чем форматируется файл
-<leader>Hxx            n      Показать все ошибки (Trouble)
-<leader>Hxl            n      Location list
-<leader>Hxq            n      Quickfix list
-<leader>Hxs            n      Символы файла (Trouble)
-<leader>Hxt            n      TODO-комментарии (Trouble)
-<leader>Hnh            n      Убрать подсветку поиска
-<leader>He             n      Дерево файлов (nvim-tree)
-<leader>Hc             n      Создать файл/директорию
-<leader>Hcf            n      Дерево: создать файл
-<leader>Hcr            n      Переименовать файл
-<leader>Hkl            n      Поиск по всем шпаргалкам
-<leader>Hat            n      Чат CodeCompanion с выбранным ИИ
-<leader>Hai            n      Действия AI
-<leader>Ap             n      ИИ: выбрать провайдера (Groq, Gemini, OpenAI…)
-<leader>Aq             n      ИИ: быстрый вопрос (ответ в окне)
-<leader>Hae            v      Отправить выделение ИИ
-<leader>Hac            n      Команда в CodeCompanion
-<leader>HGk            n      ☸ Kubernetes
-<leader>HGkk           n      k9s — TUI кластера
-<leader>HGkp           n      kubectl: поды текущего namespace
-<leader>HGkc           n      kubectl: контексты
-<leader>HGd            n      🐳 Docker
-<leader>HGdd           n      lazydocker — TUI Docker
-<leader>HGdp           n      docker ps -a
-<leader>HGdi           n      docker images
-<leader>HGa            n      📨 Kafka
-<leader>HGak           n      ktea — Kafka TUI
-<leader>HGat           n      kafkactl: топики
-<leader>HGag           n      kafkactl: consumer-группы
-<leader>HGab           n      kafkactl: брокеры
-<leader>Hyd            n      Discordo — Discord в терминале
-<leader>Hgv            n      Diffview: сравнить изменения
-<leader>Hgf            n      История файла (Diffview)
-<leader>Hgq            n      Закрыть Diffview
-<leader>Hgmo           n      Оставить СВОЁ (ours)
-<leader>Hgmt           n      Оставить ЧУЖОЁ (theirs)
-<leader>Hgmb           n      Оставить оба куска
-<leader>Hgm0           n      Убрать оба куска
-<leader>Hgmn           n      Следующий конфликт
-<leader>Hgmp           n      Предыдущий конфликт
-<leader>Hgml           n      Все конфликты в quickfix
-<leader>Hkc            n      Шпаргалка по запросу (cheat.sh)
+<leader>fw             n      Найти слово под курсором
+<leader>fm             n      Метки (marks)
+<leader>fF             n      Дерево: найти / создать файл
+<leader>rf             n      Переименовать файл
+<leader>V              n      Отдел Git · Diffview · Конфликты
+<leader>Vs             n      Stage hunk
+<leader>Vu             n      Undo stage hunk
+<leader>Vb             n      Показать автора строки
+<leader>Vh             n      Предпросмотр изменений
+<leader>Vd             n      Diff текущего файла
+<leader>Vl             n      Blame строки вкл/выкл
+<leader>Vg             n      LazyGit
+<leader>gj             n      Добавить json-теги
+<leader>ge             n      Авто if err
+<leader>gF             n      Заполнить struct
+<leader>gu             n      JSON → struct
+<leader>gI             n      Сгенерировать impl
+<leader>da             n      Добавить подключение БД
+<leader>df             n      Найти БД буфера
+<leader>dg             n      Отладка: старт/продолжить
+<leader>ds             n      Отладка: шаг в
+<leader>do             n      Отладка: шаг через
+<leader>os             n      Поиск заметок Obsidian
+<leader>on             n      Новая заметка Obsidian
+<leader>tn             n      Следующий тест
+<leader>um             n      Развернуть/восстановить окно
+<leader>lh             n      HUD: плашка в углу (вкл/выкл)
+<leader>ld             n      HUD: диагностика
+<leader>li             n      HUD: режим IP
+<leader>lc             n      HUD: 12/24-часовой формат
+<leader>lk             n      Огонёк за коммиты (:Streak)
+<leader>L              n      Отдел Плагины и LSP
+<leader>Ll             n      Открыть Lazy UI
+<leader>Ls             n      Lazy sync (поставить/обновить плагины)
+<leader>Lu             n      Снять git-блокировки Lazy
+<leader>Lm             n      Открыть Mason UI
+<leader>Li             n      Статус LSP (:LspInfo)
+<leader>Lc             n      Чем форматируется файл
+<leader>Lh             n      Проверка здоровья (:checkhealth)
+<leader>xs             n      Символы файла (Trouble)
+<leader>xt             n      TODO-комментарии (Trouble)
+<leader>kl             n      Поиск по всем шпаргалкам
+<leader>Ac             n      CodeCompanion: чат с ИИ
+<leader>AA             n      CodeCompanion: меню действий AI
+<leader>Av             v      CodeCompanion: отправить выделение ИИ
+<leader>AM             n      CodeCompanion: inline-команда
+<leader>i              n      ☸ Инфра: K8s · Docker · Kafka
+<leader>ik             n      ☸ Kubernetes
+<leader>ikk            n      k9s — TUI кластера
+<leader>ikp            n      kubectl: поды текущего namespace
+<leader>ikc            n      kubectl: контексты
+<leader>id             n      🐳 Docker
+<leader>idd            n      lazydocker — TUI Docker
+<leader>idp            n      docker ps -a
+<leader>idi            n      docker images
+<leader>ia             n      📨 Kafka
+<leader>iak            n      ktea — Kafka TUI
+<leader>iat            n      kafkactl: топики
+<leader>iag            n      kafkactl: consumer-группы
+<leader>iab            n      kafkactl: брокеры
+<leader>UD             n      Discordo — Discord в терминале
+<leader>Vv             n      Diffview: сравнить изменения
+<leader>Vf             n      История файла (Diffview)
+<leader>Vq             n      Закрыть Diffview
+<leader>Vm             n      ⚔ Мерж-конфликты
+<leader>Vmo            n      Оставить СВОЁ (ours)
+<leader>Vmt            n      Оставить ЧУЖОЕ (theirs)
+<leader>Vmb            n      Оставить оба куска
+<leader>Vm0            n      Убрать оба куска
+<leader>Vmn            n      Следующий конфликт
+<leader>Vmp            n      Предыдущий конфликт
+<leader>Vml            n      Все конфликты в quickfix
+<leader>kc             n      Шпаргалка по запросу (cheat.sh)
 <leader>cj             n      Разбить/собрать конструкцию
 <leader>cs             n      Разбить конструкцию на строки
 <leader>cJ             n      Собрать конструкцию в одну строку
 <leader>cl             n      Линтеры для этого файла
 <leader>cf             n      Форматировать файл
 <leader>ca             n      Действия кода
-<leader>Hk             n      Шпаргалки (cheat.sh)
-<leader>Hbr            n      Кольцо буфера обмена (1–9)
-<leader>Hbm            n      macOS: инструкция
-<leader>Hbk            n      Экранная клавиатура macOS
-<leader>Hq?            n      Справка по клавише
-<leader>Hqm            n      Режим справки вкл/выкл
+<leader>ym             n      macOS: инструкция
+<leader>yk             n      Экранная клавиатура macOS
 gd                     n      К определению
 gD                     n      К декларации
 gr                     n      Все ссылки
@@ -281,7 +227,8 @@ gi                     n      К реализации
 <C-n>                  n      Несколько курсоров: слово
 w                      n      Умное w (подсловами)
 e                      n      Умное e (подсловами)
-b                      n      Умное b (подсловами)
+q                      n      Назад к началу слова (подсловами)
+b                      n      Запись макроса
 ge                     n      Умное ge (подсловами)
 <leader>bd             n      Закрыть буфер
 <leader>db             n      Точка останова
@@ -303,6 +250,42 @@ ge                     n      Умное ge (подсловами)
 <leader>ts             n      Панель тестов
 <leader>to             n      Лог ошибки теста
 <leader>ua             n      Анимации вкл/выкл
+<leader>uh             n      Inlay hints вкл/выкл
+<leader>xb             n      Проблемы текущего буфера
+<leader>xq             n      Проблемы: quickfix
+<leader>xl             n      Проблемы: location list
+<leader>xe             n      Последние 10 ошибок Neovim
+<leader>xj             n      Журнал ошибок Neovim
+<leader>xg             n      Журнал ошибок Neovim (алиас)
+<leader>AI             n      Статус Avante
+<leader>AU             n      Восстановить avante
+<leader>mAb            n      C4-доска архитектуры в Neovim
+<leader>mAw            n      Браузерный C4-холст архитектуры
+<leader>mAs            n      Умный скан архитектуры
+<leader>mAl            n      Архитектура: скан символов LSP
+<leader>mAd            n      Архитектура: ИИ-генерация
+<leader>mAr            n      Архитектура: аудит циклов и ИИ-ревью
+<leader>mAn            n      Архитектура: добавить узел
+<leader>mAc            n      Архитектура: соединить узлы
+<leader>mAm            n      Архитектура: экспорт Mermaid
+<leader>mAj            n      Открыть architecture.json
+<leader>mAx            n      Остановить веб-холст ArchWeb
+<leader>Cb             n      Архитектура C4: доска в Neovim
+<leader>Cf             n      Архитектура C4: найти текущий файл
+<leader>Cp             n      Архитектура C4: меню действий
+<leader>Cw             n      Архитектура C4: веб-холст
+<leader>Cs             n      Архитектура C4: умный скан
+<leader>Cl             n      Архитектура C4: скан из LSP
+<leader>Cd             n      Архитектура C4: ИИ-генерация
+<leader>Cr             n      Архитектура C4: ИИ-ревью и циклы
+<leader>Cn             n      Архитектура C4: добавить компонент
+<leader>Cc             n      Архитектура C4: соединить компоненты
+<leader>Cm             n      Архитектура C4: экспорт Mermaid
+<leader>Cj             n      Архитектура C4: открыть JSON
+<leader>Cx             n      Архитектура C4: стоп веб-холста
+<leader>AL             n      Плагины: Lazy
+<leader>AX             n      Снять git-блокировки Lazy
+<leader>AE             n      Диагностика avante и git
 <leader>xx             n      Список всех ошибок
 <leader>z              n      Дзен-режим
 <leader>nh             n      Убрать подсветку поиска
@@ -337,34 +320,33 @@ gc                     v      Закомментировать выделени�
 <C-c>                  n      Остановить ответ ИИ
 <C-c>                  i      Закрыть чат ИИ
 <C-\><C-n>             t      Выход из терминала
-<leader>Hde            n      Выполнить запрос
+<leader>de             n      Выполнить SQL-запрос
 <leader>Tc             n      Закрыть все терминалы
 <CR>                   i      Принять автодополнение
 <C-n>                  i      Следующий пункт автодополнения
-<leader>HWr            n      Проверить переводчики
-<leader>HWh            n      Перевод подсказок K вкл/выкл
-<leader>HWd            n      Русские ошибки LSP вкл/выкл
-<leader>HWn            n      Русские уведомления вкл/выкл
-<leader>HWe            n      Проверка PATH и утилит
-<leader>HWm            n      Дождь из символов
-<leader>HWt            n      Обновить часы и HUD
-<leader>HWc            n      Часы 24 часа
-<leader>HWC            n      Часы 12 часов
-<leader>HWz            n      Пояс UTC+3 (МСК)
-<leader>HWa            n      Огонёк без уведомлений
-<leader>HWA            n      Огонёк с уведомлениями
-<leader>HWg            n      Огонёк: цель 1 в день
-<leader>HWb            n      Огонёк: сгорание в 03:00
-<leader>Huo            n      IP в углу: скрыть/показать
-<leader>HuM            n      Принудительно вернуть раскладку
+<leader>l              n      Отдел Утилиты · HUD · Огонёк · RU
+<leader>lr             n      Проверить переводчики
+<leader>lK             n      Перевод подсказок K вкл/выкл
+<leader>lD             n      Русские ошибки LSP вкл/выкл
+<leader>ln             n      Русские уведомления вкл/выкл
+<leader>le             n      Проверка PATH и утилит
+<leader>lm             n      Дождь из символов
+<leader>lt             n      Обновить часы и HUD
+<leader>l2             n      Часы 24 часа
+<leader>l1             n      Часы 12 часов
+<leader>lz             n      Пояс UTC+3 (МСК)
+<leader>la             n      Огонёк без уведомлений
+<leader>lA             n      Огонёк с уведомлениями
+<leader>lg             n      Огонёк: цель 1 в день
+<leader>lb             n      Огонёк: сгорание в 03:00
+<leader>lo             n      IP в углу: скрыть/показать
+<leader>uM             n      Принудительно вернуть раскладку
 <Tab>                  n      Следующий буфер
 <S-Tab>                n      Предыдущий буфер
 iu                     x      Внутренняя единица кода (treesitter-unit)
 au                     x      Внешняя единица кода (treesitter-unit)
 K                      x      Английский по словам
-<leader>HKw            n      Английский: слово под курсором (то же, что <leader>Kw)
 <leader>Kw             n      Слово под курсором: транскрипция, часть речи, перевод
-<leader>HU             n      Группа: TUI-утилиты (то же, что <leader>U)
 <leader>U              n      Группа: TUI-утилиты
 <leader>Uu             n      Меню всех TUI-утилит
 <leader>Uh             n      Проверка TUI-утилит
@@ -377,101 +359,129 @@ K                      x      Английский по словам
 <leader>Ui             n      dive — слои Docker-образа
 <leader>Ub             n      btop — монитор ресурсов
 <leader>Ua             n      ktea — Kafka TUI
-<leader>HUu            n      Меню всех TUI-утилит
-<leader>HUh            n      Проверка TUI-утилит
-<leader>HUk            n      k9s — Kubernetes
-<leader>HUr            n      iredis — Redis с автодополнением
-<leader>HUc            n      redis-cli — Redis классический
-<leader>HUp            n      pgcli — PostgreSQL с автодополнением
-<leader>HUl            n      lazysql — TUI-клиент БД
-<leader>HUd            n      lazydocker — Docker
-<leader>HUi            n      dive — слои Docker-образа
-<leader>HUb            n      btop — монитор ресурсов
-<leader>HUa            n      ktea — Kafka TUI
-
---- Базы данных (<leader>D + код СУБД + действие) ---
-<leader>Dsc            n      SQLite: подключиться (консоль)
-<leader>Dsr            n, x   SQLite: выполнить буфер / выделение
-<leader>Dst            n      SQLite: список таблиц
-<leader>Dsd            n      SQLite: описание таблицы
-<leader>Dsn            n      SQLite: новый SQL-буфер
-<leader>Dsu            n      SQLite: панель DBUI
-<leader>Dmc            n      MySQL / MariaDB: подключиться (консоль)
-<leader>Dmr            n, x   MySQL / MariaDB: выполнить буфер / выделение
-<leader>Dmt            n      MySQL / MariaDB: список таблиц
-<leader>Dmd            n      MySQL / MariaDB: описание таблицы
-<leader>Dmn            n      MySQL / MariaDB: новый SQL-буфер
-<leader>Dmu            n      MySQL / MariaDB: панель DBUI
-<leader>Dpc            n      PostgreSQL: подключиться (консоль)
-<leader>Dpr            n, x   PostgreSQL: выполнить буфер / выделение
-<leader>Dpt            n      PostgreSQL: список таблиц
-<leader>Dpd            n      PostgreSQL: описание таблицы
-<leader>Dpn            n      PostgreSQL: новый SQL-буфер
-<leader>Dpu            n      PostgreSQL: панель DBUI
-<leader>Doc            n      Oracle: подключиться (консоль)
-<leader>Dor            n, x   Oracle: выполнить буфер / выделение
-<leader>Dot            n      Oracle: список таблиц
-<leader>Dod            n      Oracle: описание таблицы
-<leader>Don            n      Oracle: новый SQL-буфер
-<leader>Dou            n      Oracle: панель DBUI
-<leader>Dxc            n      SQL Server: подключиться (консоль)
-<leader>Dxr            n, x   SQL Server: выполнить буфер / выделение
-<leader>Dxt            n      SQL Server: список таблиц
-<leader>Dxd            n      SQL Server: описание таблицы
-<leader>Dxn            n      SQL Server: новый SQL-буфер
-<leader>Dxu            n      SQL Server: панель DBUI
-<leader>Dcc            n      ClickHouse: подключиться (консоль)
-<leader>Dcr            n, x   ClickHouse: выполнить буфер / выделение
-<leader>Dct            n      ClickHouse: список таблиц
-<leader>Dcd            n      ClickHouse: описание таблицы
-<leader>Dcn            n      ClickHouse: новый SQL-буфер
-<leader>Dcu            n      ClickHouse: панель DBUI
-
-------------------------------------------------------------------------------
-НОВОЕ 2026-10-28: быстрое перемещение, палитра команд (группа 11 справки)
-------------------------------------------------------------------------------
+<leader>AG             n      Codeium (Ghost Text): вкл/выкл
+<leader>ui             n      Codeium (Ghost Text): вкл/выкл
+<leader>AK             n      Codeium: авторизация
+<leader>Ai             n      Codeium: подсказать сейчас
+<leader>Ah             n      ИИ: скрыть/показать размышления
+<leader>AF             n      Файл как .txt → ИИ → Git-Diff
+<leader>AT             n      Файл как .txt → в чат Avante
+<leader>AD             n      Git-Diff последнего ответа ИИ
+<M-l>                  i      Codeium: принять целиком
+<M-w>                  i      Codeium: принять одно слово
+<M-a>                  i      Codeium: принять одну строку
+<M-g>                  i      Codeium: вызвать подсказку
+<leader>Ap             n      ИИ: выбрать провайдера
+<leader>Ag             n      Чат Avante → прямой Gemini
+<leader>Ao             n      Чат Avante → OpenRouter
+<leader>Am             n      Чат Avante: выбрать модель
+<leader>Ak             n      ИИ: задать ключ на сеанс
+<leader>AN             n      ИИ: проверить сеть
+<leader>Aq             n      ИИ: быстрый вопрос
+<leader>gi             n      Go IDE: меню
+<leader>gT             n      Go: тест для функции
+<leader>gC             n      Go: конструктор New…
+<leader>gD             n      Go: документация
+<leader>ga             n      Go: файл ↔ тест
+<leader>go             n      Go: импорты
+<leader>gr             n      Go: запуск пакета
+<leader>gx             x      Go: извлечь выделение
+<leader>gh             n      Go: подсказки типов и параметров
+<leader>gL             n      Go: codelens над функцией
+<leader>gR             n      Go: тест с -race
+<leader>gB             n      Go: бенчмарк функции
+<leader>gc             n      Go: покрытие тестов
+<leader>gM             n      Go: go mod tidy
+<leader>gn             n      Go: go generate
+<leader>gS             n      Go: заполнить case'ы switch
+<leader>gE             n      Go: заполнить return
+<leader>gG             n      Go: escape analysis
+<leader>gp             n      Go: структура пакета
+<leader>gA             n      Go: тесты для всех функций файла
+<leader>gV             n      Go: go vet
+<leader>gH             n      Go: кто вызывает функцию
+<leader>gO             n      Go: что вызывает функция
+<leader>gJ             x      Go: JSON → struct
 H                      n      В начало строки
 H                      v      Выделить до начала строки
 L                      n      В конец строки
 L                      v      Выделить до конца строки
 n                      n      Следующее совпадение (по центру)
 N                      n      Предыдущее совпадение (по центру)
-<M-1>                  n      Харпун: файл 1 (Alt+1)
-<M-2>                  n      Харпун: файл 2 (Alt+2)
-<M-3>                  n      Харпун: файл 3 (Alt+3)
-<M-4>                  n      Харпун: файл 4 (Alt+4)
+<M-1>                  n      Файл 1 из Harpoon (Alt+1)
+<M-2>                  n      Файл 2 из Harpoon (Alt+2)
+<M-3>                  n      Файл 3 из Harpoon (Alt+3)
+<M-4>                  n      Файл 4 из Harpoon (Alt+4)
 <leader>h3             n      Harpoon: файл 3
 <leader>h4             n      Harpoon: файл 4
 ]b                     n      Следующая вкладка (буфер)
 [b                     n      Предыдущая вкладка (буфер)
-<leader><Space>        n      Палитра команд (все :команды)
-
-Новое: игры, картинки, питомцы, история правок, выравнивание, sudo (DOCS §41–§43)
-------------------------------------------------------------------------------
+<leader><Space>        n      Поиск команд (палитра)
+gs                     <Lua table at 0x7f2855ce6258> Прыжок flash (метки)
+sa                     <Lua table at 0x7f2855ce6378> Добавить окружение
+sd                     n      Удалить окружение
+sr                     n      Заменить окружение
+sf                     n      Найти окружение справа
+sF                     n      Найти окружение слева
+sh                     n      Подсветить окружение
+sn                     n      Окружение: размер поиска
 <leader>ug             n      Гофер Харек
 <leader>uy             n      Нян-кот (мем)
 <leader>ut             n      Тостер (мем)
 <leader>uG             n      Призрак «бу» (мем)
-<leader>Hug            n      Гофер Харек
-<leader>Huy            n      Нян-кот (мем)
-<leader>Hut            n      Тостер (мем)
-<leader>HuG            n      Призрак «бу» (мем)
 <leader>Xc             n      Шахматы
 <leader>Xs             n      Змейка
 <leader>Xt             n      Тетрис
 <leader>Xf             n      2048
 <leader>Xm             n      Меню игр
-<leader>HXc            n      Шахматы
-<leader>HXs            n      Змейка
-<leader>HXt            n      Тетрис
-<leader>HXf            n      2048
-<leader>HXm            n      Меню игр
 <leader>Ii             n      Показать картинку под курсором
 <leader>If             n      Найти картинку в проекте
-<leader>HIi            n      Показать картинку под курсором
-<leader>HIf            n      Найти картинку в проекте
 <leader>v              n      История правок (undotree)
-<leader>HV             n      История правок (undotree)
 <leader>=              n      Выровнять по символу (оператор)
 <leader>=              x      Выровнять выделение по символу
 <leader>qW             n      Записать через sudo
+<leader>uHw            n      Хэллоуин: окно-анимация
+<leader>uP             n      Тыква (питомец)
+<leader>mL             n      Markdown: live-превью в браузере
+<leader>mT             n      Markdown: оглавление
+<leader>mE             n      Markdown: выровнять таблицу
+
+------------------------------------------------------------------------------
+Базы данных: каталог <leader>D (SQLite, MySQL, PostgreSQL, Oracle, SQL Server, ClickHouse)
+------------------------------------------------------------------------------
+<leader>Dsc            n      🪶 SQLite: Подключиться (консоль)
+<leader>Dsr            n, x   🪶 SQLite: Выполнить буфер / выделение (SQL)
+<leader>Dst            n      🪶 SQLite: Список таблиц
+<leader>Dsd            n      🪶 SQLite: Описание таблицы
+<leader>Dsn            n      🪶 SQLite: Новый SQL-буфер с подключением
+<leader>Dsu            n      🪶 SQLite: Панель DBUI
+<leader>Dmc            n      🐬 MySQL / MariaDB: Подключиться (консоль)
+<leader>Dmr            n, x   🐬 MySQL / MariaDB: Выполнить буфер / выделение (SQL)
+<leader>Dmt            n      🐬 MySQL / MariaDB: Список таблиц
+<leader>Dmd            n      🐬 MySQL / MariaDB: Описание таблицы
+<leader>Dmn            n      🐬 MySQL / MariaDB: Новый SQL-буфер с подключением
+<leader>Dmu            n      🐬 MySQL / MariaDB: Панель DBUI
+<leader>Dpc            n      🐘 PostgreSQL: Подключиться (консоль)
+<leader>Dpr            n, x   🐘 PostgreSQL: Выполнить буфер / выделение (SQL)
+<leader>Dpt            n      🐘 PostgreSQL: Список таблиц
+<leader>Dpd            n      🐘 PostgreSQL: Описание таблицы
+<leader>Dpn            n      🐘 PostgreSQL: Новый SQL-буфер с подключением
+<leader>Dpu            n      🐘 PostgreSQL: Панель DBUI
+<leader>Doc            n      🏛 Oracle: Подключиться (консоль)
+<leader>Dor            n, x   🏛 Oracle: Выполнить буфер / выделение (SQL)
+<leader>Dot            n      🏛 Oracle: Список таблиц
+<leader>Dod            n      🏛 Oracle: Описание таблицы
+<leader>Don            n      🏛 Oracle: Новый SQL-буфер с подключением
+<leader>Dou            n      🏛 Oracle: Панель DBUI
+<leader>Dxc            n      🟦 SQL Server: Подключиться (консоль)
+<leader>Dxr            n, x   🟦 SQL Server: Выполнить буфер / выделение (SQL)
+<leader>Dxt            n      🟦 SQL Server: Список таблиц
+<leader>Dxd            n      🟦 SQL Server: Описание таблицы
+<leader>Dxn            n      🟦 SQL Server: Новый SQL-буфер с подключением
+<leader>Dxu            n      🟦 SQL Server: Панель DBUI
+<leader>Dcc            n      🏠 ClickHouse: Подключиться (консоль)
+<leader>Dcr            n, x   🏠 ClickHouse: Выполнить буфер / выделение (SQL)
+<leader>Dct            n      🏠 ClickHouse: Список таблиц
+<leader>Dcd            n      🏠 ClickHouse: Описание таблицы
+<leader>Dcn            n      🏠 ClickHouse: Новый SQL-буфер с подключением
+<leader>Dcu            n      🏠 ClickHouse: Панель DBUI

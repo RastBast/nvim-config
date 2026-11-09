@@ -120,6 +120,73 @@ def main():
     check(":EnvCheck: библиотека есть — так и пишет",
           "библиотека ЕСТЬ" in rt.eval("NOTES[#NOTES].msg"), rt.eval("NOTES[#NOTES].msg"))
 
+    # ---------------------------------------- зависшие .git/index.lock lazy ---
+    import tempfile
+    with tempfile.TemporaryDirectory() as lazy_tmp:
+        for plug in ("nvim-lspconfig", "nvim-treesitter", "busy-plug"):
+            gdir = os.path.join(lazy_tmp, plug, ".git")
+            os.makedirs(gdir, exist_ok=True)
+            with open(os.path.join(gdir, "index.lock"), "w", encoding="utf-8") as lf:
+                lf.write("")
+
+        rt.globals().LAZY_TMP = lazy_tmp
+        rt.execute(
+            r"""
+            EXISTING[LAZY_TMP] = true
+            EXISTING[LAZY_TMP .. "/nvim-lspconfig"] = true
+            EXISTING[LAZY_TMP .. "/nvim-treesitter"] = true
+            EXISTING[LAZY_TMP .. "/busy-plug"] = true
+            EXEC = { git = true, ps = true, lsof = true }
+
+            vim.fn.system = function(cmd)
+              if cmd[1] == "ps" then
+                return "/usr/bin/git git fetch --origin\n"
+              elseif cmd[1] == "lsof" then
+                -- Имитируем живой процесс git ТОЛЬКО внутри busy-plug:
+                return "p1234\nfcwd\nn" .. LAZY_TMP .. "/busy-plug\n"
+              end
+              return ""
+            end
+            vim.fn.delete = function(p)
+              return os.remove(p) and 0 or -1
+            end
+            vim.uv.fs_scandir = function(p)
+              if p ~= LAZY_TMP then return nil end
+              local items = { "nvim-lspconfig", "nvim-treesitter", "busy-plug" }
+              local idx = 0
+              return { next = function() idx = idx + 1; return items[idx], "directory" end }
+            end
+            vim.uv.fs_scandir_next = function(h) return h.next() end
+            vim.uv.fs_stat = function(p)
+              local f = io.open(p, "rb")
+              if f then
+                f:close()
+                return { mtime = { sec = 995 } } -- свежий lock (5 сек назад), проверяем именно ps+lsof!
+              end
+              return nil
+            end
+
+            CLEANED_LOCKS, SKIPPED_LOCKS = ep.clean_lazy_git_locks({
+              lazy_root = LAZY_TMP,
+              now = 1000,
+              max_age_sec = 300,
+              quiet = true,
+            })
+            """
+        )
+        check("clean_lazy_git_locks удаляет осиротевшие index.lock в nvim-lspconfig и nvim-treesitter",
+              rt.eval("#CLEANED_LOCKS") == 2
+              and not os.path.exists(os.path.join(lazy_tmp, "nvim-lspconfig", ".git", "index.lock"))
+              and not os.path.exists(os.path.join(lazy_tmp, "nvim-treesitter", ".git", "index.lock")))
+        check("clean_lazy_git_locks НЕ трогает плагин, в котором прямо сейчас работает живой процесс git",
+              rt.eval("#SKIPPED_LOCKS") == 1
+              and os.path.exists(os.path.join(lazy_tmp, "busy-plug", ".git", "index.lock")))
+
+        rt.execute("FORCE_CLEANED = ep.clean_lazy_git_locks({ lazy_root = LAZY_TMP, force = true, quiet = true })")
+        check(":LazyUnlock! (force=true) снимает оставшийся lock принудительно",
+              rt.eval("#FORCE_CLEANED") == 1
+              and not os.path.exists(os.path.join(lazy_tmp, "busy-plug", ".git", "index.lock")))
+
     # ----------------------------------------------- автопроверка lazy.nvim ---
     init = open(os.path.join(_lua.ROOT, "init.lua"), encoding="utf-8").read()
     check("init.lua: автопроверка lazy (checker) выключена",
@@ -127,6 +194,9 @@ def main():
     check("init.lua: checker не включён нигде",
           "checker = { enabled = true" not in init)
     check("init.lua: :EnvCheck зарегистрирована", 'nvim_create_user_command("EnvCheck"' in init)
+    check("init.lua: :LazyUnlock зарегистрирована", 'nvim_create_user_command("LazyUnlock"' in init)
+    check("init.lua: clean_lazy_git_locks вызывается до require('lazy').setup",
+          init.index("clean_lazy_git_locks()") < init.index('require("lazy").setup('))
     check("init.lua: lazy ограничен 4 параллельными процессами (concurrency)",
           "concurrency = 4" in init and init.index('require("lazy").setup(') < init.index("concurrency = 4"))
     check("init.lua: env_path подключён первым (до lazy)",

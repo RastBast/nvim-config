@@ -63,10 +63,10 @@ return {
       -- ============================================================== --
       --  УМНЫЙ GO: формочка struct как в VSCode + автозаполнение полей  --
       -- ============================================================== --
-      vim.keymap.set("n", "<leader>HGS", function()
+      vim.keymap.set("n", "<leader>gs", function()
         require("config.go_extras").fill_struct()
       end, { desc = "🧩 Формочка struct (выбор из списка)" })
-      vim.keymap.set("n", "<leader>HGf", function()
+      vim.keymap.set("n", "<leader>gf", function()
         require("config.go_extras").add_fields()
       end, { desc = "🧱 Поля struct'а под курсором" })
 

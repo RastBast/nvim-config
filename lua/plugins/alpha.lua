@@ -117,6 +117,7 @@ return {
         dashboard.button("f", "  Найти файл", ":Telescope find_files<CR>"),
         dashboard.button("r", "  Недавние файлы", ":Telescope oldfiles<CR>"),
         dashboard.button("g", "  Текст по проекту", ":Telescope live_grep<CR>"),
+        dashboard.button("c", "🏗️  Архитектура C4 (<leader>C)", ":ArchBoard<CR>"),
         dashboard.button("e", "  Дерево файлов", ":NvimTreeToggle<CR>"),
         dashboard.button("q", "  Выход", ":qa<CR>"),
       }
